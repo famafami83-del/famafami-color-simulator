@@ -41,8 +41,15 @@
  .sw button[aria-current="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 3.5px var(--acc)}
  .palhint{font-size:11.5px;color:var(--mut);margin:0 0 9px}
  .scroll{max-height:330px;overflow-y:auto;padding-right:4px}
+ .spec{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+ .spec h2,.order h2{font-size:12px;font-weight:600;margin:0 0 8px;color:var(--mut);letter-spacing:.02em}
+ .fld{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+ .fld>span{font-size:12.5px;color:var(--mut);flex:none;width:74px}
+ .fld select,.fld input{flex:1;min-width:0;padding:8px 10px;border-radius:7px;border:1px solid var(--line);
+  background:var(--card);color:var(--fg);font-size:13px;font-family:inherit}
+ .fld select:focus,.fld input:focus{outline:2px solid var(--fg);outline-offset:-1px}
+ .ordnote{font-size:11.5px;color:var(--mut);margin:9px 0 0;line-height:1.65}
  .order{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
- .order h2{font-size:12px;font-weight:600;margin:0 0 8px;color:var(--mut);letter-spacing:.02em}
  .order pre{margin:0 0 9px;padding:11px;background:var(--bg);border:1px solid var(--line);border-radius:8px;
   font-size:12px;line-height:1.75;white-space:pre-wrap;word-break:break-all;
   font-family:ui-monospace,SFMono-Regular,Menlo,"D2Coding",monospace}
@@ -108,10 +115,21 @@
     <p class="palhint" id="palHint"></p>
     <div class="scroll" id="palette"></div>
 
+    <div class="spec">
+      <h2>구성</h2>
+      <label class="fld"><span>침대 사이즈</span><select id="sel_size"><option>싱글 100×200</option><option>슈퍼싱글 110×200</option><option>120×200</option><option selected>퀸 150×200</option><option>킹 160×200</option><option>170×200</option><option>180×200</option><option>190×200</option><option>라지킹</option><option>이스턴킹</option><option>260×220</option><option>그 외 — 적어주세요</option></select></label>
+      <label class="fld"><span>차렵 두께</span><select id="sel_oz"><option>여름용 (4온스)</option><option>초여름·간절기용 (6온스)</option><option selected>간절기용 (8온스)</option><option>한겨울용 (10온스)</option><option>아직 모르겠습니다</option></select></label>
+      <label class="fld"><span>남기실 말</span><input id="memo" type="text" placeholder="쓰시는 침구, 궁금한 점 등"></label>
+    </div>
+
     <div class="order">
-      <h2>주문서에 넣을 내용</h2>
+      <h2>주문 문의에 붙여넣을 내용</h2>
       <pre id="orderTxt"></pre>
       <button class="copy" id="copyBtn">복사하기</button>
+      <p class="ordnote">
+        <b>기성 상품에 없는 조합은 맞춤 제작입니다.</b> 금액이 조금 달라지니
+        위 내용을 복사해서 문의 주시면 정확한 금액을 안내드립니다.
+      </p>
     </div>
   </div>
 </div>
@@ -177,8 +195,19 @@ function render(){
     ? `매트리스커버는 ${allow.join('·')}수만 됩니다 (100수는 너무 얇습니다) — ${shown}색`
     : `${shown}색`;
 
-  $('#orderTxt').textContent = PARTS.map(p => p.ko + ' : ' + label(state[p.key])).join('\n');
+  const memo = ($('#memo').value || '').trim();
+  const lines = [
+    '침대 사이즈 : ' + $('#sel_size').value,
+    '차렵 두께 : ' + $('#sel_oz').value,
+    '',
+    ...PARTS.map(p => p.ko + ' : ' + label(state[p.key])),
+  ];
+  if (memo) lines.push('', '남기실 말 : ' + memo);
+  $('#orderTxt').textContent = lines.join('\n');
 }
+['sel_size','sel_oz','memo'].forEach(id => {
+  const el = $('#'+id); el.addEventListener('input', render); el.addEventListener('change', render);
+});
 
 const pal = $('#palette');
 for (const g of Object.values(SW)) {
