@@ -67,6 +67,28 @@
  .skip input{width:17px;height:17px;accent-color:var(--fg)}
  .off{opacity:.4;pointer-events:none}
 
+ /* 베개 4칸 */
+ .prow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+ .prow .pdot{width:24px;height:24px;border-radius:6px;border:1px solid rgba(0,0,0,.16);flex:none}
+ .prow .pnm{flex:1;font-size:13px;line-height:1.35}
+ .prow .pcl{font-size:11px;color:var(--mut)}
+ .prow .pq{flex:0 0 82px;padding:9px 8px;border-radius:8px;border:1px solid var(--line);
+  background:var(--bg);color:var(--fg);font-size:14px;font-family:inherit}
+ .prow.zero .pdot,.prow.zero .pnm{opacity:.4}
+ .ptot{font-size:12px;color:var(--mut);margin:9px 0 0;padding-top:9px;border-top:1px solid var(--line)}
+
+ /* 견적 */
+ .qrow{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+ .qrow:last-of-type{border-bottom:0}
+ .qrow .qt{flex:none;font-weight:600}
+ .qrow .qd{flex:1;font-size:11.5px;color:var(--mut);line-height:1.5}
+ .qrow .qa{flex:none;font-variant-numeric:tabular-nums}
+ .qrow .qa.ask{color:var(--mut);font-size:12px}
+ .qsum{display:flex;justify-content:space-between;align-items:baseline;
+  margin-top:11px;padding-top:11px;border-top:1.5px solid var(--fg);font-size:13.5px}
+ .qsum b{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+ .qnote{font-size:11.5px;color:var(--mut);margin:9px 0 0;line-height:1.65}
+
  /* 확인 */
  pre{margin:0 0 10px;padding:13px;background:var(--card);border:1px solid var(--line);border-radius:9px;
   font-size:12.5px;line-height:1.85;white-space:pre-wrap;word-break:break-word;
@@ -151,12 +173,31 @@
 
   <div class="card">
     <h2>베개커버</h2>
-    <p class="d">쓰시는 베개 사이즈입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다.</p>
+    <p class="d">쓰시는 베개 사이즈입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다.<br>
+      ①에서 고르신 <b>네 칸이 곧 주문하실 베개커버</b>입니다. 칸마다 몇 장인지 골라주세요 — 안 사실 칸은 0장.</p>
     <div id="grpPil">
-      <div class="two">
-        <div class="fld"><label>사이즈</label><select id="p_size"><option>40×60</option><option selected>50×70</option><option>그 외 — 아래에 적어주세요</option></select></div>
-        <div class="fld"><label>수량</label><select id="p_qty"><option>1장</option><option selected>2장</option><option>3장</option><option>4장</option><option>5장 이상</option></select></div>
+      <div class="fld"><label>사이즈 (네 칸 공통)</label><select id="p_size"><option>40×60</option><option selected>50×70</option><option>그 외 — 아래에 적어주세요</option></select></div>
+      <div class="prow">
+        <span class="pdot" data-part="pillowF" style="background:#b9a898"></span>
+        <span class="pnm">베개(앞)-왼쪽<br><span class="pcl" data-part="pillowF">-</span></span>
+        <select class="pq" data-part="pillowF" aria-label="베개(앞)-왼쪽 장수"><option value="0">0장</option><option value="1" selected>1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select>
       </div>
+      <div class="prow">
+        <span class="pdot" data-part="pillowR" style="background:#cee2d6"></span>
+        <span class="pnm">베개(앞)-오른쪽<br><span class="pcl" data-part="pillowR">-</span></span>
+        <select class="pq" data-part="pillowR" aria-label="베개(앞)-오른쪽 장수"><option value="0">0장</option><option value="1" selected>1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select>
+      </div>
+      <div class="prow">
+        <span class="pdot" data-part="pillowL" style="background:#cee2d6"></span>
+        <span class="pnm">베개(뒤)-왼쪽<br><span class="pcl" data-part="pillowL">-</span></span>
+        <select class="pq" data-part="pillowL" aria-label="베개(뒤)-왼쪽 장수"><option value="0" selected>0장</option><option value="1">1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select>
+      </div>
+      <div class="prow">
+        <span class="pdot" data-part="pillowW" style="background:#f1ebdb"></span>
+        <span class="pnm">베개(뒤)-오른쪽<br><span class="pcl" data-part="pillowW">-</span></span>
+        <select class="pq" data-part="pillowW" aria-label="베개(뒤)-오른쪽 장수"><option value="0" selected>0장</option><option value="1">1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select>
+      </div>
+      <p class="ptot" id="pTot"></p>
     </div>
     <label class="skip"><input type="checkbox" id="p_skip"> 베개커버는 안 할래요</label>
   </div>
@@ -189,7 +230,10 @@
 
 <script>
 const SW = {"01_WhiteCream":{"ko":"화이트 · 크림","en":"White & Creams","colors":[{"no":"953","en":"Cloud White","ko":"클라우드 화이트","su":60,"hex":"#f5f5f5"},{"no":"903","en":"Cloud White","ko":"클라우드 화이트","su":80,"hex":"#f5f5f5"},{"no":"952","en":"Melt Icecream","ko":"멜트 아이스크림","su":60,"hex":"#f5f4ef"},{"no":"902","en":"Muslin White","ko":"머슬린 화이트","su":80,"hex":"#edece7"},{"no":"2002","en":"Muslin White","ko":"머슬린 화이트","su":100,"hex":"#edece7"}]},"02_LightGrey":{"ko":"라이트 그레이","en":"Light Grey Scale","colors":[{"no":"923","en":"Mist Grey","ko":"미스트 그레이","su":80,"hex":"#e4e1dc"},{"no":"924","en":"Mirage Grey","ko":"미라지 그레이","su":80,"hex":"#cdcec9"},{"no":"976","en":"Illusion Grey","ko":"일루션 그레이","su":60,"hex":"#b9bdbc"},{"no":"2032","en":"Gentle Grey","ko":"젠틀 그레이","su":100,"hex":"#b3b0ab"},{"no":"925","en":"Neutral Grey","ko":"뉴트럴 그레이","su":80,"hex":"#aeb2b1"},{"no":"972","en":"Shelter Grey","ko":"쉘터 그레이","su":60,"hex":"#a39b98"},{"no":"926","en":"Khaki Grey","ko":"카키 그레이","su":80,"hex":"#84877e"},{"no":"977","en":"Mood Grey","ko":"무드 그레이","su":60,"hex":"#797c75"},{"no":"2026","en":"Night Green","ko":"나잇 그린","su":100,"hex":"#6b6d68"}]},"03_DeepGreyscale":{"ko":"딥 그레이","en":"Deep Grey Scale","colors":[{"no":"2006","en":"Blue Haze","ko":"블루 헤이즈","su":100,"hex":"#c2d1ca"},{"no":"2025","en":"Aqua Grey","ko":"아쿠아 그레이","su":100,"hex":"#b5beb9"},{"no":"961","en":"Green Drop","ko":"그린 드롭","su":60,"hex":"#869892"},{"no":"962","en":"Green Dark Shade","ko":"그린 다크 쉐이드","su":60,"hex":"#576766"},{"no":"930","en":"Shadow Green","ko":"쉐도우 그린","su":80,"hex":"#223635"},{"no":"940","en":"Green Grey","ko":"그린 그레이","su":80,"hex":"#91a1a0"},{"no":"978","en":"Quiet Shadow","ko":"콰이어트 쉐도우","su":60,"hex":"#6d7077"},{"no":"931","en":"Charcoal","ko":"차콜","su":80,"hex":"#40434a"},{"no":"979","en":"Shadow Grey","ko":"쉐도우 그레이","su":60,"hex":"#3f424b"},{"no":"973","en":"Hearth Grey","ko":"하쓰 그레이","su":60,"hex":"#666761"},{"no":"910","en":"Evening Haze","ko":"이브닝 헤이즈","su":80,"hex":"#5c575b"},{"no":"2023","en":"Cocoa Grey","ko":"코코아 그레이","su":100,"hex":"#534a4d"},{"no":"2027","en":"After Dark","ko":"애프터 다크","su":100,"hex":"#4b4746"},{"no":"932","en":"Ebony Black","ko":"에보니 블랙","su":80,"hex":"#23272a"},{"no":"980","en":"Deep Black","ko":"딥 블랙","su":60,"hex":"#252628"}]},"04_EarthyRange":{"ko":"어시 레인지","en":"Earthy Range","colors":[{"no":"2003","en":"White Cap","ko":"화이트 캡","su":100,"hex":"#fbf1dd"},{"no":"951","en":"Cream White","ko":"크림 화이트","su":60,"hex":"#ecdbcf"},{"no":"901","en":"Almond Milk","ko":"아몬드 밀크","su":80,"hex":"#f1ebdb"},{"no":"2007","en":"Light Peanut Butter","ko":"라이트 피넛 버터","su":100,"hex":"#cfd0c0"},{"no":"954","en":"Light Skin Beige","ko":"라이트 스킨 베이지","su":60,"hex":"#d8ccc1"},{"no":"912","en":"Warm Sand","ko":"웜 샌드","su":80,"hex":"#e0cbab"},{"no":"937","en":"Peanut Butter","ko":"피넛 버터","su":80,"hex":"#b99e78"},{"no":"955","en":"Calm Beige","ko":"캄 베이지","su":60,"hex":"#b9a898"},{"no":"913","en":"Chinchilla","ko":"친칠라","su":80,"hex":"#aba28f"},{"no":"2019","en":"Fine Soil","ko":"파인 소일","su":100,"hex":"#a68968"},{"no":"914","en":"Clams Blacket","ko":"클램스 블랭킷","su":80,"hex":"#988576"},{"no":"916","en":"Foxtail","ko":"폭스테일","su":80,"hex":"#967640"},{"no":"915","en":"Acom Brown","ko":"에이컴 브라운","su":80,"hex":"#816f5b"},{"no":"909","en":"Plam Truffle","ko":"플람 트러플","su":80,"hex":"#6e6462"},{"no":"969","en":"Cozy Cocoa","ko":"코지 코코아","su":60,"hex":"#654f3a"},{"no":"970","en":"Khaki Greige","ko":"카키 그레이지","su":60,"hex":"#c1beab"},{"no":"971","en":"Khaki Beige","ko":"카키 베이지","su":60,"hex":"#a49f89"}]},"05_RedEnergy":{"ko":"레드","en":"Red Energy","colors":[{"no":"2020","en":"Faded Rose","ko":"페이드 로즈","su":100,"hex":"#de7374"},{"no":"967","en":"Vitamin Sour","ko":"비타민 사워","su":60,"hex":"#df514c"},{"no":"968","en":"Energizing Red","ko":"에너자이징 레드","su":60,"hex":"#a12628"}]},"06_RoseWine":{"ko":"로즈 와인","en":"Rose Wine","colors":[{"no":"908","en":"Terracotta","ko":"테라코타","su":80,"hex":"#a08481"},{"no":"2030","en":"Mahogany","ko":"마호가니","su":100,"hex":"#b0675e"},{"no":"2022","en":"Red Wine","ko":"레드 와인","su":100,"hex":"#683f43"},{"no":"929","en":"Windsor Wine","ko":"윈저 와인","su":80,"hex":"#613941"}]},"07_BurntOrange":{"ko":"번트 오렌지","en":"Burnt Oranges","colors":[{"no":"936","en":"Copper Blanket","ko":"쿠퍼 블랭킷","su":80,"hex":"#c9825c"},{"no":"2015","en":"Spicy Orange","ko":"스파이시 오렌지","su":100,"hex":"#c47356"},{"no":"928","en":"Red Soil","ko":"레드 소일","su":80,"hex":"#ac5444"}]},"08_YellowVitas":{"ko":"옐로우","en":"Yellow vitas","colors":[{"no":"2013","en":"Magic Dust","ko":"매직 더스트","su":100,"hex":"#eadbba"},{"no":"965","en":"Pollen","ko":"폴른","su":60,"hex":"#f3bf76"},{"no":"2010","en":"Misted Yellow","ko":"미스티드 옐로우","su":100,"hex":"#eac070"},{"no":"966","en":"Sunlit Yellow","ko":"썬릿 옐로우","su":60,"hex":"#e2a24c"},{"no":"2016","en":"Apple Cinnamon","ko":"애플 시나몬","su":100,"hex":"#bc8e5a"},{"no":"918","en":"Harvest Gold","ko":"하베스트 골드","su":80,"hex":"#cca357"},{"no":"919","en":"Plantation","ko":"플랜테이션","su":80,"hex":"#967c31"}]},"09_AcedTouch":{"ko":"에이스드 터치","en":"Aced Touch","colors":[{"no":"963","en":"Apple Lime","ko":"애플 라임","su":60,"hex":"#e2e7b1"},{"no":"933","en":"Hazy Lime","ko":"헤지 라임","su":80,"hex":"#e6e7ad"},{"no":"2028","en":"Golden Green","ko":"골든 그린","su":100,"hex":"#c3b974"},{"no":"934","en":"Light Olive","ko":"라이트 올리브","su":80,"hex":"#c4c367"}]},"10_GreenWave":{"ko":"그린 웨이브","en":"Green Wave","colors":[{"no":"2017","en":"Green Moss","ko":"그린 모스","su":100,"hex":"#968747"},{"no":"920","en":"Olive Khaki","ko":"올리브 카키","su":80,"hex":"#847646"},{"no":"921","en":"Burnt Olive","ko":"번트 올리브","su":80,"hex":"#716e4f"},{"no":"917","en":"Military Olive","ko":"밀리터리 올리브","su":80,"hex":"#67593d"},{"no":"964","en":"Forest Green","ko":"포레스트 그린","su":60,"hex":"#587056"},{"no":"2027","en":"Dark Green","ko":"다크 그린","su":100,"hex":"#4a5b49"},{"no":"960","en":"Mint Haze","ko":"민트 헤이즈","su":60,"hex":"#cee2d6"},{"no":"904","en":"Eggshell Blue","ko":"에그쉘 블루","su":80,"hex":"#c9ddde"},{"no":"927","en":"Harbor Grey","ko":"하버 그레이","su":80,"hex":"#b9cfc2"},{"no":"2005","en":"Green Tea","ko":"그린티","su":100,"hex":"#a7baa4"},{"no":"2009","en":"Basil Green","ko":"바질 그린","su":100,"hex":"#757e64"},{"no":"2018","en":"Dark Khaki","ko":"다크 카키","su":100,"hex":"#5f6750"},{"no":"922","en":"Olive Night","ko":"올리브 나이트","su":80,"hex":"#575c45"}]},"11_Blues":{"ko":"블루","en":"Blues","colors":[{"no":"974","en":"Light Sky","ko":"라이트 스카이","su":60,"hex":"#c6dbf7"},{"no":"2012","en":"Aqua-esque","ko":"아쿠아 에스케","su":100,"hex":"#c1dee6"},{"no":"905","en":"Aquifer","ko":"애퀴퍼","su":80,"hex":"#92b7b7"},{"no":"938","en":"Dusty Blue","ko":"더스티 블루","su":80,"hex":"#8393ac"},{"no":"2011","en":"Water Dream","ko":"워터 드림","su":100,"hex":"#6491ae"},{"no":"975","en":"Misty Blue","ko":"미스티 블루","su":60,"hex":"#6c89a7"},{"no":"939","en":"Bering Sea","ko":"베링씨","su":80,"hex":"#556378"},{"no":"2021","en":"Teal Blue","ko":"틸 블루","su":100,"hex":"#385660"},{"no":"2001","en":"Navy","ko":"네이비","su":100,"hex":"#424652"}]},"12_Lavender":{"ko":"라벤더","en":"Lavender Scent","colors":[{"no":"959","en":"Lilac","ko":"라일락","su":60,"hex":"#b39ca4"},{"no":"935","en":"Lavender","ko":"라벤더","su":80,"hex":"#b5a2bd"},{"no":"2023","en":"Cool Lavender","ko":"쿨 라벤더","su":100,"hex":"#a59fbb"}]},"13_Pinkshade":{"ko":"핑크","en":"Pink Skin shades","colors":[{"no":"2024","en":"Pink Halo","ko":"핑크 헤일로","su":100,"hex":"#f0e6ec"},{"no":"906","en":"Blush Pink","ko":"블러쉬 핑크","su":80,"hex":"#f5d9d6"},{"no":"2004","en":"Cherry Blossom","ko":"체리 블라섬","su":100,"hex":"#f2d0ce"},{"no":"911","en":"Coral Blush","ko":"코랄 블러쉬","su":80,"hex":"#f6ccb6"},{"no":"907","en":"Sepia Rose","ko":"세피아 로즈","su":80,"hex":"#d8baaf"},{"no":"2008","en":"Dry petal","ko":"드라이 페탈","su":100,"hex":"#d8baaf"},{"no":"957","en":"Skin Pink","ko":"스킨 핑크","su":60,"hex":"#d7afa3"},{"no":"956","en":"Mommy Pink","ko":"마미 핑크","su":60,"hex":"#e2ac8d"},{"no":"2014","en":"Peach","ko":"피치","su":100,"hex":"#f0aca9"},{"no":"958","en":"Mommy Smell","ko":"마미 스멜","su":60,"hex":"#dba48d"}]}};
-const PARTS = [{"key":"quilt","ko":"이불","def":"#cee2d6","su":null},{"key":"mattress","ko":"매트리스커버","def":"#b9a898","su":[60,80]},{"key":"pillowF","ko":"베개(앞)-왼쪽","def":"#b9a898","su":null},{"key":"pillowR","ko":"베개(앞)-오른쪽","def":"#cee2d6","su":null},{"key":"pillowL","ko":"베개(뒤)-왼쪽","def":"#cee2d6","su":null},{"key":"pillowW","ko":"베개(뒤)-오른쪽","def":"#f1ebdb","su":null}];
+const PARTS = [{"key":"quilt","ko":"이불","def":"#cee2d6","su":null},{"key":"mattress","ko":"매트리스커버","def":"#b9a898","su":[60,80]},{"key":"pillowF","ko":"베개(앞)-왼쪽","def":"#b9a898","su":null,"qty":1},{"key":"pillowR","ko":"베개(앞)-오른쪽","def":"#cee2d6","su":null,"qty":1},{"key":"pillowL","ko":"베개(뒤)-왼쪽","def":"#cee2d6","su":null,"qty":0},{"key":"pillowW","ko":"베개(뒤)-오른쪽","def":"#f1ebdb","su":null,"qty":0}];
+const PRICE = {"quilt":{"sale":{"슈퍼싱글 150×210":null,"퀸 200×230":null,"킹 220×240":null,"라지킹 240×240":null},"custom":null},"mattress":{"sale":{"싱글 100×200":null,"슈퍼싱글 110×200":null,"퀸 150×200":null,"160×200":null,"170×200":null,"180×200":null,"190×200":null,"200×200":null},"custom":null,"heightBase":null,"heightAdd":null},"pillow":{"sale":{"40×60":null,"50×70":null},"custom":null}};
+const ALWAYS_CUSTOM = true;
+const PRICE_READY = false;
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
@@ -207,7 +251,8 @@ function goto(s){
   $$('.steps div').forEach(el => el.setAttribute('aria-current', +el.dataset.s === s));
   $('#btnPrev').hidden = s === 0;
   $('#btnNext').textContent = NEXT_LABEL[s];
-  if (s === 2) { buildMini(); renderOrder(); }
+  if (s === 1) renderPillows();
+  if (s === 2) { buildMini(); renderQuote(); renderOrder(); }
   window.scrollTo({ top:0, behavior:'instant' });
 }
 $('#btnPrev').onclick = () => goto(Math.max(0, step-1));
@@ -266,6 +311,23 @@ for (const g of Object.values(SW)) {
   pal.appendChild(row);
 }
 
+/* ---- 베개커버: ①에서 고른 네 칸이 곧 장수다 ---- */
+const PILLOWS = PARTS.filter(p => p.qty !== undefined);
+const pq = k => +$('.pq[data-part="' + k + '"]').value;
+const pillowCount = () => PILLOWS.reduce((s, p) => s + pq(p.key), 0);
+const pillowRows = () => PILLOWS.map(p => ({ p, c:state[p.key], n:pq(p.key) })).filter(r => r.n > 0);
+function renderPillows(){
+  PILLOWS.forEach(p => {
+    const n = pq(p.key);
+    $('.pdot[data-part="' + p.key + '"]').style.background = state[p.key].hex;
+    $('.pcl[data-part="' + p.key + '"]').textContent = label(state[p.key]);
+    $('.pq[data-part="' + p.key + '"]').closest('.prow').classList.toggle('zero', n === 0);
+  });
+  const n = pillowCount();
+  $('#pTot').textContent = n ? '모두 ' + n + '장' : '전부 0장 — 베개커버는 주문하지 않는 것으로 봅니다';
+}
+$$('.pq').forEach(s => s.onchange = renderPillows);
+
 /* ---- 사이즈: 안 할래요 체크 시 비활성 ---- */
 [['q_skip','grpQuilt'],['m_skip','grpMat'],['p_skip','grpPil']].forEach(([c,g]) => {
   $('#'+c).onchange = e => $('#'+g).classList.toggle('off', e.target.checked);
@@ -279,6 +341,54 @@ function buildMini(){
   mini.dataset.built = '1';
   PARTS.forEach(p => mini.querySelector('[data-part="'+p.key+'"]').style.backgroundColor = state[p.key].hex);
 }
+/* ---- 견적 ----
+   판매가와 맞춤 추가금이 둘 다 있어야 금액이 나온다.
+   하나라도 비었거나 수량·사이즈가 확정되지 않으면 그 줄은 "가격 문의"로 두고 합계에서 뺀다. */
+const won = n => n.toLocaleString('ko-KR') + '원';
+function quote(){
+  const rows = [], notes = [];
+  let sum = 0, ask = false;
+  const add = r => { rows.push(r); if (r.ask) ask = true; else sum += r.a; };
+  const fee = (sale, custom) =>
+    sale == null || (ALWAYS_CUSTOM && custom == null) ? null : sale + (ALWAYS_CUSTOM ? custom : 0);
+
+  if (!$('#q_skip').checked) {
+    const d = $('#q_size').value, p = fee(PRICE.quilt.sale[d], PRICE.quilt.custom);
+    add(p == null ? { t:'이불', d, ask:'가격 문의' } : { t:'이불', d, a:p });
+  }
+  if (!$('#m_skip').checked) {
+    const size = $('#m_size').value;
+    let p = fee(PRICE.mattress.sale[size], PRICE.mattress.custom), d = size;
+    const hb = PRICE.mattress.heightBase, ha = PRICE.mattress.heightAdd;
+    if (p != null && hb != null && ha != null) {
+      const h = parseFloat($('#m_h').value);
+      if (!Number.isFinite(h)) notes.push('매트리스 높이를 적어주세요. ' + hb + 'cm를 넘으면 ' + won(ha) + '이 더 붙습니다.');
+      else if (h > hb) { p += ha; d += ' · 높이 ' + h + 'cm (' + hb + 'cm 초과)'; }
+    }
+    add(p == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:p });
+  }
+  if (!$('#p_skip').checked && pillowCount()) {
+    const size = $('#p_size').value, n = pillowCount();
+    const unit = fee(PRICE.pillow.sale[size], PRICE.pillow.custom);   // '그 외'는 사이즈가 안 정해져 null
+    const d = size + ' · 모두 ' + n + '장';
+    add(unit == null ? { t:'베개커버', d, ask:'가격 문의' } : { t:'베개커버', d, a:unit * n });
+  }
+  if (rows.length && ALWAYS_CUSTOM) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
+  return { rows, sum, ask, notes };
+}
+function renderQuote(){
+  if (!PRICE_READY) return;
+  const { rows, sum, ask, notes } = quote();
+  $('#qRows').innerHTML = rows.map(r =>
+    '<div class="qrow"><span class="qt">' + r.t + '</span><span class="qd">' + r.d + '</span>' +
+    (r.ask ? '<span class="qa ask">' + r.ask + '</span>' : '<span class="qa">' + won(r.a) + '</span>') +
+    '</div>').join('');
+  const priced = rows.some(r => !r.ask);
+  $('#qSumBox').style.display = priced ? '' : 'none';
+  $('#qSum').textContent = won(sum) + (ask ? ' + 문의' : '');
+  $('#qNote').innerHTML = notes.map(n => '· ' + n).join('<br>');
+}
+
 function renderOrder(){
   const L = [];
   if (!$('#q_skip').checked) L.push('■ 이불', '   사이즈 : ' + $('#q_size').value, '   두께 : ' + $('#q_oz').value, '   컬러 : ' + label(state.quilt), '');
@@ -288,9 +398,19 @@ function renderOrder(){
     if (wh || h) L.push('   실제 사이즈 : ' + (wh||'-') + (h ? ' / 높이 ' + h : ''));
     L.push('   컬러 : ' + label(state.mattress), '');
   }
-  if (!$('#p_skip').checked) {
-    L.push('■ 베개커버', '   사이즈 : ' + $('#p_size').value, '   수량 : ' + $('#p_qty').value,
-      ...PARTS.filter(p=>p.key.startsWith('pillow')).map(p => '   ' + p.ko + ' : ' + label(state[p.key])), '');
+  if (!$('#p_skip').checked && pillowCount()) {
+    L.push('■ 베개커버', '   사이즈 : ' + $('#p_size').value,
+      ...pillowRows().map(r => '   ' + r.p.ko + ' : ' + label(r.c) + ' — ' + r.n + '장'),
+      '   모두 ' + pillowCount() + '장', '');
+  }
+  if (PRICE_READY) {
+    const q = quote();
+    if (q.rows.length) {
+      L.push('■ 예상 금액');
+      q.rows.forEach(r => L.push('   ' + r.t + ' : ' + (r.ask ? r.ask : won(r.a))));
+      if (q.rows.some(r => !r.ask)) L.push('   합계 : ' + won(q.sum) + (q.ask ? ' + 문의' : ''));
+      L.push('   ※ 안내용 예상 금액입니다.', '');
+    }
   }
   const memo = $('#memo').value.trim();
   if (memo) L.push('■ 남기실 말', '   ' + memo, '');
