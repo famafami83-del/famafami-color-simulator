@@ -46,6 +46,13 @@ const OZ = ['여름용 (4온스)','초여름·간절기용 (6온스)','간절기
 const PIL_ASK = '그 외';                       // 사이즈가 정해지지 않아 값을 못 내는 선택지
 const PILLOW = ['40×60','50×70',PIL_ASK];
 const PIL_QTY = [0,1,2,3,4];
+// 이불·매트리스커버 장수. 0은 없다 — 안 살 때는 「안 할래요」로 끈다.
+const ITEM_QTY = [1,2,3,4];
+
+// 팔레트에서 어느 칸이 골라졌는지 가리키는 키. 색상값도 번호도 겹치는 색이 있어서
+// (#f5f5f5 클라우드 화이트 60·80수, NO.2023 두 색) 둘 다 기준으로 못 쓴다. [2026-08-04]
+let ki = 0;
+for (const g of Object.values(SW)) g.colors.forEach(c => c.k = 'c' + (ki++));
 
 /* ────────────────────────────────────────────────────────────────
    가격 — 여기 숫자만 채우면 견적이 붙는다. 단위: 원.
@@ -290,6 +297,7 @@ ${PARTS.map((p,i)=>`    <button class="part" data-part="${p.key}" aria-pressed="
     <div id="grpQuilt">
       <div class="fld"><label>사이즈</label><select id="q_size">${QUILT.map(o=>`<option${o==='퀸 200×230'?' selected':''}>${o}</option>`).join('')}</select></div>
       <div class="fld"><label>두께</label><select id="q_oz">${OZ.map(o=>`<option${o==='간절기용 (8온스)'?' selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="fld"><label>수량</label><select id="q_qty">${ITEM_QTY.map(n=>`<option value="${n}">${n}장</option>`).join('')}</select></div>
     </div>
     <label class="skip"><input type="checkbox" id="q_skip"> 이불은 안 할래요</label>
   </div>
@@ -297,15 +305,17 @@ ${PARTS.map((p,i)=>`    <button class="part" data-part="${p.key}" aria-pressed="
   <div class="card">
     <h2>매트리스커버</h2>
     <p class="d">매트리스 실제 사이즈가 필요합니다. <b>재실 필요 없습니다</b> — 사신 곳에 나와 있는 숫자를 적어주세요.
+      <br>값은 고르신 <b>침대 규격</b>으로 정해집니다. 가로×세로는 만들 때 쓰는 치수입니다.
 ${HT.length ? `      <br>높이에 따라 값이 달라집니다 — ${HT_TEXT}.
       <b>높이 ${H_MAX}cm까지만 주문받습니다.</b>` : ''}</p>
     <div id="grpMat">
-      <div class="fld"><label>침대 규격</label><select id="m_size">${MAT.map(o=>`<option${o==='퀸 150×200'?' selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="fld"><label>침대 규격 (값의 기준)</label><select id="m_size">${MAT.map(o=>`<option${o==='퀸 150×200'?' selected':''}>${o}</option>`).join('')}</select></div>
       <div class="two">
         <div class="fld"><label>가로 × 세로 (cm)</label><input id="m_wh" type="text" inputmode="numeric" placeholder="예: 150x200"></div>
         <div class="fld"><label>높이 (cm)</label><input id="m_h" type="text" inputmode="numeric" placeholder="예: 30"></div>
       </div>
       <p class="warn" id="m_hWarn" hidden></p>
+      <div class="fld"><label>수량</label><select id="m_qty">${ITEM_QTY.map(n=>`<option value="${n}">${n}장</option>`).join('')}</select></div>
     </div>
     <label class="skip"><input type="checkbox" id="m_skip"> 매트리스커버는 안 할래요</label>
   </div>
@@ -351,10 +361,11 @@ ${PRICE_READY ? `  <div class="card">
     <p class="qnote" id="qNote"></p>
   </div>
 ` : ''}  <pre id="orderTxt"></pre>
-  <button class="nav-copy" id="copyBtn" style="display:none"></button>
   <p class="ordnote">
-    <b>기성 상품에 없는 조합은 맞춤 제작입니다.</b> 금액이 조금 달라지니
-    위 내용을 복사해서 문의 주시면 정확한 금액을 안내드립니다.<br><br>
+    ${PRICE_READY ? `<b>위 금액은 안내용입니다.</b> 맞춤 추가금까지 넣은 금액이지만,
+    원단 사정이나 실제 치수에 따라 조금 달라질 수 있습니다.
+    복사해서 문의 주시면 최종 금액을 확정해 드립니다.` :
+    `<b>기성 상품에 없는 조합은 맞춤 제작입니다.</b> 복사해서 문의 주시면 금액을 안내드립니다.`}<br><br>
     화면 색과 실물은 조금 다를 수 있습니다. <b>번호와 이름은 원단 컬러차트 그대로</b>라
     그대로 알려주시면 됩니다.
   </p>
@@ -371,6 +382,7 @@ const SW = ${JSON.stringify(SW)};
 const PARTS = ${JSON.stringify(PARTS)};
 const PRICE = ${JSON.stringify(PRICE)};
 const ALWAYS_CUSTOM = ${ALWAYS_CUSTOM};
+const PIL_ASK = ${JSON.stringify(PIL_ASK)};
 const PRICE_READY = ${PRICE_READY};
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -426,7 +438,8 @@ function renderColor(){
   $$('.sw button').forEach(b => {
     const ok = !allow || allow.includes(+b.dataset.su);
     b.style.display = ok ? '' : 'none'; if (ok) shown++;
-    b.setAttribute('aria-current', ok && b.dataset.hex === c.hex);
+    // 색상값이 같은 색이 있어서 hex 로 비교하면 두 칸이 같이 켜진다. 고유 키로 본다.
+    b.setAttribute('aria-current', ok && b.dataset.k === c.k);
   });
   $$('.gname').forEach(g => {
     const any = [...g.nextElementSibling.children].some(b => b.style.display !== 'none');
@@ -442,7 +455,7 @@ for (const g of Object.values(SW)) {
   const row = document.createElement('div'); row.className='sw';
   g.colors.forEach(c => {
     const b = document.createElement('button');
-    b.style.background = c.hex; b.dataset.hex = c.hex; b.dataset.su = c.su;
+    b.style.background = c.hex; b.dataset.k = c.k; b.dataset.su = c.su;
     b.title = 'NO. ' + c.no + ' ' + c.ko + ' ' + c.su + '수';
     b.onclick = () => apply(c); row.appendChild(b);
   });
@@ -476,16 +489,26 @@ $$('.pq, .ps').forEach(s => s.onchange = renderPillows);
 /* ---- 매트리스 높이: 받을 수 있는 최대 높이를 넘으면 그 자리에서 알린다 ---- */
 const HT_ALL = PRICE.mattress.height || [];
 const H_MAX = HT_ALL.length ? HT_ALL[HT_ALL.length - 1].upto : null;
-function tooTall(){
-  const h = parseFloat($('#m_h').value);
-  return H_MAX != null && Number.isFinite(h) && h > H_MAX;
+// 적힌 높이를 읽는다. 비었거나 숫자가 아니거나 0 이하면 null.
+function height(){
+  const raw = $('#m_h').value.trim();
+  if (!raw) return null;
+  const h = parseFloat(raw);
+  return Number.isFinite(h) && h > 0 ? h : null;
 }
+const heightTyped = () => $('#m_h').value.trim() !== '';
+const heightJunk  = () => heightTyped() && height() == null;   // 적긴 했는데 못 읽는 값
+const tooTall     = () => { const h = height(); return H_MAX != null && h != null && h > H_MAX; };
+
 function checkHeight(){
-  const bad = tooTall() && !$('#m_skip').checked;
-  $('#m_h').classList.toggle('bad', bad);
+  const off = $('#m_skip').checked;
+  const junk = !off && heightJunk(), tall = !off && tooTall();
+  $('#m_h').classList.toggle('bad', junk || tall);
   const w = $('#m_hWarn');
-  w.hidden = !bad;
-  w.textContent = bad
+  w.hidden = !(junk || tall);
+  w.textContent = junk
+    ? '높이를 숫자로 적어주세요. (예: 30)'
+    : tall
     ? '높이 ' + H_MAX + 'cm까지만 주문받습니다. 이 매트리스커버는 만들어 드릴 수 없습니다 — 「매트리스커버는 안 할래요」로 넘어가 주세요.'
     : '';
 }
@@ -516,25 +539,31 @@ function quote(){
     sale == null || (ALWAYS_CUSTOM && custom == null) ? null : sale + (ALWAYS_CUSTOM ? custom : 0);
 
   if (!$('#q_skip').checked) {
-    const d = $('#q_size').value, p = fee(PRICE.quilt.sale[d], PRICE.quilt.custom);
-    add(p == null ? { t:'이불', d, ask:'가격 문의' } : { t:'이불', d, a:p });
+    const size = $('#q_size').value, n = +$('#q_qty').value;
+    const p = fee(PRICE.quilt.sale[size], PRICE.quilt.custom);
+    const d = size + (n > 1 ? ' · ' + n + '장' : '');
+    add(p == null ? { t:'이불', d, ask:'가격 문의' } : { t:'이불', d, a:p * n });
   }
   if (!$('#m_skip').checked) {
-    const size = $('#m_size').value;
-    let p = fee(PRICE.mattress.sale[size], PRICE.mattress.custom), d = size, tall = false;
-    if (p != null && HT_ALL.length) {
-      const h = parseFloat($('#m_h').value);
-      if (!Number.isFinite(h)) {
-        notes.push('매트리스 높이를 적어주세요. ' + HT_ALL[0].upto + 'cm까지는 추가금이 없고, 넘으면 높이에 따라 더 붙습니다.');
+    const size = $('#m_size').value, n = +$('#m_qty').value;
+    let unit = fee(PRICE.mattress.sale[size], PRICE.mattress.custom), d = size, tall = false;
+    if (unit != null && HT_ALL.length) {
+      const h = height();
+      if (h == null) {
+        notes.push(heightJunk()
+          ? '매트리스 높이를 숫자로 적어주세요. 지금은 높이 추가금 없이 계산했습니다.'
+          : '매트리스 높이를 적어주세요. ' + HT_ALL[0].upto + 'cm까지는 추가금이 없고, 넘으면 높이에 따라 더 붙습니다.');
       } else {
         const t = HT_ALL.find(t => h <= t.upto);
         d += ' · 높이 ' + h + 'cm';
         if (!t) { tall = true; notes.push('매트리스 높이는 ' + H_MAX + 'cm까지만 주문받습니다. 이 매트리스커버는 만들어 드릴 수 없습니다.'); }
-        else if (t.add) { p += t.add; d += ' (+' + won(t.add) + ')'; }
+        else if (t.add) { unit += t.add; d += ' (+' + won(t.add) + ')'; }
       }
     }
+    if (!$('#m_wh').value.trim()) notes.push('매트리스 가로×세로를 적어주세요. 만들 때 쓰는 치수입니다.');
+    if (n > 1) d += ' · ' + n + '장';
     add(tall ? { t:'매트리스커버', d, ask:'주문 불가', bad:true }
-      : p == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:p });
+      : unit == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:unit * n });
   }
   if (!$('#p_skip').checked) {
     // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다. '그 외'만 문의로 빠질 수 있다.
@@ -545,6 +574,8 @@ function quote(){
       add(unit == null ? { t:'베개커버', k:size, d, ask:'가격 문의' } : { t:'베개커버', k:size, d, a:unit * n });
     }
   }
+  if (!$('#p_skip').checked && pillowRows().some(r => r.size === PIL_ASK) && !$('#memo').value.trim())
+    notes.push('「' + PIL_ASK + '」로 고르신 베개 사이즈를 「남기실 말」에 적어주세요.');
   if (rows.length && ALWAYS_CUSTOM) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
   return { rows, sum, ask, bad, notes };
 }
@@ -565,10 +596,12 @@ function renderQuote(){
 
 function renderOrder(){
   const L = [];
-  if (!$('#q_skip').checked) L.push('■ 이불', '   사이즈 : ' + $('#q_size').value, '   두께 : ' + $('#q_oz').value, '   컬러 : ' + label(state.quilt), '');
+  if (!$('#q_skip').checked) L.push('■ 이불', '   사이즈 : ' + $('#q_size').value,
+    '   두께 : ' + $('#q_oz').value, '   수량 : ' + $('#q_qty').value + '장',
+    '   컬러 : ' + label(state.quilt), '');
   if (!$('#m_skip').checked) {
     const wh = $('#m_wh').value.trim(), h = $('#m_h').value.trim();
-    L.push('■ 매트리스커버', '   규격 : ' + $('#m_size').value);
+    L.push('■ 매트리스커버', '   규격 : ' + $('#m_size').value, '   수량 : ' + $('#m_qty').value + '장');
     if (wh || h) L.push('   실제 사이즈 : ' + (wh||'-') + (h ? ' / 높이 ' + h : ''));
     L.push('   컬러 : ' + label(state.mattress));
     if (tooTall()) L.push('   ※ 높이 ' + H_MAX + 'cm까지만 주문받습니다 — 이 매트리스커버는 만들어 드릴 수 없습니다');
@@ -601,8 +634,10 @@ renderColor();
 </body></html>`;
 
 fs.writeFileSync(path.join(ROOT, 'index.html'), html, 'utf8');
-// 컬러 데이터도 저장소 루트에 공개용으로 함께 내보낸다
-fs.writeFileSync(path.join(ROOT, 'colors.json'), JSON.stringify(SW, null, 1), 'utf8');
+// 컬러 데이터도 저장소 루트에 공개용으로 함께 내보낸다.
+// k 는 페이지 안에서만 쓰는 키라 공개 파일에서는 뺀다.
+fs.writeFileSync(path.join(ROOT, 'colors.json'),
+  JSON.stringify(SW, (key, v) => key === 'k' ? undefined : v, 1), 'utf8');
 
 const kb = Math.round(fs.statSync(path.join(ROOT,'index.html')).size / 1024);
 console.log(`index.html 생성 — 원단 ${total}색 / 부위 ${PARTS.length}곳 / 3단계 / ${kb}KB`);
