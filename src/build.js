@@ -17,15 +17,22 @@ const SW = JSON.parse(fs.readFileSync(path.join(SRC, 'swatches.json'), 'utf8'));
 const b64 = (f, m) => `data:${m};base64,` + fs.readFileSync(path.join(ASSETS, f)).toString('base64');
 
 // 베개 위치: 앞줄 왼쪽=pillowF, 앞줄 오른쪽=pillowR, 뒷줄 왼쪽=pillowL, 뒷줄 오른쪽=pillowW
+// 처음엔 여섯 곳 모두 흰색이다. 색이 미리 들어가 있으면 자기 색을 얹는 자리라는 게
+// 안 보이고, 고르지도 않은 색이 주문에 딸려 나간다. [대표, 2026-08-04]
+// 클라우드 화이트는 60수·80수 둘 다 있어 매트리스커버(60·80수만)에도 쓸 수 있다.
+const WHITE = '#f5f5f5';   // NO. 953 클라우드 화이트
 // qty = 베개커버 기본 장수. 앞줄 둘만 1장으로 두면 흔한 경우(2장)가 기본이 된다.
 const PARTS = [
-  { key:'quilt',    ko:'이불',            def:'#cee2d6', su:null },
-  { key:'mattress', ko:'매트리스커버',     def:'#b9a898', su:[60,80] },
-  { key:'pillowF',  ko:'베개(앞)-왼쪽',    def:'#b9a898', su:null, qty:1 },
-  { key:'pillowR',  ko:'베개(앞)-오른쪽',  def:'#cee2d6', su:null, qty:1 },
-  { key:'pillowL',  ko:'베개(뒤)-왼쪽',    def:'#cee2d6', su:null, qty:0 },
-  { key:'pillowW',  ko:'베개(뒤)-오른쪽',  def:'#f1ebdb', su:null, qty:0 },
+  { key:'quilt',    ko:'이불',            def:WHITE, su:null },
+  { key:'mattress', ko:'매트리스커버',     def:WHITE, su:[60,80] },
+  { key:'pillowF',  ko:'베개(앞)-왼쪽',    def:WHITE, su:null, qty:1 },
+  { key:'pillowR',  ko:'베개(앞)-오른쪽',  def:WHITE, su:null, qty:1 },
+  { key:'pillowL',  ko:'베개(뒤)-왼쪽',    def:WHITE, su:null, qty:0 },
+  { key:'pillowW',  ko:'베개(뒤)-오른쪽',  def:WHITE, su:null, qty:0 },
 ];
+// 흰색이 실제로 팔레트에 있어야 한다. 없으면 "직접 지정" 같은 유령 색으로 시작하게 된다.
+if (!Object.values(SW).some(g => g.colors.some(c => c.hex === WHITE)))
+  throw new Error(`기본색 ${WHITE} 이 swatches.json 에 없습니다`);
 const PILLOWS = PARTS.filter(p => p.qty !== undefined);
 
 // 이불 = 완제품 크기 / 매트리스커버 = 침대 규격. 체계가 다르다 [대표, 2026-08-04]
@@ -249,7 +256,7 @@ const html = `<!doctype html><html lang="ko"><head>
 <div class="wrap">
 <header>
   <h1>파마파미 컬러 시뮬레이터</h1>
-  <p class="sub">원단 ${total}색 중에서 고르실 수 있습니다.</p>
+  <p class="sub">지금은 여섯 곳 모두 흰색입니다. 부위를 눌러 원단 ${total}색 중에서 바꿔보세요.</p>
 </header>
 
 <div class="steps">
