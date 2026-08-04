@@ -31,8 +31,8 @@ const PILLOWS = PARTS.filter(p => p.qty !== undefined);
 // 이불 = 완제품 크기 / 매트리스커버 = 침대 규격. 체계가 다르다 [대표, 2026-08-04]
 // 견적을 내려면 모든 선택지가 가격을 가져야 하므로 "잘 모르겠습니다" 류는 두지 않는다 [대표]
 const QUILT = ['슈퍼싱글 150×210','퀸 200×230','킹 220×240','라지킹 240×240'];
-const MAT = ['싱글 100×200','슈퍼싱글 110×200','퀸 150×200','160×200','170×200',
-  '180×200','190×200','200×200'];
+const MAT = ['싱글 100×200','슈퍼싱글 110×200','120×200','퀸 150×200','160×200','170×200',
+  '180×200','190×200','200×200','220×200'];
 const OZ = ['여름용 (4온스)','초여름·간절기용 (6온스)','간절기용 (8온스)','한겨울용 (10온스)'];
 // 사이즈·수량 모두 4칸에서 각각 받는다. 40×60과 50×70을 섞어 쓰는 집이 있고,
 // 수량을 따로 받으면 "4색을 골랐는데 2장" 처럼 어느 색인지 알 수 없어진다 [대표, 2026-08-04]
@@ -52,36 +52,44 @@ const PIL_QTY = [0,1,2,3,4];
    전부 null 이면 견적 화면이 아예 나오지 않는다 — 그래서 지금 배포해도 안전하다.
 ──────────────────────────────────────────────────────────────── */
 const PRICE = {
-  quilt: {
+  quilt: {                 // 차렵이불 정상가 [대표, 2026-08-04]
     sale: {
-      '슈퍼싱글 150×210': null,
-      '퀸 200×230':      null,
-      '킹 220×240':      null,
-      '라지킹 240×240':  null,
+      '슈퍼싱글 150×210': 195000,
+      '퀸 200×230':       265000,
+      '킹 220×240':       290000,
+      '라지킹 240×240':   340000,
     },
-    custom: null,          // 이불 맞춤 추가금 (1장당)
+    custom: 10000,         // 이불 맞춤 추가금 (1장당). 사이즈 무관 [대표, 2026-08-04]
   },
-  mattress: {
+  mattress: {              // 매트리스커버 정상가. 기준가 14만원 [대표, 2026-08-04]
     sale: {
-      '싱글 100×200':     null,
-      '슈퍼싱글 110×200': null,
-      '퀸 150×200':       null,
-      '160×200':          null,
-      '170×200':          null,
-      '180×200':          null,
-      '190×200':          null,
-      '200×200':          null,
+      '싱글 100×200':     140000,
+      '슈퍼싱글 110×200': 140000,
+      '120×200':          145000,
+      '퀸 150×200':       155000,
+      '160×200':          170000,
+      '170×200':          180000,
+      '180×200':          195000,
+      '190×200':          220000,
+      '200×200':          240000,
+      '220×200':          260000,
     },
-    custom:     null,      // 매트리스커버 맞춤 추가금 (1장당)
-    heightBase: null,      // 이 높이(cm)까지는 추가금 없음. 예: 30
-    heightAdd:  null,      // 기준을 넘으면 더하는 금액
+    custom: 10000,         // 매트리스커버 맞춤 추가금 (1장당). 사이즈 무관 [대표, 2026-08-04]
+    // 높이 추가금 구간. 위에서부터 보다가 upto 이하인 첫 칸을 쓴다.
+    // 마지막 칸보다 높은 매트리스는 값이 없으니 "가격 문의"로 뺀다. [대표, 2026-08-04]
+    height: [
+      { upto: 35, add: 0 },
+      { upto: 45, add: 15000 },
+      { upto: 55, add: 25000 },
+      { upto: 65, add: 35000 },
+    ],
   },
-  pillow: {
+  pillow: {                // 사이즈와 무관하게 같은 값 [대표, 2026-08-04]
     sale: {                // '그 외'는 사이즈가 정해지지 않으니 가격도 못 낸다 → 문의
-      '40×60': null,
-      '50×70': null,
+      '40×60': 26000,
+      '50×70': 26000,
     },
-    custom: null,          // 베개커버 맞춤 추가금 (1장당)
+    custom: 3000,          // 베개커버 맞춤 추가금 (1장당). 사이즈 무관 [대표, 2026-08-04]
   },
 };
 
@@ -101,6 +109,17 @@ for (const [group, list] of [['quilt', QUILT], ['mattress', MAT],
       + (miss.length  ? `\n  가격표에 없는 사이즈: ${miss.join(', ')}` : '')
       + (extra.length ? `\n  목록에 없는 가격 항목: ${extra.join(', ')}` : ''));
 }
+
+// 높이 구간은 낮은 것부터 와야 한다. 뒤집히면 엉뚱한 칸이 먼저 걸린다.
+const HT = PRICE.mattress.height || [];
+HT.forEach((t, i) => {
+  if (i && t.upto <= HT[i-1].upto)
+    throw new Error(`PRICE.mattress.height 는 낮은 높이부터 적어야 합니다 (${HT[i-1].upto} 다음에 ${t.upto})`);
+});
+// 안내 문구는 표에서 만든다. 손으로 적어두면 표만 고쳤을 때 어긋난다.
+const HT_TEXT = HT.map((t, i) =>
+  (i ? `~${t.upto}cm` : `${t.upto}cm까지`) + (t.add ? ` +${t.add.toLocaleString('ko-KR')}원` : ' 추가 없음')
+).join(' · ');
 
 const hasPrice = o => Object.values(o).some(v => v && typeof v === 'object' ? hasPrice(v) : v != null);
 const PRICE_READY = hasPrice(PRICE);
@@ -265,12 +284,13 @@ ${PARTS.map((p,i)=>`    <button class="part" data-part="${p.key}" aria-pressed="
 
   <div class="card">
     <h2>매트리스커버</h2>
-    <p class="d">매트리스 실제 사이즈가 필요합니다. <b>재실 필요 없습니다</b> — 사신 곳에 나와 있는 숫자를 적어주세요.</p>
+    <p class="d">매트리스 실제 사이즈가 필요합니다. <b>재실 필요 없습니다</b> — 사신 곳에 나와 있는 숫자를 적어주세요.
+${HT.length ? `      <br>높이에 따라 값이 달라집니다 — ${HT_TEXT}.` : ''}</p>
     <div id="grpMat">
       <div class="fld"><label>침대 규격</label><select id="m_size">${MAT.map(o=>`<option${o==='퀸 150×200'?' selected':''}>${o}</option>`).join('')}</select></div>
       <div class="two">
         <div class="fld"><label>가로 × 세로 (cm)</label><input id="m_wh" type="text" inputmode="numeric" placeholder="예: 150x200"></div>
-        <div class="fld"><label>높이 (cm)</label><input id="m_h" type="text" inputmode="numeric" placeholder="예: 25"></div>
+        <div class="fld"><label>높이 (cm)</label><input id="m_h" type="text" inputmode="numeric" placeholder="예: 30"></div>
       </div>
     </div>
     <label class="skip"><input type="checkbox" id="m_skip"> 매트리스커버는 안 할래요</label>
@@ -468,15 +488,20 @@ function quote(){
     add(p == null ? { t:'이불', d, ask:'가격 문의' } : { t:'이불', d, a:p });
   }
   if (!$('#m_skip').checked) {
-    const size = $('#m_size').value;
-    let p = fee(PRICE.mattress.sale[size], PRICE.mattress.custom), d = size;
-    const hb = PRICE.mattress.heightBase, ha = PRICE.mattress.heightAdd;
-    if (p != null && hb != null && ha != null) {
+    const size = $('#m_size').value, HT = PRICE.mattress.height || [];
+    let p = fee(PRICE.mattress.sale[size], PRICE.mattress.custom), d = size, tall = false;
+    if (p != null && HT.length) {
       const h = parseFloat($('#m_h').value);
-      if (!Number.isFinite(h)) notes.push('매트리스 높이를 적어주세요. ' + hb + 'cm를 넘으면 ' + won(ha) + '이 더 붙습니다.');
-      else if (h > hb) { p += ha; d += ' · 높이 ' + h + 'cm (' + hb + 'cm 초과)'; }
+      if (!Number.isFinite(h)) {
+        notes.push('매트리스 높이를 적어주세요. ' + HT[0].upto + 'cm까지는 추가금이 없고, 넘으면 높이에 따라 더 붙습니다.');
+      } else {
+        const t = HT.find(t => h <= t.upto);
+        d += ' · 높이 ' + h + 'cm';
+        if (!t) { tall = true; notes.push('높이 ' + HT[HT.length-1].upto + 'cm가 넘는 매트리스는 문의 주세요.'); }
+        else if (t.add) { p += t.add; d += ' (+' + won(t.add) + ')'; }
+      }
     }
-    add(p == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:p });
+    add(p == null || tall ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:p });
   }
   if (!$('#p_skip').checked) {
     // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다. '그 외'만 문의로 빠질 수 있다.
