@@ -34,8 +34,10 @@ const QUILT = ['슈퍼싱글 150×210','퀸 200×230','킹 220×240','라지킹 
 const MAT = ['싱글 100×200','슈퍼싱글 110×200','퀸 150×200','160×200','170×200',
   '180×200','190×200','200×200'];
 const OZ = ['여름용 (4온스)','초여름·간절기용 (6온스)','간절기용 (8온스)','한겨울용 (10온스)'];
-const PILLOW = ['40×60','50×70','그 외 — 아래에 적어주세요'];
-// 수량은 4칸에서 나온다. 따로 고르면 "4색을 골랐는데 2장" 처럼 어느 색인지 알 수 없어진다 [대표, 2026-08-04]
+// 사이즈·수량 모두 4칸에서 각각 받는다. 40×60과 50×70을 섞어 쓰는 집이 있고,
+// 수량을 따로 받으면 "4색을 골랐는데 2장" 처럼 어느 색인지 알 수 없어진다 [대표, 2026-08-04]
+const PIL_ASK = '그 외';                       // 사이즈가 정해지지 않아 값을 못 내는 선택지
+const PILLOW = ['40×60','50×70',PIL_ASK];
 const PIL_QTY = [0,1,2,3,4];
 
 /* ────────────────────────────────────────────────────────────────
@@ -88,7 +90,9 @@ const PRICE = {
 const ALWAYS_CUSTOM = true;
 
 // 사이즈 목록과 가격표가 어긋나면 조용히 "문의"로 새어나가므로 여기서 잡는다.
-for (const [group, list] of [['quilt', QUILT], ['mattress', MAT]]) {
+// 베개커버의 '그 외'는 값을 못 내는 게 정상이라 가격표에서 뺀다.
+for (const [group, list] of [['quilt', QUILT], ['mattress', MAT],
+                             ['pillow', PILLOW.filter(s => s !== PIL_ASK)]]) {
   const table = PRICE[group].sale;
   const miss = list.filter(s => !(s in table));
   const extra = Object.keys(table).filter(s => !list.includes(s));
@@ -172,15 +176,21 @@ const html = `<!doctype html><html lang="ko"><head>
  .skip input{width:17px;height:17px;accent-color:var(--fg)}
  .off{opacity:.4;pointer-events:none}
 
- /* 베개 4칸 */
- .prow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
- .prow .pdot{width:24px;height:24px;border-radius:6px;border:1px solid rgba(0,0,0,.16);flex:none}
- .prow .pnm{flex:1;font-size:13px;line-height:1.35}
- .prow .pcl{font-size:11px;color:var(--mut)}
- .prow .pq{flex:0 0 82px;padding:9px 8px;border-radius:8px;border:1px solid var(--line);
-  background:var(--bg);color:var(--fg);font-size:14px;font-family:inherit}
- .prow.zero .pdot,.prow.zero .pnm{opacity:.4}
- .ptot{font-size:12px;color:var(--mut);margin:9px 0 0;padding-top:9px;border-top:1px solid var(--line)}
+ /* 베개 4칸 — 칸마다 색·사이즈·장수 */
+ .prow{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+ .prow:first-child{border-top:0;padding-top:2px}
+ .prow .pdot{width:26px;height:26px;border-radius:6px;border:1px solid rgba(0,0,0,.16);flex:none;margin-top:1px}
+ .prow .pmain{flex:1;min-width:0}
+ .prow .pnm{font-size:13px;font-weight:600;line-height:1.35}
+ .prow .pcl{font-size:11px;color:var(--mut);margin-bottom:7px;line-height:1.4}
+ .psel{display:flex;gap:7px}
+ .psel select{padding:9px 8px;border-radius:8px;border:1px solid var(--line);
+  background:var(--bg);color:var(--fg);font-size:13.5px;font-family:inherit;min-width:0}
+ .psel select:focus{outline:2px solid var(--fg);outline-offset:-1px}
+ .psel .ps{flex:1}
+ .psel .pq{flex:0 0 76px}
+ .prow.zero .pdot,.prow.zero .pnm,.prow.zero .pcl,.prow.zero .ps{opacity:.4}
+ .ptot{font-size:12px;color:var(--mut);margin:11px 0 0;padding-top:10px;border-top:1px solid var(--line)}
 
  /* 견적 */
  .qrow{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
@@ -268,14 +278,21 @@ ${PARTS.map((p,i)=>`    <button class="part" data-part="${p.key}" aria-pressed="
 
   <div class="card">
     <h2>베개커버</h2>
-    <p class="d">쓰시는 베개 사이즈입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다.<br>
-      ①에서 고르신 <b>네 칸이 곧 주문하실 베개커버</b>입니다. 칸마다 몇 장인지 골라주세요 — 안 사실 칸은 0장.</p>
+    <p class="d">①에서 고르신 <b>네 칸이 곧 주문하실 베개커버</b>입니다.
+      칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.<br>
+      사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다.
+      목록에 없으면 「${PIL_ASK}」를 고르고 아래 <b>남기실 말</b>에 적어주세요.</p>
     <div id="grpPil">
-      <div class="fld"><label>사이즈 (네 칸 공통)</label><select id="p_size">${PILLOW.map(o=>`<option${o==='50×70'?' selected':''}>${o}</option>`).join('')}</select></div>
-${PILLOWS.map(p=>`      <div class="prow">
+${PILLOWS.map(p=>`      <div class="prow" data-part="${p.key}">
         <span class="pdot" data-part="${p.key}" style="background:${p.def}"></span>
-        <span class="pnm">${p.ko}<br><span class="pcl" data-part="${p.key}">-</span></span>
-        <select class="pq" data-part="${p.key}" aria-label="${p.ko} 장수">${PIL_QTY.map(n=>`<option value="${n}"${n===p.qty?' selected':''}>${n}장</option>`).join('')}</select>
+        <div class="pmain">
+          <div class="pnm">${p.ko}</div>
+          <div class="pcl" data-part="${p.key}">-</div>
+          <div class="psel">
+            <select class="ps" data-part="${p.key}" aria-label="${p.ko} 사이즈">${PILLOW.map(o=>`<option${o==='50×70'?' selected':''}>${o}</option>`).join('')}</select>
+            <select class="pq" data-part="${p.key}" aria-label="${p.ko} 장수">${PIL_QTY.map(n=>`<option value="${n}"${n===p.qty?' selected':''}>${n}장</option>`).join('')}</select>
+          </div>
+        </div>
       </div>`).join('\n')}
       <p class="ptot" id="pTot"></p>
     </div>
@@ -401,19 +418,26 @@ for (const g of Object.values(SW)) {
 /* ---- 베개커버: ①에서 고른 네 칸이 곧 장수다 ---- */
 const PILLOWS = PARTS.filter(p => p.qty !== undefined);
 const pq = k => +$('.pq[data-part="' + k + '"]').value;
+const ps = k => $('.ps[data-part="' + k + '"]').value;
 const pillowCount = () => PILLOWS.reduce((s, p) => s + pq(p.key), 0);
-const pillowRows = () => PILLOWS.map(p => ({ p, c:state[p.key], n:pq(p.key) })).filter(r => r.n > 0);
+const pillowRows = () => PILLOWS.map(p => ({ p, c:state[p.key], size:ps(p.key), n:pq(p.key) })).filter(r => r.n > 0);
+// 사이즈마다 값이 다르니 사이즈별로 묶어서 센다. 순서는 화면에 나온 순서 그대로.
+function pillowBySize(){
+  const g = new Map();
+  pillowRows().forEach(r => g.set(r.size, (g.get(r.size) || 0) + r.n));
+  return [...g];
+}
 function renderPillows(){
   PILLOWS.forEach(p => {
-    const n = pq(p.key);
     $('.pdot[data-part="' + p.key + '"]').style.background = state[p.key].hex;
     $('.pcl[data-part="' + p.key + '"]').textContent = label(state[p.key]);
-    $('.pq[data-part="' + p.key + '"]').closest('.prow').classList.toggle('zero', n === 0);
+    $('.prow[data-part="' + p.key + '"]').classList.toggle('zero', pq(p.key) === 0);
   });
   const n = pillowCount();
-  $('#pTot').textContent = n ? '모두 ' + n + '장' : '전부 0장 — 베개커버는 주문하지 않는 것으로 봅니다';
+  $('#pTot').textContent = !n ? '전부 0장 — 베개커버는 주문하지 않는 것으로 봅니다'
+    : '모두 ' + n + '장  ·  ' + pillowBySize().map(([s, c]) => s + ' ' + c + '장').join(', ');
 }
-$$('.pq').forEach(s => s.onchange = renderPillows);
+$$('.pq, .ps').forEach(s => s.onchange = renderPillows);
 
 /* ---- 사이즈: 안 할래요 체크 시 비활성 ---- */
 [['q_skip','grpQuilt'],['m_skip','grpMat'],['p_skip','grpPil']].forEach(([c,g]) => {
@@ -454,11 +478,14 @@ function quote(){
     }
     add(p == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:p });
   }
-  if (!$('#p_skip').checked && pillowCount()) {
-    const size = $('#p_size').value, n = pillowCount();
-    const unit = fee(PRICE.pillow.sale[size], PRICE.pillow.custom);   // '그 외'는 사이즈가 안 정해져 null
-    const d = size + ' · 모두 ' + n + '장';
-    add(unit == null ? { t:'베개커버', d, ask:'가격 문의' } : { t:'베개커버', d, a:unit * n });
+  if (!$('#p_skip').checked) {
+    // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다. '그 외'만 문의로 빠질 수 있다.
+    for (const [size, n] of pillowBySize()) {
+      const unit = fee(PRICE.pillow.sale[size], PRICE.pillow.custom);
+      const d = size + ' · ' + n + '장';
+      // k = 줄이 여럿일 때 구분하는 꼬리표. 복사 텍스트에서 "베개커버"만 두 줄 나오는 걸 막는다.
+      add(unit == null ? { t:'베개커버', k:size, d, ask:'가격 문의' } : { t:'베개커버', k:size, d, a:unit * n });
+    }
   }
   if (rows.length && ALWAYS_CUSTOM) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
   return { rows, sum, ask, notes };
@@ -486,15 +513,15 @@ function renderOrder(){
     L.push('   컬러 : ' + label(state.mattress), '');
   }
   if (!$('#p_skip').checked && pillowCount()) {
-    L.push('■ 베개커버', '   사이즈 : ' + $('#p_size').value,
-      ...pillowRows().map(r => '   ' + r.p.ko + ' : ' + label(r.c) + ' — ' + r.n + '장'),
-      '   모두 ' + pillowCount() + '장', '');
+    L.push('■ 베개커버',
+      ...pillowRows().map(r => '   ' + r.p.ko + ' : ' + r.size + ' · ' + r.n + '장  /  ' + label(r.c)),
+      '   모두 ' + pillowCount() + '장 (' + pillowBySize().map(([s,c]) => s + ' ' + c + '장').join(', ') + ')', '');
   }
   if (PRICE_READY) {
     const q = quote();
     if (q.rows.length) {
       L.push('■ 예상 금액');
-      q.rows.forEach(r => L.push('   ' + r.t + ' : ' + (r.ask ? r.ask : won(r.a))));
+      q.rows.forEach(r => L.push('   ' + r.t + (r.k ? ' ' + r.k : '') + ' : ' + (r.ask ? r.ask : won(r.a))));
       if (q.rows.some(r => !r.ask)) L.push('   합계 : ' + won(q.sum) + (q.ask ? ' + 문의' : ''));
       L.push('   ※ 안내용 예상 금액입니다.', '');
     }
