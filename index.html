@@ -1,3 +1,6 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>파마파미 컬러 시뮬레이터</title>
 <style>
  :root{--bg:#faf9f7;--fg:#2b2724;--mut:#8a827b;--line:#e6e1da;--card:#fff;--acc:#2b2724}
@@ -47,7 +50,32 @@
   font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s}
  .copy:hover{opacity:.85}
  .note{margin-top:20px;font-size:12px;color:var(--mut);border-top:1px solid var(--line);padding-top:13px}
+
+ /* ── 모바일: 이미지 위 · 컬러칩 아래. 이미지는 스크롤해도 붙어 있는다 ── */
+ @media (max-width:860px){
+  .wrap{padding:14px 12px 44px}
+  h1{font-size:17px}
+  .sub{font-size:12.5px;margin-bottom:12px}
+  .grid{grid-template-columns:1fr;gap:0}
+  .scene{position:sticky;top:0;z-index:5;border-radius:0;margin:0 -12px;box-shadow:0 6px 16px rgba(0,0,0,.10)}
+  .scene img{max-height:46vh;width:100%;object-fit:cover;object-position:50% 56%}
+  .panel{border:0;border-radius:0;padding:14px 0 0;background:transparent}
+  .parts{position:sticky;top:calc(46vh - 1px);z-index:4;background:var(--bg);
+   margin:0 -12px;padding:10px 12px 8px;gap:6px;border-bottom:1px solid var(--line)}
+  .part{padding:7px 13px 7px 8px;font-size:13px}
+  .dot{width:17px;height:17px}
+  .now{margin-top:12px}
+  .scroll{max-height:none;overflow:visible;padding-right:0}
+  .sw{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:7px}
+  .order{position:sticky;bottom:0;background:var(--bg);padding:12px 0 10px;margin-top:18px}
+  .copy{padding:13px;font-size:14px}
+ }
+ @media (max-width:860px) and (orientation:landscape){
+  .scene img{max-height:62vh}
+  .parts{top:calc(62vh - 1px)}
+ }
 </style>
+</head><body>
 
 <div class="wrap">
 <h1>파마파미 컬러 시뮬레이터</h1>
@@ -176,3 +204,4 @@ $('#copyBtn').onclick = async () => {
 
 render();
 </script>
+</body></html>
