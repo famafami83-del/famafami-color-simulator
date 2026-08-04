@@ -76,7 +76,7 @@ const PRICE = {
     },
     custom: 10000,         // 매트리스커버 맞춤 추가금 (1장당). 사이즈 무관 [대표, 2026-08-04]
     // 높이 추가금 구간. 위에서부터 보다가 upto 이하인 첫 칸을 쓴다.
-    // 마지막 칸보다 높은 매트리스는 값이 없으니 "가격 문의"로 뺀다. [대표, 2026-08-04]
+    // 마지막 칸(65cm)이 곧 받을 수 있는 최대 높이다. 그보다 높으면 주문을 받지 않는다. [대표, 2026-08-04]
     height: [
       { upto: 35, add: 0 },
       { upto: 45, add: 15000 },
@@ -117,6 +117,7 @@ HT.forEach((t, i) => {
     throw new Error(`PRICE.mattress.height 는 낮은 높이부터 적어야 합니다 (${HT[i-1].upto} 다음에 ${t.upto})`);
 });
 // 안내 문구는 표에서 만든다. 손으로 적어두면 표만 고쳤을 때 어긋난다.
+const H_MAX = HT.length ? HT[HT.length - 1].upto : null;   // 받을 수 있는 최대 높이
 const HT_TEXT = HT.map((t, i) =>
   (i ? `~${t.upto}cm` : `${t.upto}cm까지`) + (t.add ? ` +${t.add.toLocaleString('ko-KR')}원` : ' 추가 없음')
 ).join(' · ');
@@ -131,10 +132,10 @@ const html = `<!doctype html><html lang="ko"><head>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>파마파미 컬러 시뮬레이터</title>
 <style>
- :root{--bg:#faf9f7;--fg:#2b2724;--mut:#8a827b;--line:#e6e1da;--card:#fff;--soft:#f2efea}
- @media (prefers-color-scheme:dark){:root{--bg:#17150f;--fg:#ece7df;--mut:#9c948a;--line:#2f2a24;--card:#201d17;--soft:#262219}}
- :root[data-theme="dark"]{--bg:#17150f;--fg:#ece7df;--mut:#9c948a;--line:#2f2a24;--card:#201d17;--soft:#262219}
- :root[data-theme="light"]{--bg:#faf9f7;--fg:#2b2724;--mut:#8a827b;--line:#e6e1da;--card:#fff;--soft:#f2efea}
+ :root{--bg:#faf9f7;--fg:#2b2724;--mut:#8a827b;--line:#e6e1da;--card:#fff;--soft:#f2efea;--bad:#b5342a}
+ @media (prefers-color-scheme:dark){:root{--bg:#17150f;--fg:#ece7df;--mut:#9c948a;--line:#2f2a24;--card:#201d17;--soft:#262219;--bad:#ff9384}}
+ :root[data-theme="dark"]{--bg:#17150f;--fg:#ece7df;--mut:#9c948a;--line:#2f2a24;--card:#201d17;--soft:#262219;--bad:#ff9384}
+ :root[data-theme="light"]{--bg:#faf9f7;--fg:#2b2724;--mut:#8a827b;--line:#e6e1da;--card:#fff;--soft:#f2efea;--bad:#b5342a}
  *{box-sizing:border-box}
  html,body{margin:0;padding:0}
  body{background:var(--bg);color:var(--fg);line-height:1.6;padding-bottom:76px;
@@ -194,6 +195,9 @@ const html = `<!doctype html><html lang="ko"><head>
  .skip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mut);margin-top:10px;cursor:pointer}
  .skip input{width:17px;height:17px;accent-color:var(--fg)}
  .off{opacity:.4;pointer-events:none}
+ .warn{font-size:12px;color:var(--bad);font-weight:600;margin:2px 0 0;line-height:1.55}
+ .warn[hidden]{display:none}
+ .fld input.bad,.fld select.bad{border-color:var(--bad);outline:1px solid var(--bad);outline-offset:-2px}
 
  /* 베개 4칸 — 칸마다 색·사이즈·장수 */
  .prow{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
@@ -218,6 +222,7 @@ const html = `<!doctype html><html lang="ko"><head>
  .qrow .qd{flex:1;font-size:11.5px;color:var(--mut);line-height:1.5}
  .qrow .qa{flex:none;font-variant-numeric:tabular-nums}
  .qrow .qa.ask{color:var(--mut);font-size:12px}
+ .qrow .qa.bad{color:var(--bad);font-weight:600}
  .qsum{display:flex;justify-content:space-between;align-items:baseline;
   margin-top:11px;padding-top:11px;border-top:1.5px solid var(--fg);font-size:13.5px}
  .qsum b{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
@@ -285,13 +290,15 @@ ${PARTS.map((p,i)=>`    <button class="part" data-part="${p.key}" aria-pressed="
   <div class="card">
     <h2>매트리스커버</h2>
     <p class="d">매트리스 실제 사이즈가 필요합니다. <b>재실 필요 없습니다</b> — 사신 곳에 나와 있는 숫자를 적어주세요.
-${HT.length ? `      <br>높이에 따라 값이 달라집니다 — ${HT_TEXT}.` : ''}</p>
+${HT.length ? `      <br>높이에 따라 값이 달라집니다 — ${HT_TEXT}.
+      <b>높이 ${H_MAX}cm까지만 주문받습니다.</b>` : ''}</p>
     <div id="grpMat">
       <div class="fld"><label>침대 규격</label><select id="m_size">${MAT.map(o=>`<option${o==='퀸 150×200'?' selected':''}>${o}</option>`).join('')}</select></div>
       <div class="two">
         <div class="fld"><label>가로 × 세로 (cm)</label><input id="m_wh" type="text" inputmode="numeric" placeholder="예: 150x200"></div>
         <div class="fld"><label>높이 (cm)</label><input id="m_h" type="text" inputmode="numeric" placeholder="예: 30"></div>
       </div>
+      <p class="warn" id="m_hWarn" hidden></p>
     </div>
     <label class="skip"><input type="checkbox" id="m_skip"> 매트리스커버는 안 할래요</label>
   </div>
@@ -375,7 +382,7 @@ function goto(s){
   $$('.steps div').forEach(el => el.setAttribute('aria-current', +el.dataset.s === s));
   $('#btnPrev').hidden = s === 0;
   $('#btnNext').textContent = NEXT_LABEL[s];
-  if (s === 1) renderPillows();
+  if (s === 1) { renderPillows(); checkHeight(); }
   if (s === 2) { buildMini(); renderQuote(); renderOrder(); }
   window.scrollTo({ top:0, behavior:'instant' });
 }
@@ -459,9 +466,27 @@ function renderPillows(){
 }
 $$('.pq, .ps').forEach(s => s.onchange = renderPillows);
 
+/* ---- 매트리스 높이: 받을 수 있는 최대 높이를 넘으면 그 자리에서 알린다 ---- */
+const HT_ALL = PRICE.mattress.height || [];
+const H_MAX = HT_ALL.length ? HT_ALL[HT_ALL.length - 1].upto : null;
+function tooTall(){
+  const h = parseFloat($('#m_h').value);
+  return H_MAX != null && Number.isFinite(h) && h > H_MAX;
+}
+function checkHeight(){
+  const bad = tooTall() && !$('#m_skip').checked;
+  $('#m_h').classList.toggle('bad', bad);
+  const w = $('#m_hWarn');
+  w.hidden = !bad;
+  w.textContent = bad
+    ? '높이 ' + H_MAX + 'cm까지만 주문받습니다. 이 매트리스커버는 만들어 드릴 수 없습니다 — 「매트리스커버는 안 할래요」로 넘어가 주세요.'
+    : '';
+}
+$('#m_h').oninput = checkHeight;
+
 /* ---- 사이즈: 안 할래요 체크 시 비활성 ---- */
 [['q_skip','grpQuilt'],['m_skip','grpMat'],['p_skip','grpPil']].forEach(([c,g]) => {
-  $('#'+c).onchange = e => $('#'+g).classList.toggle('off', e.target.checked);
+  $('#'+c).onchange = e => { $('#'+g).classList.toggle('off', e.target.checked); checkHeight(); };
 });
 
 /* ---- 확인 화면 ---- */
@@ -478,8 +503,8 @@ function buildMini(){
 const won = n => n.toLocaleString('ko-KR') + '원';
 function quote(){
   const rows = [], notes = [];
-  let sum = 0, ask = false;
-  const add = r => { rows.push(r); if (r.ask) ask = true; else sum += r.a; };
+  let sum = 0, ask = false, bad = false;
+  const add = r => { rows.push(r); if (r.bad) bad = true; else if (r.ask) ask = true; else sum += r.a; };
   const fee = (sale, custom) =>
     sale == null || (ALWAYS_CUSTOM && custom == null) ? null : sale + (ALWAYS_CUSTOM ? custom : 0);
 
@@ -488,20 +513,21 @@ function quote(){
     add(p == null ? { t:'이불', d, ask:'가격 문의' } : { t:'이불', d, a:p });
   }
   if (!$('#m_skip').checked) {
-    const size = $('#m_size').value, HT = PRICE.mattress.height || [];
+    const size = $('#m_size').value;
     let p = fee(PRICE.mattress.sale[size], PRICE.mattress.custom), d = size, tall = false;
-    if (p != null && HT.length) {
+    if (p != null && HT_ALL.length) {
       const h = parseFloat($('#m_h').value);
       if (!Number.isFinite(h)) {
-        notes.push('매트리스 높이를 적어주세요. ' + HT[0].upto + 'cm까지는 추가금이 없고, 넘으면 높이에 따라 더 붙습니다.');
+        notes.push('매트리스 높이를 적어주세요. ' + HT_ALL[0].upto + 'cm까지는 추가금이 없고, 넘으면 높이에 따라 더 붙습니다.');
       } else {
-        const t = HT.find(t => h <= t.upto);
+        const t = HT_ALL.find(t => h <= t.upto);
         d += ' · 높이 ' + h + 'cm';
-        if (!t) { tall = true; notes.push('높이 ' + HT[HT.length-1].upto + 'cm가 넘는 매트리스는 문의 주세요.'); }
+        if (!t) { tall = true; notes.push('매트리스 높이는 ' + H_MAX + 'cm까지만 주문받습니다. 이 매트리스커버는 만들어 드릴 수 없습니다.'); }
         else if (t.add) { p += t.add; d += ' (+' + won(t.add) + ')'; }
       }
     }
-    add(p == null || tall ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:p });
+    add(tall ? { t:'매트리스커버', d, ask:'주문 불가', bad:true }
+      : p == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:p });
   }
   if (!$('#p_skip').checked) {
     // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다. '그 외'만 문의로 빠질 수 있다.
@@ -513,17 +539,19 @@ function quote(){
     }
   }
   if (rows.length && ALWAYS_CUSTOM) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
-  return { rows, sum, ask, notes };
+  return { rows, sum, ask, bad, notes };
 }
 function renderQuote(){
   if (!PRICE_READY) return;
   const { rows, sum, ask, notes } = quote();
   $('#qRows').innerHTML = rows.map(r =>
     '<div class="qrow"><span class="qt">' + r.t + '</span><span class="qd">' + r.d + '</span>' +
-    (r.ask ? '<span class="qa ask">' + r.ask + '</span>' : '<span class="qa">' + won(r.a) + '</span>') +
+    (r.ask ? '<span class="qa ask' + (r.bad ? ' bad' : '') + '">' + r.ask + '</span>'
+           : '<span class="qa">' + won(r.a) + '</span>') +
     '</div>').join('');
   const priced = rows.some(r => !r.ask);
   $('#qSumBox').style.display = priced ? '' : 'none';
+  // 주문 불가한 줄은 합계에서 빠진 것이지 문의로 넘어간 게 아니다.
   $('#qSum').textContent = won(sum) + (ask ? ' + 문의' : '');
   $('#qNote').innerHTML = notes.map(n => '· ' + n).join('<br>');
 }
@@ -535,7 +563,9 @@ function renderOrder(){
     const wh = $('#m_wh').value.trim(), h = $('#m_h').value.trim();
     L.push('■ 매트리스커버', '   규격 : ' + $('#m_size').value);
     if (wh || h) L.push('   실제 사이즈 : ' + (wh||'-') + (h ? ' / 높이 ' + h : ''));
-    L.push('   컬러 : ' + label(state.mattress), '');
+    L.push('   컬러 : ' + label(state.mattress));
+    if (tooTall()) L.push('   ※ 높이 ' + H_MAX + 'cm까지만 주문받습니다 — 이 매트리스커버는 만들어 드릴 수 없습니다');
+    L.push('');
   }
   if (!$('#p_skip').checked && pillowCount()) {
     L.push('■ 베개커버',
@@ -548,7 +578,9 @@ function renderOrder(){
       L.push('■ 예상 금액');
       q.rows.forEach(r => L.push('   ' + r.t + (r.k ? ' ' + r.k : '') + ' : ' + (r.ask ? r.ask : won(r.a))));
       if (q.rows.some(r => !r.ask)) L.push('   합계 : ' + won(q.sum) + (q.ask ? ' + 문의' : ''));
-      L.push('   ※ 안내용 예상 금액입니다.', '');
+      L.push('   ※ 안내용 예상 금액입니다.');
+      q.notes.forEach(n => L.push('   ※ ' + n));
+      L.push('');
     }
   }
   const memo = $('#memo').value.trim();
