@@ -100,21 +100,29 @@ const PILLOWS = PARTS.filter(p => p.qty !== undefined);
 
 // 이불 = 완제품 크기 / 매트리스커버 = 침대 규격. 체계가 다르다 [대표, 2026-08-04]
 // 견적을 내려면 모든 선택지가 가격을 가져야 하므로 "잘 모르겠습니다" 류는 두지 않는다 [대표]
-const QUILT = ['슈퍼싱글 150×210','퀸 200×230','킹 220×240','라지킹 240×240'];
 const MAT = ['싱글 100×200','슈퍼싱글 110×200','120×200','퀸 150×200','160×200','170×200',
   '180×200','190×200','200×200','220×200'];
 const OZ = ['여름용 (4온스)','초여름·간절기용 (6온스)','간절기용 (8온스)','한겨울용 (10온스)'];
-// 이불·매트리스커버는 종류를 먼저 고른다. 가격표가 종류마다 따로 있다. [대표, 2026-08-05]
-// oz:false 인 종류는 두께 칸을 감춘다 — 이불커버는 솜이 없어 온스가 없다.
+// 이불·매트리스커버는 종류를 먼저 고른다. 가격표도 사이즈 목록도 종류마다 따로다.
+// [대표, 2026-08-05]
+//   sizes — 이 종류에서 고를 수 있는 사이즈. 종류를 바꾸면 사이즈 칸이 다시 채워진다.
+//           차렵이불 슈퍼싱글은 150×210, 이불커버 슈퍼싱글은 160×210 으로 다르다.
+//           같은 「슈퍼싱글」이라도 값이 달라 한 목록으로 묶으면 틀린 치수가 주문에 나간다.
+//   oz    — 두께(온스) 칸을 보일지. 이불커버는 솜이 없어 온스가 없다.
+//   snap  — 이불 연결 똑딱이 갯수 칸을 보일지. 이불커버에만 있다.
 const QUILT_KIND = [
-  { key:'charyeop', ko:'차렵이불', oz:true  },
-  { key:'cover',    ko:'이불커버', oz:false },
+  { key:'charyeop', ko:'차렵이불', oz:true, snap:false,
+    sizes:['슈퍼싱글 150×210','퀸 200×230','킹 220×240','라지킹 240×240'] },
+  { key:'cover',    ko:'이불커버', oz:false, snap:true,
+    sizes:['슈퍼싱글 160×210','퀸 200×230','킹 220×240','라지킹 240×240'] },
 ];
-// 이름이 길어 견적·주문서에는 short 를 쓴다.
+// 이름이 길어 견적에는 short 를 쓴다. 주문서에는 ko 를 그대로 쓴다.
 const MAT_KIND = [
-  { key:'allinone', ko:'올인원(누빔) 매트리스커버', short:'올인원(누빔)' },
-  { key:'plain',    ko:'홑겹 매트리스커버',        short:'홑겹' },
+  { key:'allinone', ko:'올인원(누빔) 매트리스커버', short:'올인원(누빔)', sizes:MAT },
+  { key:'plain',    ko:'아무르 홑겹 매트리스커버',  short:'아무르 홑겹',  sizes:MAT },
 ];
+// 종류를 바꿔도 고르던 사이즈가 그 종류에 있으면 유지하고, 없으면 이 값으로 돌아간다.
+const DEF_SIZE = { quilt:'퀸 200×230', mattress:'퀸 150×200' };
 // 사이즈·수량 모두 4칸에서 각각 받는다. 40×60과 50×70을 섞어 쓰는 집이 있고,
 // 수량을 따로 받으면 "4색을 골랐는데 2장" 처럼 어느 색인지 알 수 없어진다 [대표, 2026-08-04]
 const PIL_ASK = '그 외';                       // 사이즈가 정해지지 않아 값을 못 내는 선택지
@@ -151,11 +159,11 @@ const PRICE = {
         '킹 220×240':       290000,
         '라지킹 240×240':   340000,
       },
-      cover: {             // 이불커버 — 값 미정. 채우기 전까지 「가격 문의」로 나간다.
-        '슈퍼싱글 150×210': null,
-        '퀸 200×230':       null,
-        '킹 220×240':       null,
-        '라지킹 240×240':   null,
+      cover: {             // 이불커버 [대표, 2026-08-05]. 슈퍼싱글이 차렵이불과 치수가 다르다
+        '슈퍼싱글 160×210': 170000,
+        '퀸 200×230':       190000,
+        '킹 220×240':       210000,
+        '라지킹 240×240':   240000,
       },
     },
     custom: 10000,         // 이불 맞춤 추가금 (1장당). 사이즈·종류 무관 [대표, 2026-08-04]
@@ -175,17 +183,17 @@ const PRICE = {
         '200×200':          240000,
         '220×200':          260000,
       },
-      plain: {             // 홑겹 매트리스커버 — 값 미정. 채우기 전까지 「가격 문의」로 나간다.
-        '싱글 100×200':     null,
-        '슈퍼싱글 110×200': null,
-        '120×200':          null,
-        '퀸 150×200':       null,
-        '160×200':          null,
-        '170×200':          null,
-        '180×200':          null,
-        '190×200':          null,
-        '200×200':          null,
-        '220×200':          null,
+      plain: {             // 아무르 홑겹 매트리스커버 [대표, 2026-08-05]
+        '싱글 100×200':     110000,
+        '슈퍼싱글 110×200': 110000,
+        '120×200':          110000,
+        '퀸 150×200':       120000,
+        '160×200':          135000,
+        '170×200':          145000,
+        '180×200':          155000,
+        '190×200':          170000,
+        '200×200':          180000,
+        '220×200':          195000,
       },
     },
     custom: 10000,         // 매트리스커버 맞춤 추가금 (1장당). 사이즈·종류 무관 [대표, 2026-08-04]
@@ -215,12 +223,13 @@ const ALWAYS_CUSTOM = true;
 // 베개커버의 '그 외'는 값을 못 내는 게 정상이라 가격표에서 뺀다.
 // 종류가 있는 항목은 종류마다 가격표가 하나씩 있어야 한다. 한 종류만 채우고 넘어가면
 // 나머지 종류가 통째로 「가격 문의」로 새어나간다.
-for (const [group, list, kinds] of [['quilt', QUILT, QUILT_KIND], ['mattress', MAT, MAT_KIND],
+// 사이즈 목록은 종류마다 다르므로 종류별 목록으로 대조한다.
+for (const [group, list, kinds] of [['quilt', null, QUILT_KIND], ['mattress', null, MAT_KIND],
                                     ['pillow', PILLOW.filter(s => s !== PIL_ASK), null]]) {
   const tables = kinds
-    ? kinds.map(k => [`${group}.sale.${k.key} (${k.ko})`, PRICE[group].sale[k.key]])
-    : [[`${group}.sale`, PRICE[group].sale]];
-  for (const [name, table] of tables) {
+    ? kinds.map(k => [`${group}.sale.${k.key} (${k.ko})`, PRICE[group].sale[k.key], k.sizes])
+    : [[`${group}.sale`, PRICE[group].sale, list]];
+  for (const [name, table, list] of tables) {
     if (!table) throw new Error(`PRICE.${name} 칸이 없습니다`);
     const miss = list.filter(s => !(s in table));
     const extra = Object.keys(table).filter(s => !list.includes(s));
@@ -413,8 +422,10 @@ ${PARTS.map((p,i)=>`    <button class="part" data-part="${p.key}" aria-pressed="
       <b>이불커버</b>는 커버만이라 두께(온스)를 고르지 않습니다.</p>
     <div id="grpQuilt">
       <div class="fld"><label>종류</label><select id="q_kind">${QUILT_KIND.map((k,i)=>`<option value="${k.key}"${i===0?' selected':''}>${k.ko}</option>`).join('')}</select></div>
-      <div class="fld"><label>사이즈</label><select id="q_size">${QUILT.map(o=>`<option${o==='퀸 200×230'?' selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="fld"><label>사이즈</label><select id="q_size"></select></div>
       <div class="fld" id="q_ozFld"><label>두께</label><select id="q_oz">${OZ.map(o=>`<option${o==='간절기용 (8온스)'?' selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="fld" id="q_snapFld"><label>이불 연결 똑딱이 갯수</label>
+        <input id="q_snap" type="text" inputmode="numeric" placeholder="예: 8"></div>
       <div class="fld"><label>수량</label><select id="q_qty">${ITEM_QTY.map(n=>`<option value="${n}">${n}장</option>`).join('')}</select></div>
     </div>
     <label class="skip"><input type="checkbox" id="q_skip"> 이불은 안 할래요</label>
@@ -428,7 +439,7 @@ ${HT.length ? `      <br>높이에 따라 값이 달라집니다 — ${HT_TEXT}.
       <b>높이 ${H_MAX}cm까지만 주문받습니다.</b>` : ''}</p>
     <div id="grpMat">
       <div class="fld"><label>종류</label><select id="m_kind">${MAT_KIND.map((k,i)=>`<option value="${k.key}"${i===0?' selected':''}>${k.ko}</option>`).join('')}</select></div>
-      <div class="fld"><label>침대 규격 (값의 기준)</label><select id="m_size">${MAT.map(o=>`<option${o==='퀸 150×200'?' selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="fld"><label>침대 규격 (값의 기준)</label><select id="m_size"></select></div>
       <div class="two">
         <div class="fld"><label>가로 × 세로 (cm)</label><input id="m_wh" type="text" inputmode="numeric" placeholder="예: 150x200"></div>
         <div class="fld"><label>높이 (cm)</label><input id="m_h" type="text" inputmode="numeric" placeholder="예: 30"></div>
@@ -504,6 +515,7 @@ const ALWAYS_CUSTOM = ${ALWAYS_CUSTOM};
 const PIL_ASK = ${JSON.stringify(PIL_ASK)};
 const QUILT_KIND = ${JSON.stringify(QUILT_KIND)};
 const MAT_KIND = ${JSON.stringify(MAT_KIND)};
+const DEF_SIZE = ${JSON.stringify(DEF_SIZE)};
 const PRICE_READY = ${PRICE_READY};
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -644,11 +656,29 @@ $('#m_h').oninput = checkHeight;
 /* ---- 종류 ---- */
 const quiltKind = () => QUILT_KIND.find(k => k.key === $('#q_kind').value);
 const matKind   = () => MAT_KIND.find(k => k.key === $('#m_kind').value);
-// 이불커버는 솜이 없어 두께(온스)가 없다. 칸을 감추지 않으면 고르지도 않은 온스가
-// 주문에 딸려 나간다. [대표, 2026-08-05]
-function syncQuiltKind(){ $('#q_ozFld').hidden = !quiltKind().oz; }
+// 사이즈 목록이 종류마다 다르므로 종류를 바꾸면 다시 채운다.
+// 고르던 사이즈가 새 종류에도 있으면 그대로 두고, 없으면 기본값으로 돌아간다.
+// (차렵이불 「슈퍼싱글 150×210」 → 이불커버에는 없으므로 퀸으로 돌아간다)
+function fillSizes(sel, sizes, def){
+  const keep = sizes.includes(sel.value) ? sel.value
+             : sizes.includes(def) ? def : sizes[0];
+  sel.innerHTML = sizes.map(s => '<option' + (s === keep ? ' selected' : '') + '>' + s + '</option>').join('');
+}
+// 이불커버는 솜이 없어 두께(온스)가 없고, 대신 연결 똑딱이 갯수를 받는다.
+// 칸을 감추지 않으면 고르지도 않은 값이 주문에 딸려 나간다. [대표, 2026-08-05]
+function syncQuiltKind(){
+  const k = quiltKind();
+  $('#q_ozFld').hidden = !k.oz;
+  $('#q_snapFld').hidden = !k.snap;
+  fillSizes($('#q_size'), k.sizes, DEF_SIZE.quilt);
+}
+function syncMatKind(){ fillSizes($('#m_size'), matKind().sizes, DEF_SIZE.mattress); }
+// 똑딱이 갯수. 숫자만 본다 — 값이 없거나 숫자가 아니면 빈 문자열.
+const snap = () => { const v = $('#q_snap').value.replace(/[^0-9]/g,''); return v ? +v + '' : ''; };
 $('#q_kind').onchange = syncQuiltKind;
+$('#m_kind').onchange = syncMatKind;
 syncQuiltKind();
+syncMatKind();
 
 /* ---- 사이즈: 안 할래요 체크 시 비활성 ---- */
 [['q_skip','grpQuilt'],['m_skip','grpMat'],['p_skip','grpPil']].forEach(([c,g]) => {
@@ -679,6 +709,7 @@ function quote(){
     const p = fee(PRICE.quilt.sale[k.key][size], PRICE.quilt.custom);
     const d = k.ko + ' · ' + size + (n > 1 ? ' · ' + n + '장' : '');
     add(p == null ? { t:'이불', d, ask:'가격 문의' } : { t:'이불', d, a:p * n });
+    if (k.snap && !snap()) notes.push('이불 연결 똑딱이 갯수를 적어주세요. 쓰시던 이불의 똑딱이 수와 맞춰 만듭니다.');
   }
   if (!$('#m_skip').checked) {
     const k = matKind(), size = $('#m_size').value, n = +$('#m_qty').value;
@@ -737,7 +768,9 @@ function renderOrder(){
     const k = quiltKind();
     L.push('■ 이불', '   종류 : ' + k.ko, '   사이즈 : ' + $('#q_size').value);
     if (k.oz) L.push('   두께 : ' + $('#q_oz').value);   // 이불커버는 온스가 없다
-    L.push('   수량 : ' + $('#q_qty').value + '장', '   컬러 : ' + label(state.quilt), '');
+    L.push('   수량 : ' + $('#q_qty').value + '장');
+    if (k.snap) L.push('   이불 연결 똑딱이 : ' + (snap() ? snap() + '개' : '안 적으심'));
+    L.push('   컬러 : ' + label(state.quilt), '');
   }
   if (!$('#m_skip').checked) {
     const wh = $('#m_wh').value.trim(), h = $('#m_h').value.trim();
