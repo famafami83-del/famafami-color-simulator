@@ -16,11 +16,66 @@ const ASSETS = path.join(SRC, 'assets');
 const SW = JSON.parse(fs.readFileSync(path.join(SRC, 'swatches.json'), 'utf8'));
 const b64 = (f, m) => `data:${m};base64,` + fs.readFileSync(path.join(ASSETS, f)).toString('base64');
 
+// 팔레트에서 빼는 색 — 번호로 적는다.
+// swatches.json 은 컬러차트를 그대로 옮긴 것이라 손대지 않는다. 차트에는 있지만
+// 팔지 않는 색은 여기서 뺀다. 원본을 지우면 차트를 다시 뽑을 때 어긋난다.
+//   953·903 클라우드 화이트 — 60수·80수가 완전히 같은 값(#f5f5f5)이라 화면에서 구별되지
+//   않는데다, 실제로 쓰지 않는 화이트다. [대표, 2026-08-05]
+const EXCLUDE = ['953', '903'];
+{
+  const before = Object.values(SW).reduce((s, g) => s + g.colors.length, 0);
+  const found = new Set();
+  for (const g of Object.values(SW)) {
+    g.colors = g.colors.filter(c => {
+      if (!EXCLUDE.includes(c.no)) return true;
+      found.add(c.no); return false;
+    });
+  }
+  // 지우려던 번호가 없으면 조용히 넘어가지 않는다. 오타거나 차트가 바뀐 것이다.
+  const missing = EXCLUDE.filter(no => !found.has(no));
+  if (missing.length) throw new Error(`EXCLUDE 의 번호가 swatches.json 에 없습니다: ${missing.join(', ')}`);
+  console.log(`팔레트 제외 ${EXCLUDE.length}색 — ${before}색 → ${before - EXCLUDE.length}색`);
+}
+
+// 컬러차트에 번호가 잘못 찍힌 칩을 바로잡는다. 이름으로 색을 집고 번호만 고친다.
+// swatches.json 은 차트를 그대로 옮긴 원본이라 손대지 않는다 — 차트를 다시 뽑으면
+// 틀린 번호가 그대로 다시 들어오므로 이 표는 계속 남아 있어야 한다.
+//   다크 그린   — 차트에 2027 로 찍혀 있으나 2027 은 애프터 다크다. 2029 가 맞다.  [대표, 2026-08-05]
+//   코코아 그레이 — 차트에 2023 으로 찍혀 있으나 2023 은 쿨 라벤더다. 2031 이 맞다. [대표, 2026-08-05]
+// 100수는 2001~2032 연속 32번인데 2029·2031 이 비어 있었고 번호가 겹치는 색이 둘이라
+// 수가 정확히 맞았다. 나잇 그린의 2026 은 차트가 맞다 [대표].
+const NO_FIX = [
+  { ko:'다크 그린',   from:'2027', to:'2029' },
+  { ko:'코코아 그레이', from:'2023', to:'2031' },
+];
+for (const f of NO_FIX) {
+  const hit = Object.values(SW).flatMap(g => g.colors).filter(c => c.ko === f.ko && c.no === f.from);
+  if (hit.length !== 1)
+    throw new Error(`NO_FIX: "${f.ko}" NO.${f.from} 을 ${hit.length}개 찾았습니다 (1개여야 합니다)`);
+  const taken = Object.values(SW).flatMap(g => g.colors).find(c => c.no === f.to);
+  if (taken) throw new Error(`NO_FIX: NO.${f.to} 는 이미 ${taken.ko} 가 쓰고 있습니다`);
+  hit[0].no = f.to;
+  console.log(`번호 정정 — ${f.ko}  NO.${f.from} → NO.${f.to}`);
+}
+
+// 번호는 팔레트 안에서 고유해야 한다. 겹치면 주문서에서 어느 색인지 가려낼 수 없다.
+// 조용히 넘어가면 결제·발주가 엉뚱한 색으로 나가므로 여기서 멈춘다. [2026-08-05]
+{
+  const seen = {};
+  for (const c of Object.values(SW).flatMap(g => g.colors)) (seen[c.no] = seen[c.no] || []).push(c);
+  const dup = Object.entries(seen).filter(([, v]) => v.length > 1);
+  if (dup.length) throw new Error('번호가 겹칩니다 — build.js 의 NO_FIX 에서 바로잡으십시오:\n'
+    + dup.map(([no, v]) => `  NO.${no}: ${v.map(c => c.ko + ' ' + c.su + '수').join(' / ')}`).join('\n'));
+}
+
 // 베개 위치: 앞줄 왼쪽=pillowF, 앞줄 오른쪽=pillowR, 뒷줄 왼쪽=pillowL, 뒷줄 오른쪽=pillowW
 // 처음엔 여섯 곳 모두 흰색이다. 색이 미리 들어가 있으면 자기 색을 얹는 자리라는 게
 // 안 보이고, 고르지도 않은 색이 주문에 딸려 나간다. [대표, 2026-08-04]
-// 클라우드 화이트는 60수·80수 둘 다 있어 매트리스커버(60·80수만)에도 쓸 수 있다.
-const WHITE = '#f5f5f5';   // NO. 953 클라우드 화이트
+// 시작 색은 매트리스커버에서도 고를 수 있어야 한다 — 100수는 매트리스커버에 못 쓰므로
+// 반드시 60수나 80수인 색이어야 한다. 아니면 매트리스커버를 누르는 순간 시작 색이 사라진다.
+// 클라우드 화이트(953·80수 903)를 팔레트에서 빼면서 남은 화이트 중 가장 밝은 색으로 옮겼다.
+// [대표, 2026-08-05]
+const WHITE = '#f5f4ef';   // NO. 952 멜트 아이스크림 60수
 // qty = 베개커버 기본 장수. 앞줄 둘만 1장으로 두면 흔한 경우(2장)가 기본이 된다.
 const PARTS = [
   { key:'quilt',    ko:'이불',            def:WHITE, su:null },
@@ -30,9 +85,17 @@ const PARTS = [
   { key:'pillowL',  ko:'베개(뒤)-왼쪽',    def:WHITE, su:null, qty:0 },
   { key:'pillowW',  ko:'베개(뒤)-오른쪽',  def:WHITE, su:null, qty:0 },
 ];
-// 흰색이 실제로 팔레트에 있어야 한다. 없으면 "직접 지정" 같은 유령 색으로 시작하게 된다.
-if (!Object.values(SW).some(g => g.colors.some(c => c.hex === WHITE)))
-  throw new Error(`기본색 ${WHITE} 이 swatches.json 에 없습니다`);
+// 부위별 시작 색이 그 부위에서 실제로 고를 수 있는 색이어야 한다.
+// 팔레트에 아예 없으면 "직접 지정" 같은 유령 색으로 시작하고,
+// 번수 제한에 걸리면 그 부위를 누르는 순간 시작 색이 목록에서 사라진다.
+for (const p of PARTS) {
+  const hit = Object.values(SW).flatMap(g => g.colors).filter(c => c.hex === p.def);
+  if (!hit.length)
+    throw new Error(`${p.ko} 시작 색 ${p.def} 이 팔레트에 없습니다 (EXCLUDE 로 뺐는지 확인)`);
+  if (p.su && !hit.some(c => p.su.includes(c.su)))
+    throw new Error(`${p.ko} 시작 색 ${p.def} 은 ${hit.map(c=>c.su+'수').join('·')} 뿐이라 `
+      + `${p.su.join('·')}수만 되는 이 부위에서 고를 수 없습니다`);
+}
 const PILLOWS = PARTS.filter(p => p.qty !== undefined);
 
 // 이불 = 완제품 크기 / 매트리스커버 = 침대 규격. 체계가 다르다 [대표, 2026-08-04]
@@ -50,7 +113,10 @@ const PIL_QTY = [0,1,2,3,4];
 const ITEM_QTY = [1,2,3,4];
 
 // 팔레트에서 어느 칸이 골라졌는지 가리키는 키. 색상값도 번호도 겹치는 색이 있어서
-// (#f5f5f5 클라우드 화이트 60·80수, NO.2023 두 색) 둘 다 기준으로 못 쓴다. [2026-08-04]
+// (#edece7 머슬린 화이트 80·100수, #d8baaf 세피아 로즈/드라이 페탈, NO.2023 두 색)
+// 둘 다 기준으로 못 쓴다. [2026-08-04]
+// 이 키는 팔레트 순번이라 색이 늘거나 빠지면 값이 밀린다. 화면 안에서만 쓰고,
+// 주문 기록처럼 오래 남는 곳에 저장하면 안 된다. 저장에는 번호+이름을 쓴다. [2026-08-05]
 let ki = 0;
 for (const g of Object.values(SW)) g.colors.forEach(c => c.k = 'c' + (ki++));
 
