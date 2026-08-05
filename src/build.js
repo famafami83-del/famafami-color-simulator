@@ -125,8 +125,10 @@ const MAT_KIND = [
 const DEF_SIZE = { quilt:'퀸 200×230', mattress:'퀸 150×200' };
 // 사이즈·수량 모두 4칸에서 각각 받는다. 40×60과 50×70을 섞어 쓰는 집이 있고,
 // 수량을 따로 받으면 "4색을 골랐는데 2장" 처럼 어느 색인지 알 수 없어진다 [대표, 2026-08-04]
-const PIL_ASK = '그 외';                       // 사이즈가 정해지지 않아 값을 못 내는 선택지
-const PILLOW = ['40×60','50×70',PIL_ASK];
+// 「그 외」 선택지를 뺐다 [대표, 2026-08-05]. 사이즈가 정해지지 않아 값을 못 내는 칸이라
+// 그 줄만 「가격 문의」로 빠졌는데, 결제를 붙이면 결제가 안 되는 주문이 된다.
+// 이제 모든 베개 사이즈에 값이 있다. 다른 사이즈는 「남기실 말」로 받는다.
+const PILLOW = ['40×60','50×70'];
 const PIL_QTY = [0,1,2,3,4];
 // 이불·매트리스커버 장수. 0은 없다 — 안 살 때는 「안 할래요」로 끈다.
 const ITEM_QTY = [1,2,3,4];
@@ -207,7 +209,7 @@ const PRICE = {
     ],
   },
   pillow: {                // 사이즈와 무관하게 같은 값 [대표, 2026-08-04]
-    sale: {                // '그 외'는 사이즈가 정해지지 않으니 가격도 못 낸다 → 문의
+    sale: {
       '40×60': 26000,
       '50×70': 26000,
     },
@@ -220,12 +222,11 @@ const PRICE = {
 const ALWAYS_CUSTOM = true;
 
 // 사이즈 목록과 가격표가 어긋나면 조용히 "문의"로 새어나가므로 여기서 잡는다.
-// 베개커버의 '그 외'는 값을 못 내는 게 정상이라 가격표에서 뺀다.
 // 종류가 있는 항목은 종류마다 가격표가 하나씩 있어야 한다. 한 종류만 채우고 넘어가면
 // 나머지 종류가 통째로 「가격 문의」로 새어나간다.
 // 사이즈 목록은 종류마다 다르므로 종류별 목록으로 대조한다.
 for (const [group, list, kinds] of [['quilt', null, QUILT_KIND], ['mattress', null, MAT_KIND],
-                                    ['pillow', PILLOW.filter(s => s !== PIL_ASK), null]]) {
+                                    ['pillow', PILLOW, null]]) {
   const tables = kinds
     ? kinds.map(k => [`${group}.sale.${k.key} (${k.ko})`, PRICE[group].sale[k.key], k.sizes])
     : [[`${group}.sale`, PRICE[group].sale, list]];
@@ -455,7 +456,7 @@ ${HT.length ? `      <br>높이에 따라 값이 달라집니다 — ${HT_TEXT}.
     <p class="d">①에서 고르신 <b>네 칸이 곧 주문하실 베개커버</b>입니다.
       칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.<br>
       사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다.
-      목록에 없으면 「${PIL_ASK}」를 고르고 아래 <b>남기실 말</b>에 적어주세요.</p>
+      <b>목록에 없는 사이즈</b>는 아래 <b>남기실 말</b>에 적어주세요 — 따로 안내드립니다.</p>
     <div id="grpPil">
 ${PILLOWS.map(p=>`      <div class="prow" data-part="${p.key}">
         <span class="pdot" data-part="${p.key}" style="background:${p.def}"></span>
@@ -512,7 +513,6 @@ const SW = ${JSON.stringify(SW)};
 const PARTS = ${JSON.stringify(PARTS)};
 const PRICE = ${JSON.stringify(PRICE)};
 const ALWAYS_CUSTOM = ${ALWAYS_CUSTOM};
-const PIL_ASK = ${JSON.stringify(PIL_ASK)};
 const QUILT_KIND = ${JSON.stringify(QUILT_KIND)};
 const MAT_KIND = ${JSON.stringify(MAT_KIND)};
 const DEF_SIZE = ${JSON.stringify(DEF_SIZE)};
@@ -734,7 +734,7 @@ function quote(){
       : unit == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:unit * n });
   }
   if (!$('#p_skip').checked) {
-    // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다. '그 외'만 문의로 빠질 수 있다.
+    // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다.
     for (const [size, n] of pillowBySize()) {
       const unit = fee(PRICE.pillow.sale[size], PRICE.pillow.custom);
       const d = size + ' · ' + n + '장';
@@ -742,8 +742,6 @@ function quote(){
       add(unit == null ? { t:'베개커버', k:size, d, ask:'가격 문의' } : { t:'베개커버', k:size, d, a:unit * n });
     }
   }
-  if (!$('#p_skip').checked && pillowRows().some(r => r.size === PIL_ASK) && !$('#memo').value.trim())
-    notes.push('「' + PIL_ASK + '」로 고르신 베개 사이즈를 「남기실 말」에 적어주세요.');
   if (rows.length && ALWAYS_CUSTOM) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
   return { rows, sum, ask, bad, notes };
 }

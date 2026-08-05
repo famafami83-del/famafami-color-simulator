@@ -206,7 +206,7 @@
     <p class="d">①에서 고르신 <b>네 칸이 곧 주문하실 베개커버</b>입니다.
       칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.<br>
       사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다.
-      목록에 없으면 「그 외」를 고르고 아래 <b>남기실 말</b>에 적어주세요.</p>
+      <b>목록에 없는 사이즈</b>는 아래 <b>남기실 말</b>에 적어주세요 — 따로 안내드립니다.</p>
     <div id="grpPil">
       <div class="prow" data-part="pillowF">
         <span class="pdot" data-part="pillowF" style="background:#f5f4ef"></span>
@@ -214,7 +214,7 @@
           <div class="pnm">베개(앞)-왼쪽</div>
           <div class="pcl" data-part="pillowF">-</div>
           <div class="psel">
-            <select class="ps" data-part="pillowF" aria-label="베개(앞)-왼쪽 사이즈"><option>40×60</option><option selected>50×70</option><option>그 외</option></select>
+            <select class="ps" data-part="pillowF" aria-label="베개(앞)-왼쪽 사이즈"><option>40×60</option><option selected>50×70</option></select>
             <select class="pq" data-part="pillowF" aria-label="베개(앞)-왼쪽 장수"><option value="0">0장</option><option value="1" selected>1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select>
           </div>
         </div>
@@ -225,7 +225,7 @@
           <div class="pnm">베개(앞)-오른쪽</div>
           <div class="pcl" data-part="pillowR">-</div>
           <div class="psel">
-            <select class="ps" data-part="pillowR" aria-label="베개(앞)-오른쪽 사이즈"><option>40×60</option><option selected>50×70</option><option>그 외</option></select>
+            <select class="ps" data-part="pillowR" aria-label="베개(앞)-오른쪽 사이즈"><option>40×60</option><option selected>50×70</option></select>
             <select class="pq" data-part="pillowR" aria-label="베개(앞)-오른쪽 장수"><option value="0">0장</option><option value="1" selected>1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select>
           </div>
         </div>
@@ -236,7 +236,7 @@
           <div class="pnm">베개(뒤)-왼쪽</div>
           <div class="pcl" data-part="pillowL">-</div>
           <div class="psel">
-            <select class="ps" data-part="pillowL" aria-label="베개(뒤)-왼쪽 사이즈"><option>40×60</option><option selected>50×70</option><option>그 외</option></select>
+            <select class="ps" data-part="pillowL" aria-label="베개(뒤)-왼쪽 사이즈"><option>40×60</option><option selected>50×70</option></select>
             <select class="pq" data-part="pillowL" aria-label="베개(뒤)-왼쪽 장수"><option value="0" selected>0장</option><option value="1">1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select>
           </div>
         </div>
@@ -247,7 +247,7 @@
           <div class="pnm">베개(뒤)-오른쪽</div>
           <div class="pcl" data-part="pillowW">-</div>
           <div class="psel">
-            <select class="ps" data-part="pillowW" aria-label="베개(뒤)-오른쪽 사이즈"><option>40×60</option><option selected>50×70</option><option>그 외</option></select>
+            <select class="ps" data-part="pillowW" aria-label="베개(뒤)-오른쪽 사이즈"><option>40×60</option><option selected>50×70</option></select>
             <select class="pq" data-part="pillowW" aria-label="베개(뒤)-오른쪽 장수"><option value="0" selected>0장</option><option value="1">1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select>
           </div>
         </div>
@@ -295,7 +295,6 @@ const SW = {"01_WhiteCream":{"ko":"화이트 · 크림","en":"White & Creams","c
 const PARTS = [{"key":"quilt","ko":"이불","def":"#f5f4ef","su":null},{"key":"mattress","ko":"매트리스커버","def":"#f5f4ef","su":[60,80]},{"key":"pillowF","ko":"베개(앞)-왼쪽","def":"#f5f4ef","su":null,"qty":1},{"key":"pillowR","ko":"베개(앞)-오른쪽","def":"#f5f4ef","su":null,"qty":1},{"key":"pillowL","ko":"베개(뒤)-왼쪽","def":"#f5f4ef","su":null,"qty":0},{"key":"pillowW","ko":"베개(뒤)-오른쪽","def":"#f5f4ef","su":null,"qty":0}];
 const PRICE = {"quilt":{"sale":{"charyeop":{"슈퍼싱글 150×210":195000,"퀸 200×230":265000,"킹 220×240":290000,"라지킹 240×240":340000},"cover":{"슈퍼싱글 160×210":170000,"퀸 200×230":190000,"킹 220×240":210000,"라지킹 240×240":240000}},"custom":10000},"mattress":{"sale":{"allinone":{"싱글 100×200":140000,"슈퍼싱글 110×200":140000,"120×200":145000,"퀸 150×200":155000,"160×200":170000,"170×200":180000,"180×200":195000,"190×200":220000,"200×200":240000,"220×200":260000},"plain":{"싱글 100×200":110000,"슈퍼싱글 110×200":110000,"120×200":110000,"퀸 150×200":120000,"160×200":135000,"170×200":145000,"180×200":155000,"190×200":170000,"200×200":180000,"220×200":195000}},"custom":10000,"height":[{"upto":35,"add":0},{"upto":45,"add":15000},{"upto":55,"add":25000},{"upto":65,"add":35000}]},"pillow":{"sale":{"40×60":26000,"50×70":26000},"custom":3000}};
 const ALWAYS_CUSTOM = true;
-const PIL_ASK = "그 외";
 const QUILT_KIND = [{"key":"charyeop","ko":"차렵이불","oz":true,"snap":false,"sizes":["슈퍼싱글 150×210","퀸 200×230","킹 220×240","라지킹 240×240"]},{"key":"cover","ko":"이불커버","oz":false,"snap":true,"sizes":["슈퍼싱글 160×210","퀸 200×230","킹 220×240","라지킹 240×240"]}];
 const MAT_KIND = [{"key":"allinone","ko":"올인원(누빔) 매트리스커버","short":"올인원(누빔)","sizes":["싱글 100×200","슈퍼싱글 110×200","120×200","퀸 150×200","160×200","170×200","180×200","190×200","200×200","220×200"]},{"key":"plain","ko":"홑겹 매트리스커버","short":"홑겹","sizes":["싱글 100×200","슈퍼싱글 110×200","120×200","퀸 150×200","160×200","170×200","180×200","190×200","200×200","220×200"]}];
 const DEF_SIZE = {"quilt":"퀸 200×230","mattress":"퀸 150×200"};
@@ -517,7 +516,7 @@ function quote(){
       : unit == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:unit * n });
   }
   if (!$('#p_skip').checked) {
-    // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다. '그 외'만 문의로 빠질 수 있다.
+    // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다.
     for (const [size, n] of pillowBySize()) {
       const unit = fee(PRICE.pillow.sale[size], PRICE.pillow.custom);
       const d = size + ' · ' + n + '장';
@@ -525,8 +524,6 @@ function quote(){
       add(unit == null ? { t:'베개커버', k:size, d, ask:'가격 문의' } : { t:'베개커버', k:size, d, a:unit * n });
     }
   }
-  if (!$('#p_skip').checked && pillowRows().some(r => r.size === PIL_ASK) && !$('#memo').value.trim())
-    notes.push('「' + PIL_ASK + '」로 고르신 베개 사이즈를 「남기실 말」에 적어주세요.');
   if (rows.length && ALWAYS_CUSTOM) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
   return { rows, sum, ask, bad, notes };
 }
