@@ -56,7 +56,8 @@
   display:flex;flex-direction:column;gap:3px;text-align:center}
  .sw button .c{display:block;aspect-ratio:1;border-radius:8px;border:1px solid rgba(0,0,0,.12)}
  .sw button .n{font-size:10px;line-height:1.15;color:var(--fg);letter-spacing:-.3px}
- .sw button .s{font-size:9.5px;line-height:1.15;color:var(--mut)}
+ /* 번수는 매트리스커버에서 고를 수 있는지를 가르는 값이라 흐리면 안 된다 [대표, 2026-08-05] */
+ .sw button .s{font-size:10px;line-height:1.15;color:var(--fg);font-weight:600}
  .sw button[aria-current="true"] .c{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--fg)}
  .sw button[aria-current="true"] .n{font-weight:700}
 
