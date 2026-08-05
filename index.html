@@ -48,7 +48,7 @@
  .now .l2{font-size:11.5px;color:var(--mut)}
  .hint{font-size:11.5px;color:var(--mut);margin:0 0 12px}
  .gname{font-size:11px;color:var(--mut);margin:14px 0 7px}
- /* 칩 밑에 원단 번호와 번수를 적는다. 컬러명은 넣지 않는다 —
+ /* 칩 밑에 번수(위)와 원단 번호(아래)를 적는다. 컬러명은 넣지 않는다 —
     한글명이 「라이트 스킨 베이지」처럼 길어 이 폭에서는 잘려서 오히려 못 읽는다.
     이름은 칩을 누르면 위쪽 큰 칸에 나오고, 마우스를 올려도 나온다. [대표, 2026-08-05] */
  .sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:10px 7px}
@@ -369,7 +369,7 @@ for (const g of Object.values(SW)) {
     const sw = document.createElement('span'); sw.className = 'c'; sw.style.background = c.hex;
     const no = document.createElement('span'); no.className = 'n'; no.textContent = c.no;
     const su = document.createElement('span'); su.className = 's'; su.textContent = c.su + '수';
-    b.append(sw, no, su);
+    b.append(sw, su, no);   // 번수가 위, 원단 번호가 아래 [대표, 2026-08-05]
     b.onclick = () => apply(c); row.appendChild(b);
   });
   pal.appendChild(row);
