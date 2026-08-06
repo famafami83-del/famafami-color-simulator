@@ -108,6 +108,9 @@
   background:var(--bg);color:var(--fg);font-size:14px;font-family:inherit}
  .fld select:focus,.fld input:focus{outline:2px solid var(--fg);outline-offset:-1px}
  .two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+ /* 가로·세로·높이 세 칸. 폰(375px)에서 한 칸이 100px 남짓이라 안내글은 짧게 쓴다 */
+ .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+ .three .fld input{padding:11px 8px;text-align:center}
  .skip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mut);margin-top:10px;cursor:pointer}
  .skip input{width:17px;height:17px;accent-color:var(--fg)}
  .off{opacity:.4;pointer-events:none}
@@ -270,9 +273,12 @@
     <div id="grpMat">
       <div class="fld"><label>종류</label><select id="m_kind"><option value="allinone" selected>올인원(누빔) 매트리스커버</option><option value="plain">홑겹 매트리스커버</option></select></div>
       <div class="fld"><label>침대 규격 (값의 기준)</label><select id="m_size"></select></div>
-      <div class="two">
-        <div class="fld"><label>가로 × 세로 (cm)</label><input id="m_wh" type="text" inputmode="numeric" placeholder="예: 150x200"></div>
-        <div class="fld"><label>높이 (cm)</label><input id="m_h" type="text" inputmode="numeric" placeholder="예: 30"></div>
+      <!-- 가로·세로를 한 칸에 「150x200」으로 받았더니 폰에서 못 적었다. 숫자 자판에는
+           x 가 없다 [대표, 2026-08-06]. 칸을 나누면 숫자 자판 그대로 쓰면서 x 가 필요 없다. -->
+      <div class="three">
+        <div class="fld"><label>가로 (cm)</label><input id="m_w" type="text" inputmode="numeric" placeholder="150"></div>
+        <div class="fld"><label>세로 (cm)</label><input id="m_d" type="text" inputmode="numeric" placeholder="200"></div>
+        <div class="fld"><label>높이 (cm)</label><input id="m_h" type="text" inputmode="numeric" placeholder="30"></div>
       </div>
       <p class="warn" id="m_hWarn" hidden></p>
       <div class="fld"><label>수량</label><select id="m_qty"><option value="1">1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select></div>
@@ -610,14 +616,20 @@ $('#p_two').onchange = () => { syncDesign(); };
 /* ---- 매트리스 높이: 받을 수 있는 최대 높이를 넘으면 그 자리에서 알린다 ---- */
 const HT_ALL = PRICE.mattress.height || [];
 const H_MAX = HT_ALL.length ? HT_ALL[HT_ALL.length - 1].upto : null;
-// 적힌 높이를 읽는다. 비었거나 숫자가 아니거나 0 이하면 null.
-function height(){
-  const raw = $('#m_h').value.trim();
+// 적힌 치수를 읽는다. 비었거나 숫자가 아니거나 0 이하면 null.
+// 「안 적음」과 「못 읽는 값」을 가려야 「적어주세요」와 「숫자로 적어주세요」를 나눠 낼 수 있다.
+const dimTyped = id => $('#' + id).value.trim() !== '';
+function dim(id){
+  const raw = $('#' + id).value.trim();
   if (!raw) return null;
-  const h = parseFloat(raw);
-  return Number.isFinite(h) && h > 0 ? h : null;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
-const heightTyped = () => $('#m_h').value.trim() !== '';
+// 가로·세로는 **둘 다** 있어야 치수가 된다. 하나만 적힌 것은 치수가 아니다.
+const matWH = () => { const w = dim('m_w'), d = dim('m_d'); return w && d ? w + '×' + d : ''; };
+const matWHJunk = () => ['m_w','m_d'].some(id => dimTyped(id) && dim(id) == null);
+const height = () => dim('m_h');
+const heightTyped = () => dimTyped('m_h');
 const heightJunk  = () => heightTyped() && height() == null;   // 적긴 했는데 못 읽는 값
 const tooTall     = () => { const h = height(); return H_MAX != null && h != null && h > H_MAX; };
 
@@ -727,7 +739,9 @@ function quote(){
         else if (t.add) { unit += t.add; d += ' (+' + won(t.add) + ')'; }
       }
     }
-    if (!$('#m_wh').value.trim()) notes.push('매트리스 가로×세로를 적어주세요. 만들 때 쓰는 치수입니다.');
+    if (!matWH()) notes.push(matWHJunk()
+      ? '매트리스 가로·세로를 숫자로 적어주세요. (예: 가로 150, 세로 200)'
+      : '매트리스 가로·세로를 적어주세요. 만들 때 쓰는 치수입니다.');
     if (n > 1) d += ' · ' + n + '장';
     add(tall ? { t:'매트리스커버', d, ask:'주문 불가', bad:true }
       : unit == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:unit * n });
@@ -790,7 +804,9 @@ function renderOrder(){
     L.push('');
   }
   if (!$('#m_skip').checked) {
-    const wh = $('#m_wh').value.trim(), h = $('#m_h').value.trim();
+    // 하나만 적으셨어도 적으신 것은 그대로 내보낸다 — 대표가 보고 물어볼 수 있어야 한다.
+    const w = $('#m_w').value.trim(), d = $('#m_d').value.trim(), h = $('#m_h').value.trim();
+    const wh = (w || d) ? (w || '?') + '×' + (d || '?') : '';
     L.push('■ 매트리스커버', '   종류 : ' + matKind().ko,
       '   규격 : ' + $('#m_size').value, '   수량 : ' + $('#m_qty').value + '장');
     if (wh || h) L.push('   실제 사이즈 : ' + (wh||'-') + (h ? ' / 높이 ' + h : ''));
