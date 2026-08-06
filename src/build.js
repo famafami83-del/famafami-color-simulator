@@ -342,21 +342,23 @@ const PRICE = {
 //   ① 디자인 화면만 표지처럼 만들고, 카드를 누르면 그때부터 도구가 된다.
 // 로고 안 영문 「INSTITUE OF BEDDING RESEARCH」 는 쓰지 않는다 — INSTITUTE 의 오타다.
 // 워드마크만 쓴다 (`src/tools/brand-logo.js`).
-// 표지 글은 **영어로** 쓴다 [대표, 2026-08-06]. 대표가 한글판과 영문판을 둘 다 주었고
-// 영문판을 골랐다. 한글판은 아래에 남겨둔다 — 되돌릴 때 다시 옮겨 적지 않아도 되게.
-//   아버지, 어머니, 그리고 가족.
-//   파마파미는 하루가 시작되고 끝나는 가장 가까운 공간에 오래도록 편안함을 더합니다.
-//   유행을 좇기보다 시간이 지나도 질리지 않는 디자인과 엄선한 소재, 국내의 세심한 제작에
-//   집중합니다. 자신에게 꼭 맞는 침구를 찾아 오래도록 아끼며 사용하는 분들을 위해 만듭니다.
-// 「디자인을 고르세요」는 한글로 둔다 — 브랜드 말이 아니라 **눌러야 할 곳을 알려주는 말**이다.
+// 표지 글 [대표, 2026-08-06].
+//   브랜드 슬로건에서 **서비스가 무엇인지 바로 알리는 한글 문구**로 바꿨다.
+//   「처음 들어온 사람이 3초 안에 여기서 뭘 하는 곳인지 알아야 한다」는 자리라서다.
+//   전에 쓰던 것들은 아래에 남겨둔다 — 되돌릴 때 다시 옮겨 적지 않아도 되게.
+//     아버지, 어머니, 그리고 가족.
+//     Father + Mother + Family.
+//     FAMAFAMI creates lasting comfort where each day begins and ends. Rather than
+//     following passing trends, we focus on timeless design, carefully selected
+//     materials, and thoughtful craftsmanship in Korea. We make bedding for those who
+//     value finding what truly suits them and cherishing it for years to come.
+//     파마파미는 하루가 시작되고 끝나는 가장 가까운 공간에 오래도록 편안함을 더합니다. …
+// 줄바꿈은 대표가 정한 자리다. 저절로 넘어가게 두지 말 것 — 「찾는 침구에서,」 뒤에서
+// 끊겨야 두 줄이 대구를 이룬다.
 const BRAND = {
   eyebrow: 'FAMAFAMI · EST. 2017',
-  title:   ['Father + Mother + Family.'],
-  body:    'FAMAFAMI creates lasting comfort where each day begins and ends. '
-         + 'Rather than following passing trends, we focus on timeless design, '
-         + 'carefully selected materials, and thoughtful craftsmanship in Korea. '
-         + 'We make bedding for those who value finding what truly suits them '
-         + 'and cherishing it for years to come.',
+  title:   ['찾는 침구에서,', '만드는 침구로.'],
+  body:    ['좋아하는 걸,', '하나씩 담아보세요.'],
 };
 
 // 이 페이지로 들어오는 주문은 색 조합을 직접 고른 것이라 전부 맞춤 제작이다.
@@ -410,11 +412,36 @@ const PRICE_READY = hasPrice(PRICE);
 
 const total = Object.values(SW).reduce((s,g)=>s+g.colors.length,0);
 
+/* 폰트 — 쓰는 글자만 잘라 넣는다 (`src/tools/subset-fonts.js`).
+   심는 이유: 안 심으면 손님 기기에 있는 걸 빌려 쓰게 되어 **아이폰은 애플 산돌고딕,
+   윈도우는 맑은 고딕**으로 사람마다 다르게 보인다.
+   이름을 원본과 다르게(`FF Head`/`FF Body`) 두는 것은 일부러다 — 잘라낸 글꼴에 없는
+   글자(손님이 「남기실 말」에 적는 글자)가 나오면 뒤에 적어둔 **기기에 깔린 폰트로
+   자연스럽게 떨어진다.** 이름을 `Pretendard` 로 똑같이 주면 그 길이 막힌다.
+   폰트가 아직 없으면 **멈추지 않고 넘어간다** — 처음 만들 때는 폰트가 있을 수 없다
+   (글자 목록을 index.html 에서 뽑기 때문이다. 도구 머리말 참조). */
+const FACE = [
+  { file:'font-head.woff2', family:'FF Head', weight:700 },
+  { file:'font-body.woff2', family:'FF Body', weight:400 },
+];
+const fontCss = FACE.map(f => {
+  if (!fs.existsSync(path.join(ASSETS, f.file))) {
+    console.log(`  ! ${f.file} 이 없어 폰트 없이 만듭니다 — src/tools/subset-fonts.js 를 돌린 뒤 다시 만드십시오`);
+    return '';
+  }
+  return `@font-face{font-family:'${f.family}';font-weight:${f.weight};font-style:normal;`
+       + `font-display:swap;src:url(${b64(f.file,'font/woff2')}) format('woff2')}`;
+}).join('\n');
+const FONT_BODY = "'FF Body','Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif";
+const FONT_HEAD = "'FF Head'," + FONT_BODY;
+
 const html = `<!doctype html><html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>파마파미 컬러 시뮬레이터</title>
 <style>
+${fontCss}
+ :root{--head:${FONT_HEAD}}
  /* 색 [대표, 2026-08-06] — 바탕은 크림, 글자와 강조는 **브랜드 네이비 #16203d**.
     네이비는 로고 시트 색 띠의 절반을 차지하는 주색인데 그동안 한 번도 안 쓰고 있었다.
     --fg 하나만 네이비로 바꾸면 「고른 부위」 알약, 「다음」 단추, 단계 표시, 색칩 선택
@@ -431,7 +458,7 @@ const html = `<!doctype html><html lang="ko"><head>
  *{box-sizing:border-box}
  html,body{margin:0;padding:0}
  body{background:var(--bg);color:var(--fg);line-height:1.6;padding-bottom:76px;
-  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  font-family:${FONT_BODY};-webkit-font-smoothing:antialiased}
  .wrap{max-width:960px;margin:0 auto;padding:16px 14px 24px}
 
  header{margin-bottom:12px}
@@ -463,12 +490,13 @@ const html = `<!doctype html><html lang="ko"><head>
   -webkit-mask-mode:alpha;mask-mode:alpha}
  .btext{padding:26px 22px 4px}
  .beye{font-size:10.5px;letter-spacing:.17em;color:var(--mut);text-align:center;margin:0 0 11px}
- /* 영문이라 한글보다 줄간을 좁게 잡는다. 한글 1.9 는 영문에서 성글어 보인다.
-    슬로건은 **아래 글과 같은 글꼴·같은 크기**로 둔다 [대표, 2026-08-06].
-    크게 굵게 얹으면 표제처럼 튀어서, 조용히 이어 읽히는 쪽을 골랐다.
-    색만 --fg 로 남겨 첫 줄인 것은 알아보게 한다. */
- .btit{font-size:12.5px;font-weight:400;line-height:1.8;letter-spacing:normal;text-align:center;margin:0 0 10px}
- .bbody{font-size:12.5px;line-height:1.8;color:var(--mut);text-align:center;max-width:34em;margin:0 auto}
+ /* 표지 문구 [대표, 2026-08-06] — 제목 Paperlogy Bold 700 / 본문 Pretendard Regular 400.
+    크기는 대표가 준 42~48px 과 18~20px 을 clamp 로 감싼다. 폰(375px)에서는 각각 43px,
+    18.8px 이 나와 지정 범위 안에 든다. **작은 폰에서만 더 줄어든다** — 320px 화면에서
+    48px 로 두면 「찾는 침구에서,」 가 화면 밖으로 나간다. */
+ .btit{font-family:var(--head);font-size:clamp(34px,11.5vw,48px);font-weight:700;
+  line-height:1.28;letter-spacing:-.04em;text-align:center;margin:0 0 16px}
+ .bbody{font-size:clamp(17px,5vw,20px);line-height:1.8;color:var(--mut);text-align:center;margin:0 auto}
  /* 카드 위 구역 이름. 표지에서 도구로 넘어가는 자리를 표시한다 */
  .bsec{text-align:center;margin:34px 0 13px}
  .bsec .k{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em}
@@ -651,7 +679,7 @@ const html = `<!doctype html><html lang="ko"><head>
     <div class="btext">
       <p class="beye">${BRAND.eyebrow}</p>
       <h2 class="btit">${BRAND.title.join('<br>')}</h2>
-      <p class="bbody">${BRAND.body}</p>
+      <p class="bbody">${BRAND.body.join('<br>')}</p>
     </div>
   </div>
   <p class="bsec"><span class="e">DESIGN</span><span class="k">디자인을 고르세요</span></p>

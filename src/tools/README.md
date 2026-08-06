@@ -155,6 +155,38 @@ CSS `mask-image`는 **투명도**를 읽습니다. 흑백 이미지로 두면 �
 그 줄이 없는 「자사몰 로고.png」 를 원본으로 씁니다. [대표, 2026-08-06]
 그 시트에서 뽑은 **브랜드 색**은 `README.md` 에 적어두었습니다.
 
+## 2-5. `subset-fonts.js` — 폰트를 쓰는 글자만 잘라내기
+
+**언제:** **표지 문구나 안내 문구를 바꿨을 때.** 폰트를 바꿀 때.
+
+```
+입력  %LOCALAPPDATA%\Microsoft\Windows\Fonts\Paperlogy-7Bold.ttf     (1,277KB)
+      %LOCALAPPDATA%\Microsoft\Windows\Fonts\Pretendard-Regular.otf  (1,615KB)
+출력  font-head.woff2 (28KB) · font-body.woff2 (62KB)
+```
+
+한글 폰트는 통째로 넣으면 두 벌 3MB 라 페이지에 못 넣습니다. 이 페이지가 쓰는
+**584자만** 남기면 90KB 로 줄어듭니다. `npm i subset-font` 가 필요합니다.
+
+**주의 — 두 번 돌려야 합니다.**
+글자 목록을 **만들어진 `index.html`** 에서 뽑습니다 (문구를 코드 여기저기서 만들어서
+소스만 봐서는 셀 수가 없습니다). 그래서 `build → subset → build` 순서입니다.
+폰트는 글자를 더하지 않으므로 두 번째 build 뒤에도 목록은 그대로입니다.
+폰트 파일이 없으면 build 가 **멈추지 않고 경고만 하고 넘어갑니다** — 처음 만들 때는
+폰트가 있을 수 없기 때문입니다.
+
+**주의 — 문구를 바꾸고 안 돌리면 티가 안 납니다.**
+새로 들어간 글자만 기기에 깔린 글꼴로 떨어집니다. 한 글자씩이라 눈에 잘 안 띕니다.
+
+**주의 — 폰트가 어디 깔렸는지.**
+윈도우가 「모든 사용자」로 설치하면 `C:\Windows\Fonts`, 「나만」이면 사용자 폴더입니다.
+도구가 둘 다 봅니다. 대표는 `C:\Windows\Fonts` 에 넣었다고 했는데 실제로는
+사용자 폴더로 갔습니다 — 레지스트리(`HKCU:\...\Fonts`)를 보면 실제 경로가 나옵니다.
+
+**주의 — 라이선스.**
+Pretendard 는 OFL, Paperlogy 도 웹폰트 사용을 허용합니다. **폰트를 바꿀 때는
+웹 임베딩이 허용되는지 먼저 확인하십시오.**
+
 ## 3. `extract-colors.js` — 컬러차트에서 102색 뽑기
 
 **언제:** 원단 색이 추가·변경될 때.
@@ -188,7 +220,11 @@ node src/tools/design-cards.js      # 디자인 카드 2장 — 위 둘 다 끝�
 node src/tools/brand-hero.js        # ① 표지 사진 (표지 사진이 바뀌었을 때만)
 node src/tools/brand-logo.js        # 워드마크 (로고가 바뀌었을 때만)
 node src/tools/extract-colors.js    # 컬러 102색
-node src/build.js                   # index.html
+node src/build.js                   # index.html — 글자가 다 들어간다
+node src/tools/subset-fonts.js      # 그 글자만 남긴 폰트 두 벌
+node src/build.js                   # 이번엔 폰트가 박힌다
 ```
 
-마스크와 색이 그대로면 **마지막 것만** 돌리면 됩니다.
+마스크와 색이 그대로면 **마지막 셋만** 돌리면 됩니다.
+**문구를 손댔으면 반드시 셋을 다 돌리십시오** — build 만 다시 하면 새로 들어간 글자가
+심은 글꼴에 없어서 그 글자만 다른 글꼴로 나갑니다.
