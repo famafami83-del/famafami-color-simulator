@@ -1,0 +1,47 @@
+# 깃허브 페이지 배포 — **우리가 직접 만든 것.**
+#
+# 원래는 깃허브가 알아서 붙여주는 `pages-build-deployment` 를 썼는데,
+# 2026-08-06 에 그 배포 하나가 `queued` 인 채로 굳어버렸다. 취소도 안 되고
+# (`Cannot cancel a workflow re-run that has not yet queued`), 그놈이 `pages`
+# 라는 자리를 붙잡고 있어서 **뒤에 올린 배포가 전부 줄만 서 있었다.**
+#
+# 그래서 자리 이름(concurrency group)을 우리 것으로 따로 두고 그 줄에 안 선다.
+# 겸해서 Jekyll 을 안 거치고 **필요한 파일만** 올린다 — 이 사이트는 index.html
+# 한 장이 전부다 (사진·마스크·폰트가 그 안에 들어 있다).
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # 손으로도 돌릴 수 있게
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: famafami-pages   # ★ 굳어버린 `pages` 자리를 피한다
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      # 저장소를 통째로 올리지 않는다. 만드는 도구(src/)와 원본은 사이트에 필요 없다.
+      - name: 올릴 것만 모은다
+        run: |
+          mkdir -p _site
+          cp index.html colors.json .nojekyll _site/
+          ls -lh _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
