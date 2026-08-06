@@ -682,7 +682,7 @@ ${fontCss}
       <p class="bbody">${BRAND.body.join('<br>')}</p>
     </div>
   </div>
-  <p class="bsec"><span class="e">DESIGN</span><span class="k">디자인을 고르세요</span></p>
+  <p class="bsec"><span class="e">DESIGN</span><span class="k">어떤 침구를 만들까요?</span></p>
   <div class="cards" id="designs">
 ${DESIGNS.map((d,i)=>`    <button data-design="${d.key}" aria-pressed="${i===0}">
       <img src="${b64(d.card,'image/jpeg')}" alt="${d.ko} 미리보기">
