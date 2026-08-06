@@ -1,0 +1,7 @@
+# sharp 는 재생성 도구에만 필요합니다 (src/tools/README.md 참조).
+# 40MB 가 넘고 운영체제마다 다른 파일이 깔려서 저장소에 넣지 않습니다.
+node_modules/
+package-lock.json
+
+# 마스크 확인용 임시 출력 (src/tools/verify.js)
+verify.jpg

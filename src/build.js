@@ -76,15 +76,57 @@ for (const f of NO_FIX) {
 // 클라우드 화이트(953·80수 903)를 팔레트에서 빼면서 남은 화이트 중 가장 밝은 색으로 옮겼다.
 // [대표, 2026-08-05]
 const WHITE = '#f5f4ef';   // NO. 952 멜트 아이스크림 60수
-// qty = 베개커버 기본 장수. 앞줄 둘만 1장으로 두면 흔한 경우(2장)가 기본이 된다.
-const PARTS = [
-  { key:'quilt',    ko:'이불',            def:WHITE, su:null },
-  { key:'mattress', ko:'매트리스커버',     def:WHITE, su:[60,80] },
-  { key:'pillowF',  ko:'베개(앞)-왼쪽',    def:WHITE, su:null, qty:1 },
-  { key:'pillowR',  ko:'베개(앞)-오른쪽',  def:WHITE, su:null, qty:1 },
-  { key:'pillowL',  ko:'베개(뒤)-왼쪽',    def:WHITE, su:null, qty:0 },
-  { key:'pillowW',  ko:'베개(뒤)-오른쪽',  def:WHITE, su:null, qty:0 },
+
+// 디자인 — 무지와 양면은 **사진이 같다.** 이불을 한 덩어리로 보느냐, 깔린 면과 젖혀진 면으로
+// 나눠 보느냐만 다르다 (`src/tools/split-quilt.js`). 그래서 사진을 하나도 더 넣지 않았다.
+// 늘어난 건 마스크 두 장, 30KB 남짓이다.
+//   ★ 날개형처럼 **사진 자체가 다른** 디자인을 넣게 되면 그때는 사진을 페이지 밖 파일로 빼야 한다.
+//     지금 index.html 은 사진을 글자로 품고 있어(base64) 디자인마다 500KB 씩 불어난다.
+//     빼두면 첫 화면은 165KB 로 오히려 가벼워지고, 누른 디자인 사진만 받아온다.
+// card   = 고르는 화면에 걸리는 사진. `src/tools/design-cards.js` 가 만든다.
+// pilTwo = 「베개커버도 앞뒤를 다르게」 칸을 보일지. 양면 디자인에서만 묻는다.
+const DESIGNS = [
+  { key:'plain', ko:'무지', d:'이불 앞뒤가 같은 색',        card:'card_plain.jpg' },
+  { key:'both',  ko:'양면', d:'이불 앞뒤를 다른 색으로',    card:'card_both.jpg', pilTwo:true },
 ];
+// 디자인을 바꿔도 **고른 색이 날아가지 않게** 물려준다. 다시 고르게 하면 탭을 둔 뜻이 없다.
+// 그 디자인을 처음 열 때만 물려준다 — 갈 때마다 덮으면 무지↔양면을 오가는 사이에
+// 양면에서 고른 뒷면 색이 앞면 색으로 지워진다.
+const CARRY = {
+  both:  { quiltA:'quilt', quiltB:'quilt' },   // 무지 → 양면 : 앞뒤 모두 쓰던 색으로 시작
+  plain: { quilt:'quiltA' },                   // 양면 → 무지 : 앞면 색을 가져온다
+};
+// dz   = 이 부위가 나오는 디자인. 없으면 모든 디자인에 나온다.
+// grp  = 주문서에서 한 덩어리로 묶는 이름. 양면이면 이불이 두 부위라 묶을 데가 필요하다.
+// face = 주문서에 「컬러(앞면)」처럼 붙일 말. 한 면뿐이면 없다.
+// qty  = 베개커버 기본 장수. 앞줄 둘만 1장으로 두면 흔한 경우(2장)가 기본이 된다.
+const PARTS = [
+  { key:'quilt',    ko:'이불',            def:WHITE, su:null,     dz:['plain'], grp:'quilt' },
+  { key:'quiltA',   ko:'이불 앞면',        def:WHITE, su:null,     dz:['both'],  grp:'quilt', face:'앞면' },
+  { key:'quiltB',   ko:'이불 뒷면',        def:WHITE, su:null,     dz:['both'],  grp:'quilt', face:'뒷면' },
+  { key:'mattress', ko:'매트리스커버',     def:WHITE, su:[60,80] },
+  // 베개 네 부위는 늘 나온다. **베개커버를 양면으로 만들 때만** 이름이 바뀐다 (koTwo) —
+  // 그때는 사진의 뒤쪽 베개 두 개가 앞쪽 두 장의 「뒷면」을 보여주는 자리가 된다.
+  //   ★ 이 사진에는 베개 한 장의 앞뒤가 같이 보이는 자리가 없다. 네 개 다 윗면만 보인다.
+  //     그래서 이건 절충이다. 베개 모서리가 젖혀진 컷이 생기면 이불처럼 제대로 가를 수 있다.
+  { key:'pillowF',  ko:'베개(앞)-왼쪽',    def:WHITE, su:null, koTwo:'베개-왼쪽 앞면' },
+  { key:'pillowR',  ko:'베개(앞)-오른쪽',  def:WHITE, su:null, koTwo:'베개-오른쪽 앞면' },
+  { key:'pillowL',  ko:'베개(뒤)-왼쪽',    def:WHITE, su:null, koTwo:'베개-왼쪽 뒷면' },
+  { key:'pillowW',  ko:'베개(뒤)-오른쪽',  def:WHITE, su:null, koTwo:'베개-오른쪽 뒷면' },
+];
+const inDz = (p, d) => !p.dz || p.dz.includes(d);
+// 마스크가 없는 부위를 적어두면 그 자리만 색이 안 먹는 페이지가 조용히 나간다.
+for (const p of PARTS)
+  if (!fs.existsSync(path.join(ASSETS, `mask_${p.key}.png`)))
+    throw new Error(`${p.ko}(${p.key}) 마스크가 없습니다 — src/tools/split-quilt.js 를 돌리셨습니까`);
+for (const d of DESIGNS)
+  if (!fs.existsSync(path.join(ASSETS, d.card)))
+    throw new Error(`${d.ko} 카드 사진(${d.card})이 없습니다 — src/tools/design-cards.js 를 돌리셨습니까`);
+// 물려주기가 가리키는 부위가 실제로 있어야 한다.
+for (const [d, m] of Object.entries(CARRY))
+  for (const [to, from] of Object.entries(m))
+    if (!PARTS.some(p => p.key === to) || !PARTS.some(p => p.key === from))
+      throw new Error(`CARRY.${d} 의 ${to}←${from} 가 PARTS 에 없습니다`);
 // 부위별 시작 색이 그 부위에서 실제로 고를 수 있는 색이어야 한다.
 // 팔레트에 아예 없으면 "직접 지정" 같은 유령 색으로 시작하고,
 // 번수 제한에 걸리면 그 부위를 누르는 순간 시작 색이 목록에서 사라진다.
@@ -96,7 +138,39 @@ for (const p of PARTS) {
     throw new Error(`${p.ko} 시작 색 ${p.def} 은 ${hit.map(c=>c.su+'수').join('·')} 뿐이라 `
       + `${p.su.join('·')}수만 되는 이 부위에서 고를 수 없습니다`);
 }
-const PILLOWS = PARTS.filter(p => p.qty !== undefined);
+// 베개 칸 — **사이즈와 장수를 받는 단위**다. 부위(색을 칠하는 자리)와 다르다.
+// 이불이 양면이라고 베개커버까지 양면인 것은 아니다. **따로 받는다** [대표, 2026-08-06].
+//   single : 사진의 베개 네 개를 각각 한 장씩 고른다 → 네 칸, 한 칸에 한 색
+//   double : 앞쪽 두 장만 주문하고 한 장이 앞면·뒷면 두 색 → 두 칸
+//            뒤쪽 베개는 주문 대상이 아니라 앞쪽 두 장의 **뒷면을 보여주는 자리**로 쓴다.
+// faces = 이 칸의 색이 어느 부위에 칠해지는지. 둘이면 앞면·뒷면이다.
+const PIL_MODES = {
+  single: [
+    { key:'L',  ko:'베개(앞)-왼쪽',   qty:1, faces:[{ part:'pillowF' }] },
+    { key:'R',  ko:'베개(앞)-오른쪽', qty:1, faces:[{ part:'pillowR' }] },
+    { key:'L2', ko:'베개(뒤)-왼쪽',   qty:0, faces:[{ part:'pillowL' }] },
+    { key:'R2', ko:'베개(뒤)-오른쪽', qty:0, faces:[{ part:'pillowW' }] },
+  ],
+  double: [
+    { key:'L', ko:'베개-왼쪽',   qty:1, faces:[{ part:'pillowF', face:'앞면' }, { part:'pillowL', face:'뒷면' }] },
+    { key:'R', ko:'베개-오른쪽', qty:1, faces:[{ part:'pillowR', face:'앞면' }, { part:'pillowW', face:'뒷면' }] },
+  ],
+};
+// 사이즈·장수 칸은 한 벌만 만들어두고 감췄다 보였다 한다.
+// 그래야 양면/무지를 오가도 적어둔 사이즈와 장수가 살아남는다.
+const PIL_UNION = [];
+for (const list of Object.values(PIL_MODES))
+  for (const s of list) if (!PIL_UNION.some(u => u.key === s.key)) PIL_UNION.push(s);
+for (const list of Object.values(PIL_MODES))
+  for (const s of list) for (const f of s.faces)
+    if (!PARTS.some(p => p.key === f.part))
+      throw new Error(`베개 칸 ${s.ko} 가 없는 부위 ${f.part} 를 가리킵니다`);
+// 양면 베개커버로 바뀌면 부위 이름도 바뀌어야 한다. 이름이 없으면 「베개(뒤)-왼쪽」이
+// 뒷면 자리로 쓰이는데 이름은 그대로라 손님이 무엇을 고르는지 알 수 없다.
+for (const s of PIL_MODES.double)
+  for (const f of s.faces)
+    if (!PARTS.find(p => p.key === f.part).koTwo)
+      throw new Error(`${f.part} 에 양면일 때 쓸 이름(koTwo)이 없습니다`);
 
 // 이불 = 완제품 크기 / 매트리스커버 = 침대 규격. 체계가 다르다 [대표, 2026-08-04]
 // 견적을 내려면 모든 선택지가 가격을 가져야 하므로 "잘 모르겠습니다" 류는 두지 않는다 [대표]
@@ -283,6 +357,29 @@ const html = `<!doctype html><html lang="ko"><head>
   background:var(--soft);color:var(--mut);border:1px solid transparent}
  .steps div[aria-current="true"]{background:var(--fg);color:var(--bg);font-weight:600}
 
+ /* 디자인 고르기 — 쇼핑몰 상품 목록처럼 사진 카드를 눌러 들어간다 [대표, 2026-08-06].
+    카드 두 장은 같은 사진·같은 색이고 젖혀진 면만 다르다. 견주면 차이가 그것 하나로 보인다. */
+ .cards{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+ .cards button{display:block;width:100%;padding:0;overflow:hidden;cursor:pointer;font-family:inherit;
+  text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg)}
+ .cards button img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+ .cards .ct{display:block;padding:10px 11px 12px;position:relative}
+ .cards .cn{display:block;font-size:14px;font-weight:650;line-height:1.4}
+ .cards .cd{display:block;font-size:11.5px;color:var(--mut);line-height:1.45}
+ .cards button[aria-pressed="true"]{border-color:var(--fg);box-shadow:0 0 0 1.5px var(--fg)}
+ .cards .cnow{display:none;font-size:10.5px;font-weight:650;color:var(--bg);background:var(--fg);
+  border-radius:999px;padding:2px 8px;margin-top:5px;width:fit-content}
+ .cards button[aria-pressed="true"] .cnow{display:block}
+ .chint{font-size:11.5px;color:var(--mut);margin:12px 0 0;line-height:1.7}
+
+ /* ② 색 화면 맨 위 — 지금 어느 디자인인지 보이고, 한 번에 바꿔 돌아갈 수 있다 */
+ .dnow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;
+  padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-size:12.5px}
+ .dnow b{font-weight:650}
+ .dnow span{color:var(--mut)}
+ .dnow button{flex:none;border:1px solid var(--line);background:var(--bg);color:var(--fg);
+  border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+
  /* 미리보기 */
  .scene{position:relative;border-radius:11px;overflow:hidden;background:#fff;isolation:isolate;
   box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 20px rgba(0,0,0,.07);margin-bottom:14px}
@@ -295,11 +392,21 @@ const html = `<!doctype html><html lang="ko"><head>
  .step{display:none}
  .step[aria-hidden="false"]{display:block}
 
+ /* 베개커버를 양면으로 할지 — 이불이 양면이어도 베개는 따로 받는다 */
+ .ptwo{display:flex;align-items:flex-start;gap:9px;margin:0 0 11px;padding:10px 12px;
+  border:1px solid var(--line);border-radius:9px;background:var(--card);
+  font-size:11.5px;color:var(--mut);line-height:1.55;cursor:pointer}
+ .ptwo[hidden]{display:none}
+ .ptwo input{width:18px;height:18px;accent-color:var(--fg);flex:none;margin-top:1px}
+ .ptwo b{color:var(--fg);font-size:12.5px;font-weight:650}
+
  /* 부위 · 팔레트 */
  .parts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
  .part{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);color:var(--fg);
   border-radius:999px;padding:7px 13px 7px 8px;font-size:13px;cursor:pointer;font-family:inherit}
  .part[aria-pressed="true"]{border-color:var(--fg);background:var(--fg);color:var(--bg);font-weight:600}
+ /* display 를 따로 준 요소는 hidden 속성만으로 안 감춰진다 */
+ .part[hidden]{display:none}
  .dot{width:17px;height:17px;border-radius:50%;border:1px solid rgba(0,0,0,.18);flex:none}
  .now{display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid var(--line);
   border-radius:9px;margin-bottom:6px;background:var(--card)}
@@ -339,20 +446,22 @@ const html = `<!doctype html><html lang="ko"><head>
  .warn[hidden]{display:none}
  .fld input.bad,.fld select.bad{border-color:var(--bad);outline:1px solid var(--bad);outline-offset:-2px}
 
- /* 베개 4칸 — 칸마다 색·사이즈·장수 */
- .prow{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+ /* 베개 칸 — 칸마다 색·사이즈·장수. 양면은 한 칸에 색이 둘(앞면·뒷면)이다 */
+ .prow{display:block;padding:11px 0;border-top:1px solid var(--line)}
  .prow:first-child{border-top:0;padding-top:2px}
- .prow .pdot{width:26px;height:26px;border-radius:6px;border:1px solid rgba(0,0,0,.16);flex:none;margin-top:1px}
- .prow .pmain{flex:1;min-width:0}
+ .prow[hidden]{display:none}
  .prow .pnm{font-size:13px;font-weight:600;line-height:1.35}
- .prow .pcl{font-size:11px;color:var(--mut);margin-bottom:7px;line-height:1.4}
+ .prow .pcls{margin-bottom:7px}
+ .prow .pcl{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--mut);line-height:1.5;margin-top:3px}
+ .prow .pdot{width:22px;height:22px;border-radius:5px;border:1px solid rgba(0,0,0,.16);flex:none}
+ .prow .pfc{flex:none;color:var(--fg);font-weight:600}
  .psel{display:flex;gap:7px}
  .psel select{padding:9px 8px;border-radius:8px;border:1px solid var(--line);
   background:var(--bg);color:var(--fg);font-size:13.5px;font-family:inherit;min-width:0}
  .psel select:focus{outline:2px solid var(--fg);outline-offset:-1px}
  .psel .ps{flex:1}
  .psel .pq{flex:0 0 76px}
- .prow.zero .pdot,.prow.zero .pnm,.prow.zero .pcl,.prow.zero .ps{opacity:.4}
+ .prow.zero .pnm,.prow.zero .pcls,.prow.zero .ps{opacity:.4}
  .ptot{font-size:12px;color:var(--mut);margin:11px 0 0;padding-top:10px;border-top:1px solid var(--line)}
 
  /* 견적 */
@@ -389,23 +498,45 @@ const html = `<!doctype html><html lang="ko"><head>
 <div class="wrap">
 <header>
   <h1>파마파미 컬러 시뮬레이터</h1>
-  <p class="sub">지금은 여섯 곳 모두 흰색입니다. 부위를 눌러 원단 ${total}색 중에서 바꿔보세요.</p>
+  <p class="sub" id="sub"></p>
 </header>
 
 <div class="steps">
-  <div data-s="0" aria-current="true">① 색 고르기</div>
-  <div data-s="1">② 사이즈</div>
-  <div data-s="2">③ 확인</div>
+  <div data-s="0" aria-current="true">① 디자인</div>
+  <div data-s="1">② 색</div>
+  <div data-s="2">③ 사이즈</div>
+  <div data-s="3">④ 확인</div>
 </div>
 
-<!-- ① 색 -->
+<!-- ① 디자인 -->
 <section class="step" data-step="0" aria-hidden="false">
+  <div class="cards" id="designs">
+${DESIGNS.map((d,i)=>`    <button data-design="${d.key}" aria-pressed="${i===0}">
+      <img src="${b64(d.card,'image/jpeg')}" alt="${d.ko} 미리보기">
+      <span class="ct"><span class="cn">${d.ko}</span><span class="cd">${d.d}</span><span class="cnow">고르신 것</span></span>
+    </button>`).join('\n')}
+  </div>
+  <p class="chint">사진의 색은 예시입니다. 다음 단계에서 원단 ${total}색 중에서 고르시면 됩니다.<br>
+    <b>디자인을 바꿔도 고르신 색은 그대로 둡니다</b> — 언제든 돌아와 바꿔보실 수 있습니다.</p>
+</section>
+
+<!-- ② 색 -->
+<section class="step" data-step="1" aria-hidden="true">
+  <div class="dnow">
+    <span><b id="dnowT"></b> · <span id="dnowD"></span></span>
+    <button type="button" id="dchg">디자인 바꾸기</button>
+  </div>
   <div class="scene" id="sceneMain">
     <img src="${b64('base.jpg','image/jpeg')}" alt="침구 미리보기">
-${PARTS.map(p=>{const u=b64(`mask_${p.key}.png`,'image/png');return `    <div class="layer" data-part="${p.key}" style="background-color:${p.def};-webkit-mask-image:url('${u}');mask-image:url('${u}')"></div>`;}).join('\n')}
+${PARTS.map(p=>{const u=b64(`mask_${p.key}.png`,'image/png');return `    <div class="layer" data-part="${p.key}" style="background-color:${p.def};-webkit-mask-image:url('${u}');mask-image:url('${u}')"${inDz(p,DESIGNS[0].key)?'':' hidden'}></div>`;}).join('\n')}
   </div>
+  <label class="ptwo" id="pTwoWrap" hidden>
+    <input type="checkbox" id="p_two">
+    <span><b>베개커버도 앞뒤를 다르게</b><br>
+      체크하시면 베개 <b>두 장</b>의 앞면·뒷면을 각각 고릅니다. 안 하시면 베개는 <b>네 장 모두 한 색씩</b>입니다.</span>
+  </label>
   <div class="parts">
-${PARTS.map((p,i)=>`    <button class="part" data-part="${p.key}" aria-pressed="${i===0}"><span class="dot" style="background:${p.def}"></span>${p.ko}</button>`).join('\n')}
+${PARTS.map(p=>`    <button class="part" data-part="${p.key}" aria-pressed="false"><span class="dot" style="background:${p.def}"></span>${p.ko}</button>`).join('\n')}
   </div>
   <div class="now">
     <span class="big" id="nowSw"></span>
@@ -415,8 +546,8 @@ ${PARTS.map((p,i)=>`    <button class="part" data-part="${p.key}" aria-pressed="
   <div id="palette"></div>
 </section>
 
-<!-- ② 사이즈 -->
-<section class="step" data-step="1" aria-hidden="true">
+<!-- ③ 사이즈 -->
+<section class="step" data-step="2" aria-hidden="true">
   <div class="card">
     <h2>이불</h2>
     <p class="d"><b>차렵이불</b>은 솜이 들어 있는 일체형입니다.
@@ -453,20 +584,14 @@ ${HT.length ? `      <br>높이에 따라 값이 달라집니다 — ${HT_TEXT}.
 
   <div class="card">
     <h2>베개커버</h2>
-    <p class="d">①에서 고르신 <b>네 칸이 곧 주문하실 베개커버</b>입니다.
-      칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.<br>
-      사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다.
-      <b>목록에 없는 사이즈</b>는 아래 <b>남기실 말</b>에 적어주세요 — 따로 안내드립니다.</p>
+    <p class="d" id="pDesc"></p>
     <div id="grpPil">
-${PILLOWS.map(p=>`      <div class="prow" data-part="${p.key}">
-        <span class="pdot" data-part="${p.key}" style="background:${p.def}"></span>
-        <div class="pmain">
-          <div class="pnm">${p.ko}</div>
-          <div class="pcl" data-part="${p.key}">-</div>
-          <div class="psel">
-            <select class="ps" data-part="${p.key}" aria-label="${p.ko} 사이즈">${PILLOW.map(o=>`<option${o==='50×70'?' selected':''}>${o}</option>`).join('')}</select>
-            <select class="pq" data-part="${p.key}" aria-label="${p.ko} 장수">${PIL_QTY.map(n=>`<option value="${n}"${n===p.qty?' selected':''}>${n}장</option>`).join('')}</select>
-          </div>
+${PIL_UNION.map(s=>`      <div class="prow" data-slot="${s.key}">
+        <div class="pnm"></div>
+        <div class="pcls"></div>
+        <div class="psel">
+          <select class="ps" data-slot="${s.key}">${PILLOW.map(o=>`<option${o==='50×70'?' selected':''}>${o}</option>`).join('')}</select>
+          <select class="pq" data-slot="${s.key}">${PIL_QTY.map(n=>`<option value="${n}"${n===s.qty?' selected':''}>${n}장</option>`).join('')}</select>
         </div>
       </div>`).join('\n')}
       <p class="ptot" id="pTot"></p>
@@ -481,8 +606,8 @@ ${PILLOWS.map(p=>`      <div class="prow" data-part="${p.key}">
   </div>
 </section>
 
-<!-- ③ 확인 -->
-<section class="step" data-step="2" aria-hidden="true">
+<!-- ④ 확인 -->
+<section class="step" data-step="3" aria-hidden="true">
   <div class="scene mini" id="sceneMini"></div>
 ${PRICE_READY ? `  <div class="card">
     <h2>예상 금액</h2>
@@ -505,12 +630,16 @@ ${PRICE_READY ? `  <div class="card">
 
 <div class="nav">
   <button class="prev" id="btnPrev" hidden>이전</button>
-  <button class="next" id="btnNext">사이즈 입력하기</button>
+  <button class="next" id="btnNext"></button>
 </div>
 
 <script>
 const SW = ${JSON.stringify(SW)};
 const PARTS = ${JSON.stringify(PARTS)};
+const DESIGNS = ${JSON.stringify(DESIGNS)};
+const CARRY = ${JSON.stringify(CARRY)};
+const PIL_MODES = ${JSON.stringify(PIL_MODES)};
+const TOTAL = ${total};
 const PRICE = ${JSON.stringify(PRICE)};
 const ALWAYS_CUSTOM = ${ALWAYS_CUSTOM};
 const QUILT_KIND = ${JSON.stringify(QUILT_KIND)};
@@ -524,23 +653,41 @@ const byHex = {};
 for (const g of Object.values(SW)) for (const c of g.colors) if(!byHex[c.hex]) byHex[c.hex] = c;
 const state = {};
 PARTS.forEach(p => state[p.key] = byHex[p.def] || { no:'', en:'', ko:'직접 지정', su:'', hex:p.def });
-let cur = PARTS[0], step = 0;
+const inDz = (p, d) => !p.dz || p.dz.includes(d);
+let design = DESIGNS[0].key, step = 0;
+const parts = () => PARTS.filter(p => inDz(p, design));
+let cur = parts()[0];
 
 /* ---- 단계 이동 ---- */
-const NEXT_LABEL = ['사이즈 입력하기','확인하기','복사하기'];
+const NEXT_LABEL = ['색 고르기','사이즈 입력하기','확인하기','복사하기'];
+const LAST = NEXT_LABEL.length - 1;
 function goto(s){
   step = s;
   $$('.step').forEach(el => el.setAttribute('aria-hidden', +el.dataset.step !== s));
   $$('.steps div').forEach(el => el.setAttribute('aria-current', +el.dataset.s === s));
   $('#btnPrev').hidden = s === 0;
   $('#btnNext').textContent = NEXT_LABEL[s];
-  if (s === 1) { renderPillows(); checkHeight(); }
-  if (s === 2) { buildMini(); renderQuote(); renderOrder(); }
+  if (s === 2) { renderPillows(); checkHeight(); }
+  if (s === 3) { buildMini(); renderQuote(); renderOrder(); }
+  renderSub();
   window.scrollTo({ top:0, behavior:'instant' });
 }
-$('#btnPrev').onclick = () => goto(Math.max(0, step-1));
+/* ---- 뒤로가기 ----
+   단계를 브라우저 기록에 남긴다. 안 남기면 폰에서 뒤로가기를 눌렀을 때 **페이지를 통째로 벗어나
+   고르던 것이 전부 날아간다** [대표, 2026-08-06]. 양면을 보다가 무지로 돌아가려고 뒤로가기를
+   누르는 것이 자연스러운데, 그때 딴 데로 가버렸다.
+   goto 는 화면만 바꾸고 기록은 건드리지 않는다. 손님이 눌러서 옮길 때만 navigate 로 기록을 남긴다 —
+   뒤로가기로 돌아온 것까지 기록에 더하면 뒤로가기가 영영 안 끝난다. */
+function navigate(s){
+  if (s === step) return;
+  goto(s);
+  try { history.pushState({ step:s }, ''); } catch(_) {}   // file:// 에서 막히면 그냥 넘어간다
+}
+addEventListener('popstate', e => goto(e.state && typeof e.state.step === 'number' ? e.state.step : 0));
+
+$('#btnPrev').onclick = () => navigate(Math.max(0, step-1));
 $('#btnNext').onclick = async () => {
-  if (step < 2) return goto(step+1);
+  if (step < LAST) return navigate(step+1);
   const t = $('#orderTxt').textContent;
   try { await navigator.clipboard.writeText(t); }
   catch(_) { const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
@@ -548,16 +695,70 @@ $('#btnNext').onclick = async () => {
 };
 
 /* ---- 색 ---- */
-const layers = {}, dots = {};
+const layers = {}, dots = {}, btns = {};
 $$('.layer').forEach(l => layers[l.dataset.part] = l);
 $$('.part').forEach(b => {
+  btns[b.dataset.part] = b;
   dots[b.dataset.part] = b.querySelector('.dot');
-  b.onclick = () => { cur = PARTS.find(p => p.key === b.dataset.part);
-    $$('.part').forEach(x => x.setAttribute('aria-pressed', x === b)); renderColor(); };
+  b.onclick = () => pick(PARTS.find(p => p.key === b.dataset.part));
 });
+function pick(p){
+  cur = p;
+  PARTS.forEach(q => btns[q.key].setAttribute('aria-pressed', q.key === p.key));
+  renderColor();
+}
+
+/* ---- 디자인 ----
+   무지와 양면은 사진이 같고 이불 마스크만 다르다. 층과 단추를 감췄다 보였다 할 뿐이다.
+   고른 색은 그대로 둔다 — 디자인만 바꿔 견주는 것이 이 탭의 요점이다. */
+const touched = {};   // 손님이 실제로 눌러서 고른 부위. apply() 에서 표시한다.
+function syncDesign(){
+  PARTS.forEach(p => {
+    const on = inDz(p, design);
+    layers[p.key].hidden = !on;
+    btns[p.key].hidden = !on;
+    layers[p.key].style.backgroundColor = state[p.key].hex;
+    dots[p.key].style.background = state[p.key].hex;
+    // 베개는 양면으로 만들 때 부르는 이름이 달라진다 (베개(뒤)-왼쪽 ↔ 베개-왼쪽 뒷면)
+    btns[p.key].lastChild.textContent = pilKo(p);
+  });
+  $('#pTwoWrap').hidden = !DESIGNS.find(d => d.key === design).pilTwo;
+  renderPillows();
+  $$('#designs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.design === design));
+  const d = DESIGNS.find(x => x.key === design);
+  $('#dnowT').textContent = d.ko;
+  $('#dnowD').textContent = d.d;
+  // 확인 화면의 작은 미리보기는 이 화면을 복사해 만든다. 디자인이 바뀌면 다시 만들어야 한다.
+  $('#sceneMini').dataset.built = '';
+  if (!inDz(cur, design)) pick(parts()[0]);
+  else pick(cur);
+}
+function setDesign(key){
+  if (key === design) return;
+  design = key;
+  // 아직 **손 안 댄** 부위에만 쓰던 색을 물려준다.
+  //   물려주지 않으면 — 양면에서 색을 고르고 무지로 가면 흰색부터 다시 골라야 한다.
+  //   늘 물려주면 — 무지를 들렀다 오는 사이에 양면에서 고른 뒷면 색이 앞면 색으로 덮인다.
+  for (const [to, from] of Object.entries(CARRY[key] || {}))
+    if (!touched[to]) state[to] = state[from];
+  syncDesign();
+}
+// 카드를 누르면 그 디자인으로 **들어간다** — 고른 뒤 다시 「다음」을 누르게 하지 않는다.
+$$('#designs button').forEach(b => b.onclick = () => { setDesign(b.dataset.design); navigate(1); });
+$('#dchg').onclick = () => navigate(0);
+// 화면마다 할 말이 다르다. 색 화면에서는 처음에 전부 흰색이라 그 말을 해주는데,
+// 색을 하나라도 바꾸면 더는 사실이 아니므로 말을 바꾼다.
+function renderSub(){
+  if (step === 0) return $('#sub').textContent = '디자인을 고르시면 색을 고르는 화면으로 넘어갑니다.';
+  const ps = parts(), white = ps.every(p => state[p.key].hex === p.def);
+  $('#sub').textContent = white
+    ? \`지금은 \${ps.length}곳 모두 흰색입니다. 부위를 눌러 원단 \${TOTAL}색 중에서 바꿔보세요.\`
+    : \`부위 \${ps.length}곳을 원단 \${TOTAL}색에서 고릅니다.\`;
+}
 function label(c){ return c.no ? \`NO. \${c.no} · \${c.ko} \${c.su}수\` : c.ko; }
 function apply(c){
   state[cur.key] = c;
+  touched[cur.key] = 1;
   layers[cur.key].style.backgroundColor = c.hex;
   dots[cur.key].style.background = c.hex;
   renderColor();
@@ -581,6 +782,7 @@ function renderColor(){
   $('#palHint').textContent = allow
     ? \`매트리스커버는 \${allow.join('·')}수만 됩니다 (100수는 얇아서 쓰지 않습니다) — \${shown}색\`
     : \`\${shown}색\`;
+  renderSub();
 }
 const pal = $('#palette');
 for (const g of Object.values(SW)) {
@@ -601,12 +803,17 @@ for (const g of Object.values(SW)) {
   pal.appendChild(row);
 }
 
-/* ---- 베개커버: ①에서 고른 네 칸이 곧 장수다 ---- */
-const PILLOWS = PARTS.filter(p => p.qty !== undefined);
-const pq = k => +$('.pq[data-part="' + k + '"]').value;
-const ps = k => $('.ps[data-part="' + k + '"]').value;
-const pillowCount = () => PILLOWS.reduce((s, p) => s + pq(p.key), 0);
-const pillowRows = () => PILLOWS.map(p => ({ p, c:state[p.key], size:ps(p.key), n:pq(p.key) })).filter(r => r.n > 0);
+/* ---- 베개커버 ----
+   ②에서 고른 색이 곧 주문하실 베개커버다. 칸 수는 디자인마다 다르다 —
+   무지는 네 칸, 양면은 두 칸이고 한 칸이 앞면·뒷면 두 색을 갖는다. */
+// 이불이 양면이어도 베개커버까지 양면인 것은 아니다. 체크한 때만 두 칸·두 색이 된다.
+const pilTwo  = () => !!(DESIGNS.find(d => d.key === design).pilTwo && $('#p_two').checked);
+const pilKo   = p => (pilTwo() && p.koTwo) || p.ko;
+const slots   = () => PIL_MODES[pilTwo() ? 'double' : 'single'];
+const pq = k => +$('.pq[data-slot="' + k + '"]').value;
+const ps = k => $('.ps[data-slot="' + k + '"]').value;
+const pillowCount = () => slots().reduce((s, sl) => s + pq(sl.key), 0);
+const pillowRows = () => slots().map(sl => ({ sl, size:ps(sl.key), n:pq(sl.key) })).filter(r => r.n > 0);
 // 사이즈마다 값이 다르니 사이즈별로 묶어서 센다. 순서는 화면에 나온 순서 그대로.
 function pillowBySize(){
   const g = new Map();
@@ -614,16 +821,40 @@ function pillowBySize(){
   return [...g];
 }
 function renderPillows(){
-  PILLOWS.forEach(p => {
-    $('.pdot[data-part="' + p.key + '"]').style.background = state[p.key].hex;
-    $('.pcl[data-part="' + p.key + '"]').textContent = label(state[p.key]);
-    $('.prow[data-part="' + p.key + '"]').classList.toggle('zero', pq(p.key) === 0);
+  const on = new Set(slots().map(s => s.key));
+  // 이 디자인에 없는 칸은 감춘다. 지우지 않는 것은 디자인을 되돌렸을 때
+  // 적어둔 사이즈와 장수가 그대로 살아 있게 하기 위해서다.
+  $$('.prow').forEach(r => r.hidden = !on.has(r.dataset.slot));
+  slots().forEach(sl => {
+    const row = $('.prow[data-slot="' + sl.key + '"]');
+    row.querySelector('.pnm').textContent = sl.ko;
+    const box = row.querySelector('.pcls');
+    box.textContent = '';
+    sl.faces.forEach(f => {
+      const c = state[f.part];
+      const line = document.createElement('div'); line.className = 'pcl';
+      const dot = document.createElement('span'); dot.className = 'pdot'; dot.style.background = c.hex;
+      line.append(dot);
+      if (f.face) { const t = document.createElement('b'); t.className = 'pfc'; t.textContent = f.face; line.append(t); }
+      const nm = document.createElement('span'); nm.textContent = label(c); line.append(nm);
+      box.append(line);
+    });
+    row.querySelector('.ps').setAttribute('aria-label', sl.ko + ' 사이즈');
+    row.querySelector('.pq').setAttribute('aria-label', sl.ko + ' 장수');
+    row.classList.toggle('zero', pq(sl.key) === 0);
   });
+  $('#pDesc').innerHTML = '②에서 고르신 <b>' + slots().length + '칸이 곧 주문하실 베개커버</b>입니다.'
+    + (pilTwo() ? ' <b>양면 베개커버</b>라 한 장이 앞면·뒷면 두 색입니다.' : '')
+    + ' 칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.<br>'
+    + '사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다. '
+    + '<b>목록에 없는 사이즈</b>는 아래 <b>남기실 말</b>에 적어주세요 — 따로 안내드립니다.';
   const n = pillowCount();
   $('#pTot').textContent = !n ? '전부 0장 — 베개커버는 주문하지 않는 것으로 봅니다'
     : '모두 ' + n + '장  ·  ' + pillowBySize().map(([s, c]) => s + ' ' + c + '장').join(', ');
 }
 $$('.pq, .ps').forEach(s => s.onchange = renderPillows);
+// 베개 양면 여부가 바뀌면 부위 이름·미리보기·칸 수가 한꺼번에 따라간다.
+$('#p_two').onchange = () => { syncDesign(); };
 
 /* ---- 매트리스 높이: 받을 수 있는 최대 높이를 넘으면 그 자리에서 알린다 ---- */
 const HT_ALL = PRICE.mattress.height || [];
@@ -654,7 +885,9 @@ function checkHeight(){
 $('#m_h').oninput = checkHeight;
 
 /* ---- 종류 ---- */
-const quiltKind = () => QUILT_KIND.find(k => k.key === $('#q_kind').value);
+const designKo   = () => DESIGNS.find(d => d.key === design).ko;
+const quiltParts = () => parts().filter(p => p.grp === 'quilt');
+const quiltKind  = () => QUILT_KIND.find(k => k.key === $('#q_kind').value);
 const matKind   = () => MAT_KIND.find(k => k.key === $('#m_kind').value);
 // 사이즈 목록이 종류마다 다르므로 종류를 바꾸면 다시 채운다.
 // 고르던 사이즈가 새 종류에도 있으면 그대로 두고, 없으면 기본값으로 돌아간다.
@@ -707,7 +940,8 @@ function quote(){
   if (!$('#q_skip').checked) {
     const k = quiltKind(), size = $('#q_size').value, n = +$('#q_qty').value;
     const p = fee(PRICE.quilt.sale[k.key][size], PRICE.quilt.custom);
-    const d = k.ko + ' · ' + size + (n > 1 ? ' · ' + n + '장' : '');
+    // 양면은 값이 무지와 같다 [대표, 2026-08-06]. 값은 같아도 무엇을 주문했는지는 보여야 한다.
+    const d = designKo() + ' · ' + k.ko + ' · ' + size + (n > 1 ? ' · ' + n + '장' : '');
     add(p == null ? { t:'이불', d, ask:'가격 문의' } : { t:'이불', d, a:p * n });
     if (k.snap && !snap()) notes.push('이불 연결 똑딱이 갯수를 적어주세요. 쓰시던 이불의 똑딱이 수와 맞춰 만듭니다.');
   }
@@ -742,6 +976,18 @@ function quote(){
       add(unit == null ? { t:'베개커버', k:size, d, ask:'가격 문의' } : { t:'베개커버', k:size, d, a:unit * n });
     }
   }
+  // 양면으로 고르셨는데 앞뒤 색이 같으면 알린다. 그대로 둬도 값은 같지만,
+  // 손님이 뒷면을 안 고른 것일 수 있고 그러면 대표가 「양면인데 왜 한 색?」을 물어봐야 한다.
+  if (!$('#q_skip').checked) {
+    const qp = quiltParts();
+    if (qp.length > 1 && qp.every(p => state[p.key].hex === state[qp[0].key].hex))
+      notes.push('이불을 양면으로 고르셨는데 앞면과 뒷면 색이 같습니다. 그대로 하셔도 되고 ② 색에서 바꾸실 수 있습니다.');
+  }
+  if (!$('#p_skip').checked && pilTwo()) {
+    const same = pillowRows().filter(r => state[r.sl.faces[0].part].hex === state[r.sl.faces[1].part].hex);
+    if (same.length)
+      notes.push('양면 베개커버인데 ' + same.map(r => r.sl.ko).join(' · ') + '의 앞뒤 색이 같습니다.');
+  }
   if (rows.length && ALWAYS_CUSTOM) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
   return { rows, sum, ask, bad, notes };
 }
@@ -764,11 +1010,15 @@ function renderOrder(){
   const L = [];
   if (!$('#q_skip').checked) {
     const k = quiltKind();
-    L.push('■ 이불', '   종류 : ' + k.ko, '   사이즈 : ' + $('#q_size').value);
+    // 디자인은 늘 적는다. 「무지」라고 못박아야 양면이 아님이 분명해진다.
+    L.push('■ 이불', '   디자인 : ' + designKo(), '   종류 : ' + k.ko, '   사이즈 : ' + $('#q_size').value);
     if (k.oz) L.push('   두께 : ' + $('#q_oz').value);   // 이불커버는 온스가 없다
     L.push('   수량 : ' + $('#q_qty').value + '장');
     if (k.snap) L.push('   이불 연결 똑딱이 : ' + (snap() ? snap() + '개' : '안 적으심'));
-    L.push('   컬러 : ' + label(state.quilt), '');
+    // 양면이면 이불이 두 부위라 「컬러(앞면)」「컬러(뒷면)」 두 줄이 나간다.
+    quiltParts().forEach(p =>
+      L.push('   컬러' + (p.face ? '(' + p.face + ')' : '') + ' : ' + label(state[p.key])));
+    L.push('');
   }
   if (!$('#m_skip').checked) {
     const wh = $('#m_wh').value.trim(), h = $('#m_h').value.trim();
@@ -780,9 +1030,16 @@ function renderOrder(){
     L.push('');
   }
   if (!$('#p_skip').checked && pillowCount()) {
-    L.push('■ 베개커버',
-      ...pillowRows().map(r => '   ' + r.p.ko + ' : ' + r.size + ' · ' + r.n + '장  /  ' + label(r.c)),
-      '   모두 ' + pillowCount() + '장 (' + pillowBySize().map(([s,c]) => s + ' ' + c + '장').join(', ') + ')', '');
+    // 대표가 주문서에서 바로 알아야 하는 값이다 [대표, 2026-08-06].
+    // 「무지」도 적는다 — 안 적으면 양면인지 아닌지 물어봐야 한다.
+    L.push('■ 베개커버', '   종류 : ' + (pilTwo() ? '양면 (앞뒤 다른 색)' : '무지 (앞뒤 같은 색)'));
+    pillowRows().forEach(r => {
+      const head = '   ' + r.sl.ko + ' : ' + r.size + ' · ' + r.n + '장';
+      // 한 색이면 한 줄에 붙이고, 양면처럼 두 색이면 색을 아래에 따로 적는다.
+      if (r.sl.faces.length === 1) L.push(head + '  /  ' + label(state[r.sl.faces[0].part]));
+      else { L.push(head); r.sl.faces.forEach(f => L.push('      컬러(' + f.face + ') : ' + label(state[f.part]))); }
+    });
+    L.push('   모두 ' + pillowCount() + '장 (' + pillowBySize().map(([s,c]) => s + ' ' + c + '장').join(', ') + ')', '');
   }
   if (PRICE_READY) {
     const q = quote();
@@ -801,7 +1058,10 @@ function renderOrder(){
   $('#orderTxt').textContent = L.join('\\n').trim();
 }
 
-renderColor();
+syncDesign();
+goto(0);      // 단추 글씨·부제목까지 한 곳에서 정해진다. HTML 에 적어두면 어긋난다.
+// 첫 화면도 기록에 심어둔다. 없으면 뒤로가기로 돌아왔을 때 어느 단계였는지 알 수 없다.
+try { history.replaceState({ step:0 }, ''); } catch(_) {}
 </script>
 </body></html>`;
 
@@ -812,4 +1072,6 @@ fs.writeFileSync(path.join(ROOT, 'colors.json'),
   JSON.stringify(SW, (key, v) => key === 'k' ? undefined : v, 1), 'utf8');
 
 const kb = Math.round(fs.statSync(path.join(ROOT,'index.html')).size / 1024);
-console.log(`index.html 생성 — 원단 ${total}색 / 부위 ${PARTS.length}곳 / 3단계 / ${kb}KB`);
+const dz = DESIGNS.map(d => `${d.ko} ${PARTS.filter(p => inDz(p, d.key)).length}곳`).join(' · ');
+const steps = (html.match(/<section class="step"/g) || []).length;
+console.log(`index.html 생성 — 원단 ${total}색 / 디자인 ${DESIGNS.length}가지 (${dz}) / ${steps}단계 / ${kb}KB`);
