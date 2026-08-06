@@ -490,17 +490,42 @@ ${fontCss}
   -webkit-mask-mode:alpha;mask-mode:alpha}
  .btext{padding:26px 22px 4px}
  .beye{font-size:10.5px;letter-spacing:.17em;color:var(--mut);text-align:center;margin:0 0 11px}
- /* 표지 문구 [대표, 2026-08-06] — 제목 Paperlogy Bold 700 / 본문 Pretendard Regular 400.
-    크기는 대표가 준 42~48px 과 18~20px 을 clamp 로 감싼다. 폰(375px)에서는 각각 43px,
-    18.8px 이 나와 지정 범위 안에 든다. **작은 폰에서만 더 줄어든다** — 320px 화면에서
-    48px 로 두면 「찾는 침구에서,」 가 화면 밖으로 나간다. */
- .btit{font-family:var(--head);font-size:clamp(34px,11.5vw,48px);font-weight:700;
-  line-height:1.28;letter-spacing:-.04em;text-align:center;margin:0 0 16px}
- .bbody{font-size:clamp(17px,5vw,20px);line-height:1.8;color:var(--mut);text-align:center;margin:0 auto}
+ /* 표지 문구 — 제목 Paperlogy Bold 700 / 본문 Pretendard Regular 400.
+    폰으로 보고 세 가지를 고쳤다 [대표, 2026-08-06].
+      · 자간 -0.04em 이 너무 좁아 답답했다 → 0 으로 푼다
+      · 42~48px 은 폰에서 너무 컸다 → 아래 「어떤 침구를 만들까요?」(15px) 에 맞춘다
+      · 줄과 줄이 붙어 있었다 → 줄간을 넓히고 두 덩어리 사이도 벌린다
+    이제 표지 글이 다 15px 이다. 크기로 힘을 주는 대신 **여백으로 읽히게** 한 것이다. */
+ /* 제목 두 줄은 한 문장처럼 붙어 읽혀야 해서 본문(2.3)보다 좁게 잡는다 [대표, 2026-08-06].
+    글꼴이 다른 두 덩어리(Paperlogy 제목 / Pretendard 본문) 사이는 넉넉히 벌린다 —
+    붙여두면 글꼴이 바뀐 것이 실수처럼 보인다. */
+ .btit{font-family:var(--head);font-size:25px;font-weight:700;
+  line-height:1.65;letter-spacing:0;text-align:center;margin:0 0 40px}
+ .bbody{font-size:15px;line-height:2.3;color:var(--mut);text-align:center;margin:0 auto}
  /* 카드 위 구역 이름. 표지에서 도구로 넘어가는 자리를 표시한다 */
  .bsec{text-align:center;margin:34px 0 13px}
  .bsec .k{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em}
  .bsec .e{display:block;font-size:10px;letter-spacing:.17em;color:var(--mut);margin-bottom:4px}
+ /* 폰에서는 **표지만 한 화면**에 담고, 상품 카드는 아래로 내린다 [대표, 2026-08-06].
+    100svh 를 쓰는 것은 주소창이 접혔다 펴졌다 할 때 화면이 튀지 않게 하려는 것이다.
+    76px 은 아래 고정 단추(.nav) 자리다.
+    글은 사진 아래 남는 공간의 **가운데**에 놓는다 — 위에 붙여두면 아래가 휑하다. */
+ /* 표지 맨 아래에 붙는 안내. 화살표가 천천히 움직여 「더 있다」를 알린다.
+    넓은 화면에서는 카드가 이미 보이므로 감춘다.
+    ★ 감추는 규칙을 미디어쿼리보다 **먼저** 써야 한다. 뒤에 쓰면 힘이 같아서
+      나중 것이 이겨 폰에서도 안 보인다. */
+ .bmore{display:none;align-items:center;justify-content:center;gap:6px;margin:0 auto 16px;
+  padding:9px 14px;border:0;background:none;cursor:pointer;font-family:inherit;
+  font-size:12px;color:var(--mut);letter-spacing:.01em}
+ .bmore .a{font-size:13px;animation:bob 1.9s ease-in-out infinite}
+ @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+ /* 움직임을 꺼둔 사람에게는 흔들지 않는다 */
+ @media (prefers-reduced-motion:reduce){.bmore .a{animation:none}}
+ @media (max-width:700px){
+  .brand{min-height:calc(100vh - 76px);min-height:calc(100svh - 76px);display:flex;flex-direction:column}
+  .brand .btext{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:26px}
+  .bmore{display:flex}
+ }
 
  /* 디자인 고르기 — 쇼핑몰 상품 목록처럼 사진 카드를 눌러 들어간다 [대표, 2026-08-06].
     카드 두 장은 같은 사진·같은 색이고 젖혀진 면만 다르다. 견주면 차이가 그것 하나로 보인다. */
@@ -681,6 +706,9 @@ ${fontCss}
       <h2 class="btit">${BRAND.title.join('<br>')}</h2>
       <p class="bbody">${BRAND.body.join('<br>')}</p>
     </div>
+    <!-- 폰에서는 표지가 한 화면을 다 채워 카드가 안 보인다. 아래에 더 있다는 것을 알린다 —
+         없으면 아래 「색 고르기」를 그냥 눌러 기본 디자인(무지)으로 넘어간다. -->
+    <button class="bmore" id="bmore">디자인 고르기<span class="a">↓</span></button>
   </div>
   <p class="bsec"><span class="e">DESIGN</span><span class="k">어떤 침구를 만들까요?</span></p>
   <div class="cards" id="designs">
@@ -689,8 +717,9 @@ ${DESIGNS.map((d,i)=>`    <button data-design="${d.key}" aria-pressed="${i===0}"
       <span class="ct"><span class="cn">${d.ko}</span><span class="cd">${d.d}</span><span class="cnow">고르신 것</span></span>
     </button>`).join('\n')}
   </div>
-  <p class="chint">사진의 색은 예시입니다. 다음 단계에서 원단 ${total}색 중에서 고르시면 됩니다.<br>
-    <b>디자인을 바꿔도 고르신 색은 그대로 둡니다</b> — 언제든 돌아와 바꿔보실 수 있습니다.</p>
+  <!-- 줄바꿈은 대표가 정한 자리다 [2026-08-06]. 저절로 넘어가게 두지 말 것. -->
+  <p class="chint">사진은 예시입니다.<br>
+    당신의 취향에 맞게, 하나씩 바꿔보세요.</p>
 </section>
 
 <!-- ② 색 -->
@@ -844,7 +873,9 @@ const paintOf = p => state[p.follow || p.key].hex;
 let cur = parts()[0];
 
 /* ---- 단계 이동 ---- */
-const NEXT_LABEL = ['색 고르기','사이즈 입력하기','확인하기','복사하기'];
+// ① 의 단추만 「내 침구 만들기」다 [대표, 2026-08-06] — 표지에서 시작을 누르는 자리라
+// 하는 일(색 고르기)보다 **무엇을 얻는지**를 적는다. 뒤 단계는 그대로 하는 일을 적는다.
+const NEXT_LABEL = ['내 침구 만들기','사이즈 입력하기','확인하기','복사하기'];
 const LAST = NEXT_LABEL.length - 1;
 function goto(s){
   step = s;
@@ -874,6 +905,9 @@ addEventListener('popstate', e => goto(e.state && typeof e.state.step === 'numbe
 
 $('#btnPrev').onclick = () => navigate(Math.max(0, step-1));
 $('#btnNext').onclick = async () => {
+  // 카드를 안 누르고 아래 단추로 넘어가면 지금 디자인(무지)으로 정해진 것으로 본다.
+  // 안 그러면 ② 는 무지인데 ① 로 돌아왔을 때 아무것도 안 골라진 것처럼 보인다.
+  if (step === 0) { chosen = true; markCards(); }
   if (step < LAST) return navigate(step+1);
   const t = $('#orderTxt').textContent;
   try { await navigator.clipboard.writeText(t); }
@@ -900,6 +934,14 @@ function pick(p){
    무지와 양면은 사진이 같고 이불 마스크만 다르다. 층과 단추를 감췄다 보였다 할 뿐이다.
    고른 색은 그대로 둔다 — 디자인만 바꿔 견주는 것이 이 탭의 요점이다. */
 const touched = {};   // 손님이 실제로 눌러서 고른 부위. apply() 에서 표시한다.
+// 손님이 카드를 **눌렀는가.** 안 눌렀으면 어느 카드에도 고른 표시를 하지 않는다 —
+// 처음부터 무지에 테두리가 쳐져 있으면 고르지도 않은 것을 고른 것처럼 보인다
+// [대표, 2026-08-06]. 속으로는 무지가 기본값이라 아무 때나 ② 로 넘어갈 수 있다.
+let chosen = false;
+function markCards(){
+  $$('#designs button').forEach(b =>
+    b.setAttribute('aria-pressed', chosen && b.dataset.design === design));
+}
 function syncDesign(){
   // 사진은 디자인마다 한 장씩 있고 고른 것만 보인다. 층은 그 사진 안에만 있다.
   $$('#sceneMain .scene').forEach(s => s.hidden = s.dataset.design !== design);
@@ -912,7 +954,7 @@ function syncDesign(){
   });
   $('#pTwoWrap').hidden = !DESIGNS.find(d => d.key === design).pilTwo;
   renderPillows();
-  $$('#designs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.design === design));
+  markCards();
   const d = DESIGNS.find(x => x.key === design);
   $('#dnowT').textContent = d.ko;
   $('#dnowD').textContent = d.d;
@@ -932,8 +974,13 @@ function setDesign(key){
   syncDesign();
 }
 // 카드를 누르면 그 디자인으로 **들어간다** — 고른 뒤 다시 「다음」을 누르게 하지 않는다.
-$$('#designs button').forEach(b => b.onclick = () => { setDesign(b.dataset.design); navigate(1); });
+// 같은 디자인을 다시 눌러도 setDesign 은 일찍 빠져나가므로, 고른 표시는 따로 켠다.
+$$('#designs button').forEach(b => b.onclick = () => {
+  chosen = true; setDesign(b.dataset.design); markCards(); navigate(1);
+});
 $('#dchg').onclick = () => navigate(0);
+// 표지 아래 안내를 누르면 카드까지 내려간다. 손으로 밀어 내리는 것과 같은 자리로 간다.
+$('#bmore').onclick = () => $('#designs').scrollIntoView({ behavior:'smooth', block:'center' });
 // 화면마다 할 말이 다르다. 색 화면에서는 처음에 전부 흰색이라 그 말을 해주는데,
 // 색을 하나라도 바꾸면 더는 사실이 아니므로 말을 바꾼다.
 function renderSub(){
