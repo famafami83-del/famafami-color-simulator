@@ -313,10 +313,17 @@ const PRICE = {
   },
   pillow: {                // 사이즈와 무관하게 같은 값 [대표, 2026-08-04]
     sale: {
-      '40×60': 26000,
-      '50×70': 26000,
+      '40×60': 28000,
+      '50×70': 28000,
     },
-    custom: 3000,          // 베개커버 맞춤 추가금 (1장당). 사이즈 무관 [대표, 2026-08-04]
+    // 베개커버에는 맞춤 추가금이 없다 [대표, 2026-08-06].
+    //   2026-08-04 에 26,000 + 3,000 으로 받아 적었는데 잘못이었다. 한 장 28,000 이고
+    //   맞춤 추가금은 원래 없다 — 대표가 2장 56,000 을 짚어 주면서 드러났다.
+    //   0 을 null 로 두면 「가격 문의」로 새어나간다. 반드시 0 이어야 한다.
+    custom: 0,
+    // 양면 베개커버 추가금 — **장수로 붙는다.** 2장까지 10,000원 [대표, 2026-08-06].
+    // 천이 두 종류라 무지와 값이 같을 수 없다. 이불 양면은 값이 같지만 베개는 다르다.
+    two: { per: 2, add: 10000 },
   },
 };
 
@@ -343,6 +350,16 @@ for (const [group, list, kinds] of [['quilt', null, QUILT_KIND], ['mattress', nu
         + (extra.length ? `\n  목록에 없는 가격 항목: ${extra.join(', ')}` : ''));
   }
 }
+
+// 양면 베개커버 추가금 — per 가 0이나 음수면 나누기에서 무한대가 나와 값이 폭주한다.
+{
+  const t = PRICE.pillow.two;
+  if (t && (!(t.per >= 1) || !(t.add >= 0)))
+    throw new Error('PRICE.pillow.two 는 per 가 1 이상, add 가 0 이상이어야 합니다');
+}
+// 손님이 체크칸에서 미리 알 수 있게 문구를 표에서 만든다. 손으로 적으면 값만 고쳤을 때 어긋난다.
+const PIL_TWO_TEXT = PRICE.pillow.two && PRICE.pillow.two.add
+  ? `${PRICE.pillow.two.per}장까지 ${PRICE.pillow.two.add.toLocaleString('ko-KR')}원이 더 붙습니다.` : '';
 
 // 높이 구간은 낮은 것부터 와야 한다. 뒤집히면 엉뚱한 칸이 먼저 걸린다.
 const HT = PRICE.mattress.height || [];
@@ -566,9 +583,9 @@ ${PARTS.filter(p=>inDz(p,d.key)).map(p=>{const u=b64(`mask_${p.key}.png`,'image/
   </div>
   <label class="ptwo" id="pTwoWrap" hidden>
     <input type="checkbox" id="p_two" checked>
-    <span><b>베개커버도 앞뒤를 다르게</b><br>
+    <span><b>베개커버도 앞뒤를 다르게</b>${PIL_TWO_TEXT ? ` <b>${PIL_TWO_TEXT}</b>` : ''}<br>
       사진처럼 베개 <b>한 장의 앞뒤</b>를 다른 색으로 만듭니다.
-      체크를 푸시면 베개는 <b>앞면 색 한 가지</b>로 나갑니다.</span>
+      체크를 푸시면 베개는 <b>앞면 색 한 가지</b>로 나가고 추가금도 없습니다.</span>
   </label>
   <div class="parts">
 ${PARTS.filter(pickable).map(p=>`    <button class="part" data-part="${p.key}" aria-pressed="false"><span class="dot" style="background:${p.def}"></span>${p.ko}</button>`).join('\n')}
@@ -987,8 +1004,14 @@ function quote(){
   const rows = [], notes = [];
   let sum = 0, ask = false, bad = false;
   const add = r => { rows.push(r); if (r.bad) bad = true; else if (r.ask) ask = true; else sum += r.a; };
-  const fee = (sale, custom) =>
-    sale == null || (ALWAYS_CUSTOM && custom == null) ? null : sale + (ALWAYS_CUSTOM ? custom : 0);
+  // 맞춤 추가금이 실제로 붙은 줄이 하나라도 있어야 「추가금이 포함된 금액」이라고 말한다.
+  // 베개커버만 사시면 추가금이 0이라, 늘 말하면 거짓말이 된다. [2026-08-06]
+  let usedCustom = false;
+  const fee = (sale, custom) => {
+    if (sale == null || (ALWAYS_CUSTOM && custom == null)) return null;
+    if (ALWAYS_CUSTOM && custom) usedCustom = true;
+    return sale + (ALWAYS_CUSTOM ? custom : 0);
+  };
 
   if (!$('#q_skip').checked) {
     const k = quiltKind(), size = $('#q_size').value, n = +$('#q_qty').value;
@@ -1028,6 +1051,14 @@ function quote(){
       // k = 줄이 여럿일 때 구분하는 꼬리표. 복사 텍스트에서 "베개커버"만 두 줄 나오는 걸 막는다.
       add(unit == null ? { t:'베개커버', k:size, d, ask:'가격 문의' } : { t:'베개커버', k:size, d, a:unit * n });
     }
+    // 양면 베개커버 추가금 — 천이 두 종류라 붙는다. 사이즈와 무관해 한 줄로 낸다.
+    const TW = PRICE.pillow.two, np = pillowCount();
+    if (pilTwo() && TW && np) {
+      const blocks = Math.ceil(np / TW.per);
+      add({ t:'베개커버', k:'양면 추가', a:TW.add * blocks,
+        d:'양면 ' + np + '장 · ' + TW.per + '장까지 ' + won(TW.add)
+          + (blocks > 1 ? ' × ' + blocks : '') });
+    }
   }
   // 양면으로 고르셨는데 앞뒤 색이 같으면 알린다. 그대로 둬도 값은 같지만,
   // 손님이 뒷면을 안 고른 것일 수 있고 그러면 대표가 「양면인데 왜 한 색?」을 물어봐야 한다.
@@ -1037,7 +1068,7 @@ function quote(){
     if (qp.length > 1 && qp.every(p => state[p.key].hex === state[qp[0].key].hex))
       notes.push('양면으로 고르셨는데 앞면과 뒷면 색이 같습니다. 그대로 하셔도 되고 ② 색에서 바꾸실 수 있습니다.');
   }
-  if (rows.length && ALWAYS_CUSTOM) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
+  if (usedCustom) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
   return { rows, sum, ask, bad, notes };
 }
 function renderQuote(){
