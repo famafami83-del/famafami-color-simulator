@@ -88,9 +88,17 @@ const WHITE = '#f5f4ef';   // NO. 952 멜트 아이스크림 60수
 // base   = 그 디자인의 바탕 사진. 침구가 전부 흰색인 컷이다.
 // card   = 고르는 화면에 걸리는 사진. `src/tools/design-cards.js` 가 만든다.
 // pilTwo = 「베개커버도 앞뒤를 다르게」 칸을 보일지. 양면 디자인에서만 묻는다.
+// d      = 한 줄짜리. ② 화면 맨 위 띠(「무지 · 이불 앞뒤가 같은 색」)에 쓴다.
+// cd     = 카드 안에 넣을 줄들. **무엇을 만드는지 먼저, 무엇이 다른지 나중.**
+//   「무지」라고만 써두면 이불 얘기로만 읽혀서, 베개커버·매트리스커버도 같이 맞추는 줄
+//   손님이 모른다 [대표, 2026-08-07]. 두 카드에 같은 줄이 겹쳐 보이는 것은 일부러다 —
+//   어느 쪽을 골라도 셋 다 맞춘다는 뜻이다.
+const SET = '이불 · 베개커버 · 매트리스커버';
 const DESIGNS = [
-  { key:'plain', ko:'무지', d:'이불 앞뒤가 같은 색',     card:'card_plain.jpg', base:'base.jpg' },
-  { key:'both',  ko:'양면', d:'이불 앞뒤를 다른 색으로', card:'card_both.jpg',  base:'base_both.jpg',
+  { key:'plain', ko:'무지', d:'이불 앞뒤가 같은 색',
+    cd:[SET, '이불 앞뒤가 <b>같은 색</b>'],       card:'card_plain.jpg', base:'base.jpg' },
+  { key:'both',  ko:'양면', d:'이불 앞뒤를 다른 색으로',
+    cd:[SET, '이불 앞뒤를 <b>다른 색으로</b>'],   card:'card_both.jpg',  base:'base_both.jpg',
     pilTwo:true },
 ];
 // 디자인을 바꿔도 **고른 색이 날아가지 않게** 물려준다. 다시 고르게 하면 카드를 둔 뜻이 없다.
@@ -438,7 +446,7 @@ const FONT_HEAD = "'FF Head'," + FONT_BODY;
 const html = `<!doctype html><html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>파마파미 컬러 시뮬레이터</title>
+<title>FAMAFAMI MADE</title>
 <style>
 ${fontCss}
  :root{--head:${FONT_HEAD}}
@@ -503,7 +511,13 @@ ${fontCss}
   line-height:1.65;letter-spacing:0;text-align:center;margin:0 0 40px}
  .bbody{font-size:15px;line-height:2.3;color:var(--mut);text-align:center;margin:0 auto}
  /* 카드 위 구역 이름. 표지에서 도구로 넘어가는 자리를 표시한다 */
- .bsec{text-align:center;margin:34px 0 13px}
+ .bsec{text-align:center;margin:34px 0 12px}
+ /* 제목 아래 두 덩어리 — 설명 한 단, 그보다 한 단 작고 연한 보조 안내 한 단.
+    카드까지 여백을 촘촘히 잡아 답답하지 않으면서도 한 묶음으로 읽히게 한다. */
+ .dlead{text-align:center;font-size:13px;line-height:1.85;color:var(--fg);
+  margin:0 0 10px;word-break:keep-all}
+ .dsub{text-align:center;font-size:11.5px;line-height:1.8;color:var(--mut);
+  margin:0 0 18px;word-break:keep-all}
  .bsec .k{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em}
  .bsec .e{display:block;font-size:10px;letter-spacing:.17em;color:var(--mut);margin-bottom:4px}
  /* 폰에서는 **표지만 한 화면**에 담고, 상품 카드는 아래로 내린다 [대표, 2026-08-06].
@@ -535,7 +549,10 @@ ${fontCss}
  .cards button img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
  .cards .ct{display:block;padding:10px 11px 12px;position:relative}
  .cards .cn{display:block;font-size:14px;font-weight:650;line-height:1.4}
- .cards .cd{display:block;font-size:11.5px;color:var(--mut);line-height:1.45}
+ /* 카드 설명은 두 줄이다 — 무엇을 만드는지 / 무엇이 다른지. 두 줄이라 줄간을 좀 벌린다.
+    폰에서 카드가 175px 남짓이라 「매트리스커버」가 넘어갈 수 있어 자간을 살짝 좁힌다. */
+ .cards .cd{display:block;font-size:11.5px;color:var(--mut);line-height:1.6;letter-spacing:-.02em}
+ .cards .cd b{color:var(--fg);font-weight:650}
  .cards button[aria-pressed="true"]{border-color:var(--fg);box-shadow:0 0 0 1.5px var(--fg)}
  .cards .cnow{display:none;font-size:10.5px;font-weight:650;color:var(--bg);background:var(--fg);
   border-radius:999px;padding:2px 8px;margin-top:5px;width:fit-content}
@@ -681,7 +698,9 @@ ${fontCss}
 <!-- 머리글과 단계 표시는 ① 디자인에서 감춘다. 첫 화면은 표지고, 카드를 누르면 도구가 된다. -->
 <div id="topbar">
 <header>
-  <h1>파마파미 컬러 시뮬레이터</h1>
+  <!-- 페이지 이름 [대표, 2026-08-07]. 「컬러 시뮬레이터」는 만드는 쪽 말이라
+       손님에게는 뜻이 안 통한다. 브라우저 탭·즐겨찾기에도 이 이름으로 뜬다. -->
+  <h1>FAMAFAMI MADE</h1>
   <p class="sub" id="sub"></p>
 </header>
 
@@ -711,10 +730,14 @@ ${fontCss}
     <button class="bmore" id="bmore">디자인 고르기<span class="a">↓</span></button>
   </div>
   <p class="bsec"><span class="e">DESIGN</span><span class="k">어떤 침구를 만들까요?</span></p>
+  <!-- 줄바꿈은 대표가 정한 자리다 [2026-08-07]. word-break:keep-all 을 걸어두어
+       좁은 화면에서 어쩔 수 없이 넘어갈 때도 낱말 가운데가 아니라 띄어쓰기에서 끊긴다. -->
+  <p class="dlead">이불부터 베개커버, 매트리스커버까지<br>하나의 공간처럼 함께 만들어보세요.</p>
+  <p class="dsub">매트리스커버는 우리 집 침대에 맞게<br>사이즈 맞춤이 가능합니다.</p>
   <div class="cards" id="designs">
 ${DESIGNS.map((d,i)=>`    <button data-design="${d.key}" aria-pressed="${i===0}">
       <img src="${b64(d.card,'image/jpeg')}" alt="${d.ko} 미리보기">
-      <span class="ct"><span class="cn">${d.ko}</span><span class="cd">${d.d}</span><span class="cnow">고르신 것</span></span>
+      <span class="ct"><span class="cn">${d.ko}</span><span class="cd">${(d.cd||[d.d]).join('<br>')}</span><span class="cnow">고르신 것</span></span>
     </button>`).join('\n')}
   </div>
   <!-- 줄바꿈은 대표가 정한 자리다 [2026-08-06]. 저절로 넘어가게 두지 말 것. -->
