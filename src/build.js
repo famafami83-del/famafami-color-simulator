@@ -421,11 +421,9 @@ const html = `<!doctype html><html lang="ko"><head>
     테두리가 **전부 따라온다** — 그 자리들이 모두 var(--fg) 를 배경으로 쓰기 때문이다.
     --card 는 크림보다 밝게 둔다. 카드까지 크림이면 팔레트의 흰색·크림 계열 색칩이
     바탕에 묻혀 안 보인다 (901 아몬드 밀크 #f1ebdb 같은 것). */
- /* --acc = 시그니처 버터 [대표, 2026-08-06]. 직조라벨의 SH-295 버터베이지 실 색이고,
-    라벨 시안에서 재보니 동그라미의 87%·글씨의 68%가 정확히 #f4ecb8 이었다.
-    라벨이 「검정 바탕 + 버터 글씨」라 이 색은 어두운 데 얹혀야 산다. 그래서 밝은
-    화면에서도 어두운 화면에서도 값을 바꾸지 않고, 글자만 네이비로 고정한다. */
- :root{--acc:#f4ecb8;--accfg:#16203d}
+ /* 시그니처 버터 #f4ecb8 (직조라벨 SH-295 버터베이지) 는 **지금 안 쓴다.**
+    주 단추에 칠해봤더니 네이비 쪽이 더 세련돼 보인다는 판단이었다 [대표, 2026-08-06].
+    큰 면적으로 깔면 무르게 보이는 색이다. 다시 쓸 일이 있으면 좁은 자리에 쓸 것. */
  :root{--bg:#f3f0e9;--fg:#16203d;--mut:#636a7b;--line:#e2ddd1;--card:#fdfbf6;--soft:#eae5da;--bad:#a8261f}
  @media (prefers-color-scheme:dark){:root{--bg:#131a2a;--fg:#ece9e1;--mut:#98a0b2;--line:#28324a;--card:#1a2338;--soft:#1f293e;--bad:#ff9384}}
  :root[data-theme="dark"]{--bg:#131a2a;--fg:#ece9e1;--mut:#98a0b2;--line:#28324a;--card:#1a2338;--soft:#1f293e;--bad:#ff9384}
@@ -618,9 +616,7 @@ const html = `<!doctype html><html lang="ko"><head>
  .nav button{flex:1;padding:14px;border-radius:9px;font-size:14px;font-weight:600;
   cursor:pointer;font-family:inherit;border:1px solid var(--fg)}
  .nav .prev{background:transparent;color:var(--fg);flex:0 0 92px}
- /* 손님이 눌러야 할 단 하나의 자리라 브랜드 버터를 여기에 쓴다.
-    테두리까지 버터로 바꾼다 — 안 그러면 .nav button 의 네이비 테두리가 남아 겉돈다. */
- .nav .next{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+ .nav .next{background:var(--fg);color:var(--bg)}
  .nav button[hidden]{display:none}
 </style>
 </head><body>
