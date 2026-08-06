@@ -133,7 +133,7 @@ for (const d of DESIGNS)
     if (!fs.existsSync(path.join(ASSETS, f)))
       throw new Error(`${d.ko} ${what}(${f})이 없습니다 — src/tools/ 의 도구를 돌리셨습니까`);
 // ① 표지 재료. 없으면 첫 화면이 통째로 빈 채로 나간다.
-for (const [f, tool] of [['hero.jpg', 'design-cards.js'], ['logo.png', 'brand-logo.js']])
+for (const [f, tool] of [['hero.jpg', 'brand-hero.js'], ['logo.png', 'brand-logo.js']])
   if (!fs.existsSync(path.join(ASSETS, f)))
     throw new Error(`표지 재료 ${f} 가 없습니다 — src/tools/${tool} 를 돌리셨습니까`);
 // 물려주기가 가리키는 부위가 실제로 있어야 한다.
@@ -342,12 +342,21 @@ const PRICE = {
 //   ① 디자인 화면만 표지처럼 만들고, 카드를 누르면 그때부터 도구가 된다.
 // 로고 안 영문 「INSTITUE OF BEDDING RESEARCH」 는 쓰지 않는다 — INSTITUTE 의 오타다.
 // 워드마크만 쓴다 (`src/tools/brand-logo.js`).
+// 표지 글은 **영어로** 쓴다 [대표, 2026-08-06]. 대표가 한글판과 영문판을 둘 다 주었고
+// 영문판을 골랐다. 한글판은 아래에 남겨둔다 — 되돌릴 때 다시 옮겨 적지 않아도 되게.
+//   아버지, 어머니, 그리고 가족.
+//   파마파미는 하루가 시작되고 끝나는 가장 가까운 공간에 오래도록 편안함을 더합니다.
+//   유행을 좇기보다 시간이 지나도 질리지 않는 디자인과 엄선한 소재, 국내의 세심한 제작에
+//   집중합니다. 자신에게 꼭 맞는 침구를 찾아 오래도록 아끼며 사용하는 분들을 위해 만듭니다.
+// 「디자인을 고르세요」는 한글로 둔다 — 브랜드 말이 아니라 **눌러야 할 곳을 알려주는 말**이다.
 const BRAND = {
   eyebrow: 'FAMAFAMI · EST. 2017',
-  title:   ['아버지, 어머니,', '그리고 가족.'],
-  body:    '파마파미는 하루가 시작되고 끝나는 가장 가까운 공간에 오래도록 편안함을 더합니다. '
-         + '유행을 좇기보다 시간이 지나도 질리지 않는 디자인과 엄선한 소재, 국내의 세심한 제작에 '
-         + '집중합니다. 자신에게 꼭 맞는 침구를 찾아 오래도록 아끼며 사용하는 분들을 위해 만듭니다.',
+  title:   ['Father + Mother + Family.'],
+  body:    'FAMAFAMI creates lasting comfort where each day begins and ends. '
+         + 'Rather than following passing trends, we focus on timeless design, '
+         + 'carefully selected materials, and thoughtful craftsmanship in Korea. '
+         + 'We make bedding for those who value finding what truly suits them '
+         + 'and cherishing it for years to come.',
 };
 
 // 이 페이지로 들어오는 주문은 색 조합을 직접 고른 것이라 전부 맞춤 제작이다.
@@ -435,7 +444,7 @@ const html = `<!doctype html><html lang="ko"><head>
  /* 아래쪽만 살짝 어둡게 깐다. 크림색 워드마크가 크림색 이불 위를 지날 때 사라져서다.
     사진 전체를 어둡게 하면 침구 색이 탁해 보이므로 아래 절반에만 준다. */
  .bshot::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(to bottom,transparent 52%,rgba(18,24,40,.38))}
+  background:linear-gradient(to bottom,transparent 44%,rgba(18,24,40,.30) 74%,rgba(18,24,40,.56))}
  /* 워드마크는 늘 사진 위에 얹히므로 화면 밝기와 무관하게 밝은 색으로 고정한다.
     아래로 넘어간 부분은 overflow:hidden 이 잘라낸다 — 글자가 사진에 잠긴 모양이 된다.
     translateY 는 제 키 기준이라 사진 높이가 바뀌어도 잘리는 정도가 그대로다. */
@@ -445,8 +454,9 @@ const html = `<!doctype html><html lang="ko"><head>
   -webkit-mask-mode:alpha;mask-mode:alpha}
  .btext{padding:26px 22px 4px}
  .beye{font-size:10.5px;letter-spacing:.17em;color:var(--mut);text-align:center;margin:0 0 11px}
- .btit{font-size:22px;font-weight:650;line-height:1.45;letter-spacing:-.02em;text-align:center;margin:0 0 15px}
- .bbody{font-size:12.5px;line-height:1.9;color:var(--mut);text-align:center;max-width:32em;margin:0 auto}
+ /* 영문이라 한글보다 줄간을 좁게 잡는다. 한글 1.9 는 영문에서 성글어 보인다. */
+ .btit{font-size:22px;font-weight:650;line-height:1.4;letter-spacing:-.01em;text-align:center;margin:0 0 15px}
+ .bbody{font-size:12.5px;line-height:1.8;color:var(--mut);text-align:center;max-width:34em;margin:0 auto}
  /* 카드 위 구역 이름. 표지에서 도구로 넘어가는 자리를 표시한다 */
  .bsec{text-align:center;margin:34px 0 13px}
  .bsec .k{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em}
