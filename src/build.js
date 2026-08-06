@@ -132,6 +132,10 @@ for (const d of DESIGNS)
   for (const [what, f] of [['카드 사진', d.card], ['바탕 사진', d.base]])
     if (!fs.existsSync(path.join(ASSETS, f)))
       throw new Error(`${d.ko} ${what}(${f})이 없습니다 — src/tools/ 의 도구를 돌리셨습니까`);
+// ① 표지 재료. 없으면 첫 화면이 통째로 빈 채로 나간다.
+for (const [f, tool] of [['hero.jpg', 'design-cards.js'], ['logo.png', 'brand-logo.js']])
+  if (!fs.existsSync(path.join(ASSETS, f)))
+    throw new Error(`표지 재료 ${f} 가 없습니다 — src/tools/${tool} 를 돌리셨습니까`);
 // 물려주기가 가리키는 부위가 실제로 있어야 한다.
 for (const [d, m] of Object.entries(CARRY))
   for (const [to, from] of Object.entries(m))
@@ -333,6 +337,19 @@ const PRICE = {
   },
 };
 
+// 첫 화면에 거는 브랜드 이야기 [대표, 2026-08-06].
+//   「딱 열자마자 이불 고르는 칸이 나오니까 브랜드 이미지가 안 산다」는 말에서 나왔다.
+//   ① 디자인 화면만 표지처럼 만들고, 카드를 누르면 그때부터 도구가 된다.
+// 로고 안 영문 「INSTITUE OF BEDDING RESEARCH」 는 쓰지 않는다 — INSTITUTE 의 오타다.
+// 워드마크만 쓴다 (`src/tools/brand-logo.js`).
+const BRAND = {
+  eyebrow: 'FAMAFAMI · EST. 2017',
+  title:   ['아버지, 어머니,', '그리고 가족.'],
+  body:    '파마파미는 하루가 시작되고 끝나는 가장 가까운 공간에 오래도록 편안함을 더합니다. '
+         + '유행을 좇기보다 시간이 지나도 질리지 않는 디자인과 엄선한 소재, 국내의 세심한 제작에 '
+         + '집중합니다. 자신에게 꼭 맞는 침구를 찾아 오래도록 아끼며 사용하는 분들을 위해 만듭니다.',
+};
+
 // 이 페이지로 들어오는 주문은 색 조합을 직접 고른 것이라 전부 맞춤 제작이다.
 // 그래서 맞춤 추가금은 항상 붙는다. 기성가로만 낼 일이 생기면 false 로 바꾼다.
 const ALWAYS_CUSTOM = true;
@@ -408,6 +425,32 @@ const html = `<!doctype html><html lang="ko"><head>
  .steps div{flex:1;font-size:11.5px;text-align:center;padding:7px 2px;border-radius:7px;
   background:var(--soft);color:var(--mut);border:1px solid transparent}
  .steps div[aria-current="true"]{background:var(--fg);color:var(--bg);font-weight:600}
+
+ /* ① 디자인 = 브랜드 표지 [대표, 2026-08-06]
+    사진이 가로로 꽉 차고, 그 아래끝에 **워드마크가 걸쳐 잘린다.** 양옆으로도 조금 넘겨
+    자른다 — 로고를 통째로 앉히면 그냥 머리글이 되고, 잘라야 표지처럼 읽힌다. */
+ .brand{margin:-16px -14px 0}                 /* .wrap 의 여백을 지워 가로로 꽉 채운다 */
+ .bshot{position:relative;overflow:hidden;background:var(--soft)}
+ .bshot img{display:block;width:100%;height:auto}
+ /* 아래쪽만 살짝 어둡게 깐다. 크림색 워드마크가 크림색 이불 위를 지날 때 사라져서다.
+    사진 전체를 어둡게 하면 침구 색이 탁해 보이므로 아래 절반에만 준다. */
+ .bshot::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to bottom,transparent 52%,rgba(18,24,40,.38))}
+ /* 워드마크는 늘 사진 위에 얹히므로 화면 밝기와 무관하게 밝은 색으로 고정한다.
+    아래로 넘어간 부분은 overflow:hidden 이 잘라낸다 — 글자가 사진에 잠긴 모양이 된다.
+    translateY 는 제 키 기준이라 사진 높이가 바뀌어도 잘리는 정도가 그대로다. */
+ .bmark{position:absolute;left:-2%;bottom:0;width:104%;aspect-ratio:900/79;z-index:1;
+  transform:translateY(22%);background:#f4f1ea;
+  -webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-mode:alpha;mask-mode:alpha}
+ .btext{padding:26px 22px 4px}
+ .beye{font-size:10.5px;letter-spacing:.17em;color:var(--mut);text-align:center;margin:0 0 11px}
+ .btit{font-size:22px;font-weight:650;line-height:1.45;letter-spacing:-.02em;text-align:center;margin:0 0 15px}
+ .bbody{font-size:12.5px;line-height:1.9;color:var(--mut);text-align:center;max-width:32em;margin:0 auto}
+ /* 카드 위 구역 이름. 표지에서 도구로 넘어가는 자리를 표시한다 */
+ .bsec{text-align:center;margin:34px 0 13px}
+ .bsec .k{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em}
+ .bsec .e{display:block;font-size:10px;letter-spacing:.17em;color:var(--mut);margin-bottom:4px}
 
  /* 디자인 고르기 — 쇼핑몰 상품 목록처럼 사진 카드를 눌러 들어간다 [대표, 2026-08-06].
     카드 두 장은 같은 사진·같은 색이고 젖혀진 면만 다르다. 견주면 차이가 그것 하나로 보인다. */
@@ -558,6 +601,8 @@ const html = `<!doctype html><html lang="ko"><head>
 </head><body>
 
 <div class="wrap">
+<!-- 머리글과 단계 표시는 ① 디자인에서 감춘다. 첫 화면은 표지고, 카드를 누르면 도구가 된다. -->
+<div id="topbar">
 <header>
   <h1>파마파미 컬러 시뮬레이터</h1>
   <p class="sub" id="sub"></p>
@@ -569,9 +614,23 @@ const html = `<!doctype html><html lang="ko"><head>
   <div data-s="2">③ 사이즈</div>
   <div data-s="3">④ 확인</div>
 </div>
+</div>
 
 <!-- ① 디자인 -->
 <section class="step" data-step="0" aria-hidden="false">
+  <div class="brand">
+    <div class="bshot">
+      <img src="${b64('hero.jpg','image/jpeg')}" alt="파마파미 침구">
+      <span class="bmark" role="img" aria-label="FAMA FAMI"
+        style="-webkit-mask-image:url('${b64('logo.png','image/png')}');mask-image:url('${b64('logo.png','image/png')}')"></span>
+    </div>
+    <div class="btext">
+      <p class="beye">${BRAND.eyebrow}</p>
+      <h2 class="btit">${BRAND.title.join('<br>')}</h2>
+      <p class="bbody">${BRAND.body}</p>
+    </div>
+  </div>
+  <p class="bsec"><span class="e">DESIGN</span><span class="k">디자인을 고르세요</span></p>
   <div class="cards" id="designs">
 ${DESIGNS.map((d,i)=>`    <button data-design="${d.key}" aria-pressed="${i===0}">
       <img src="${b64(d.card,'image/jpeg')}" alt="${d.ko} 미리보기">
@@ -737,6 +796,8 @@ const NEXT_LABEL = ['색 고르기','사이즈 입력하기','확인하기','복
 const LAST = NEXT_LABEL.length - 1;
 function goto(s){
   step = s;
+  // ① 은 브랜드 표지다. 머리글과 단계 표시를 걷어내야 사진이 화면 맨 위에서 시작한다.
+  $('#topbar').hidden = s === 0;
   $$('.step').forEach(el => el.setAttribute('aria-hidden', +el.dataset.step !== s));
   $$('.steps div').forEach(el => el.setAttribute('aria-current', +el.dataset.s === s));
   $('#btnPrev').hidden = s === 0;

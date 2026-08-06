@@ -1,4 +1,5 @@
-// 디자인 고르는 카드에 넣을 작은 사진을 만든다.
+// 페이지에 들어가는 사진을 만든다 — 디자인 고르는 카드 2장 + 첫 화면에 까는 사진 1장.
+// 셋 다 같은 색표(C)를 쓴다. 색을 따로 적어두면 대표가 색을 바꿀 때 한쪽만 바뀐다.
 //
 // 카드는 **디자인끼리 무엇이 다른지**만 보여주면 된다. 그래서 두 장에 같은 색을 쓴다 —
 // 이불은 아몬드 밀크, 매트리스커버는 베링씨. 색을 여기저기 다르게 칠하면
@@ -30,22 +31,30 @@ const C = {
 // 카드에서부터 보인다. 양면 카드에는 이 자유가 없다(베개가 이불을 따라간다).
 const PILLOWS = { pillowF:C.p952, pillowR:C.p2006, pillowL:C.p970, pillowW:C.p952 };
 
-const CARDS = {
-  // base.jpg(1200×1500) — 이불 앞면(왼쪽 아래)과 베개 네 개가 들어오는 자리
-  'card_plain.jpg': { base:'base.jpg', crop:{ left:0, top:500, width:1000, height:1000 },
+const BOTH = { bothA:C.q901, bothB:C.b2012, bothM:C.m939, bothP:C.q901 };
+
+const SHOTS = {
+  // base.jpg(1200×1500) — 이불 앞면(왼쪽 아래)과 베개 네 개가 들어오는 자리.
+  // 폰에서 두 칸 그리드면 카드 하나가 175px 남짓, 2배 화면이라 350px 이면 충분하다.
+  'card_plain.jpg': { base:'base.jpg', w:520, q:76,
+    crop:{ left:0, top:500, width:1000, height:1000 },
     paint:{ quilt:C.q901, mattress:C.m939, ...PILLOWS } },
   // base_both.jpg(1200×1600) — 베개 둘과 젖혀진 이불이 다 들어와야 양면인 게 보인다.
   // 삥은 앞면과 같은 색으로 덮어 안 보이게 한다. 페이지에서도 그렇게 쓴다.
-  'card_both.jpg':  { base:'base_both.jpg', crop:{ left:80, top:400, width:1120, height:1120 },
-    paint:{ bothA:C.q901, bothB:C.b2012, bothM:C.m939, bothP:C.q901 } },
+  'card_both.jpg':  { base:'base_both.jpg', w:520, q:76,
+    crop:{ left:80, top:400, width:1120, height:1120 }, paint:BOTH },
+  // 첫 화면 맨 위에 가로로 꽉 차게 깔린다. 그 위에 워드마크가 아래끝에 걸쳐 얹힌다.
+  //   가로로 긴 조각이라야 한다 — 세로로 길면 사진만으로 첫 화면이 다 찬다.
+  //   베개 둘과 젖혀진 이불 띠가 같이 들어오는 자리를 골랐다.
+  //   900px = 폰(430px) 2배 화면까지 덮는다. 더 키워봐야 안 보이고 무겁기만 하다.
+  //   왼쪽 위 마루가 얼룩덜룩하게 눌려 있어 그 자리를 피해 아래로 내려 잡았다.
+  'hero.jpg':       { base:'base_both.jpg', w:900, q:76,
+    crop:{ left:0, top:680, width:1200, height:620 }, paint:BOTH },
 };
-
-// 폰에서 두 칸 그리드면 카드 하나가 175px 남짓, 2배 화면이라 350px 이면 충분하다.
-const CARD_W = 520;
 const hex2rgb = h => [1,3,5].map(i => parseInt(h.substr(i,2),16));
 
 (async () => {
-  for (const [name, { base: bf, crop, paint }] of Object.entries(CARDS)) {
+  for (const [name, { base: bf, crop, paint, w, q }] of Object.entries(SHOTS)) {
     if (!fs.existsSync(OUT + bf)) throw new Error(`바탕 사진이 없습니다: ${bf}`);
     const { data: base, info } = await sharp(OUT + bf).removeAlpha().raw().toBuffer({ resolveWithObject: true });
     const W = info.width, H = info.height;
@@ -68,7 +77,7 @@ const hex2rgb = h => [1,3,5].map(i => parseInt(h.substr(i,2),16));
       }
     }
     await sharp(out, { raw:{ width:W, height:H, channels:3 } })
-      .extract(crop).resize(CARD_W).jpeg({ quality:76, mozjpeg:true }).toFile(OUT + name);
-    console.log(`${name.padEnd(16)} ${bf.padEnd(15)} ${CARD_W}px  ${Math.round(fs.statSync(OUT+name).size/1024)}KB`);
+      .extract(crop).resize(w).jpeg({ quality:q, mozjpeg:true }).toFile(OUT + name);
+    console.log(`${name.padEnd(16)} ${bf.padEnd(15)} ${String(w).padStart(4)}px  ${Math.round(fs.statSync(OUT+name).size/1024)}KB`);
   }
 })();
