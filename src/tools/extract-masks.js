@@ -79,7 +79,10 @@ const nrm = (b,i)=>{const r=b[i*3],g=b[i*3+1],bl=b[i*3+2],s=r+g+bl+1;return [r/s
       base[i*3+c]=Math.max(0,Math.min(255,Math.round(vals[1])));
     }
   }
-  await sharp(base,{raw:{width:W,height:H,channels:3}}).jpeg({quality:92}).toFile(A('base.jpg'));
+  // 품질 82 + mozjpeg — 92 로 두면 394KB 라 페이지가 그만큼 무거워진다. 82 로 낮춰도
+  // 화소 평균 차이가 1.9/255 라 눈에 안 보인다. 이 사진은 색을 곱해 얹는 바탕일 뿐이다.
+  // split-piping.js 의 base_both.jpg 도 같은 값을 쓴다. [2026-08-06]
+  await sharp(base,{raw:{width:W,height:H,channels:3}}).jpeg({quality:82,mozjpeg:true}).toFile(A('base.jpg'));
   console.log('\nwrote base.jpg');
 
   for(let s=0;s<SEEDS.length;s++){
