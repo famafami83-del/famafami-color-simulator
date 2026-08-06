@@ -3,10 +3,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>파마파미 컬러 시뮬레이터</title>
 <style>
- :root{--bg:#faf9f7;--fg:#2b2724;--mut:#8a827b;--line:#e6e1da;--card:#fff;--soft:#f2efea;--bad:#b5342a}
- @media (prefers-color-scheme:dark){:root{--bg:#17150f;--fg:#ece7df;--mut:#9c948a;--line:#2f2a24;--card:#201d17;--soft:#262219;--bad:#ff9384}}
- :root[data-theme="dark"]{--bg:#17150f;--fg:#ece7df;--mut:#9c948a;--line:#2f2a24;--card:#201d17;--soft:#262219;--bad:#ff9384}
- :root[data-theme="light"]{--bg:#faf9f7;--fg:#2b2724;--mut:#8a827b;--line:#e6e1da;--card:#fff;--soft:#f2efea;--bad:#b5342a}
+ /* 색 [대표, 2026-08-06] — 바탕은 크림, 글자와 강조는 **브랜드 네이비 #16203d**.
+    네이비는 로고 시트 색 띠의 절반을 차지하는 주색인데 그동안 한 번도 안 쓰고 있었다.
+    --fg 하나만 네이비로 바꾸면 「고른 부위」 알약, 「다음」 단추, 단계 표시, 색칩 선택
+    테두리가 **전부 따라온다** — 그 자리들이 모두 var(--fg) 를 배경으로 쓰기 때문이다.
+    --card 는 크림보다 밝게 둔다. 카드까지 크림이면 팔레트의 흰색·크림 계열 색칩이
+    바탕에 묻혀 안 보인다 (901 아몬드 밀크 #f1ebdb 같은 것). */
+ :root{--bg:#f3f0e9;--fg:#16203d;--mut:#636a7b;--line:#e2ddd1;--card:#fdfbf6;--soft:#eae5da;--bad:#a8261f}
+ @media (prefers-color-scheme:dark){:root{--bg:#131a2a;--fg:#ece9e1;--mut:#98a0b2;--line:#28324a;--card:#1a2338;--soft:#1f293e;--bad:#ff9384}}
+ :root[data-theme="dark"]{--bg:#131a2a;--fg:#ece9e1;--mut:#98a0b2;--line:#28324a;--card:#1a2338;--soft:#1f293e;--bad:#ff9384}
+ :root[data-theme="light"]{--bg:#f3f0e9;--fg:#16203d;--mut:#636a7b;--line:#e2ddd1;--card:#fdfbf6;--soft:#eae5da;--bad:#a8261f}
  *{box-sizing:border-box}
  html,body{margin:0;padding:0}
  body{background:var(--bg);color:var(--fg);line-height:1.6;padding-bottom:76px;
@@ -117,7 +123,9 @@
  .sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:10px 7px}
  .sw button{border:0;background:none;padding:0;cursor:pointer;font-family:inherit;
   display:flex;flex-direction:column;gap:3px;text-align:center}
- .sw button .c{display:block;aspect-ratio:1;border-radius:8px;border:1px solid rgba(0,0,0,.12)}
+ /* 팔레트는 카드가 아니라 크림 바탕 위에 바로 놓인다. 흰색·크림 계열 칩(952·902·2002…)이
+    바탕과 가까워서 테두리가 유일한 구분선이다 — 옅게 두면 칩이 안 보인다. */
+ .sw button .c{display:block;aspect-ratio:1;border-radius:8px;border:1px solid rgba(0,0,0,.18)}
  .sw button .n{font-size:10px;line-height:1.15;color:var(--fg);letter-spacing:-.3px}
  /* 번수는 매트리스커버에서 고를 수 있는지를 가르는 값이라 흐리면 안 된다 [대표, 2026-08-05] */
  .sw button .s{font-size:10px;line-height:1.15;color:var(--fg);font-weight:600}
