@@ -117,7 +117,9 @@
 
  /* 베개 칸 — 칸마다 색·사이즈·장수. 양면은 한 칸에 색이 둘(앞면·뒷면)이다 */
  .prow{display:block;padding:11px 0;border-top:1px solid var(--line)}
- .prow:first-child{border-top:0;padding-top:2px}
+ /* 맨 위 칸에는 줄을 긋지 않는다. 감춘 칸이 앞에 있을 수 있어 :first-child 로는 안 된다 —
+    renderPillows() 가 보이는 첫 칸에 .first 를 붙인다. */
+ .prow.first{border-top:0;padding-top:2px}
  .prow[hidden]{display:none}
  .prow .pnm{font-size:13px;font-weight:600;line-height:1.35}
  .prow .pcls{margin-bottom:7px}
@@ -314,6 +316,14 @@
           <select class="pq" data-slot="R2"><option value="0" selected>0장</option><option value="1">1장</option><option value="2">2장</option><option value="3">3장</option><option value="4">4장</option></select>
         </div>
       </div>
+      <div class="prow" data-slot="B">
+        <div class="pnm"></div>
+        <div class="pcls"></div>
+        <div class="psel">
+          <select class="ps" data-slot="B"><option>40×60</option><option selected>50×70</option></select>
+          <select class="pq" data-slot="B"><option value="0">0장</option><option value="1">1장</option><option value="2" selected>2장</option><option value="3">3장</option><option value="4">4장</option><option value="5">5장</option><option value="6">6장</option><option value="7">7장</option><option value="8">8장</option></select>
+        </div>
+      </div>
       <p class="ptot" id="pTot"></p>
     </div>
     <label class="skip"><input type="checkbox" id="p_skip"> 베개커버는 안 할래요</label>
@@ -357,7 +367,7 @@ const SW = {"01_WhiteCream":{"ko":"화이트 · 크림","en":"White & Creams","c
 const PARTS = [{"key":"quilt","ko":"이불","def":"#f5f4ef","su":null,"dz":["plain"],"grp":"quilt"},{"key":"mattress","ko":"매트리스커버","def":"#f5f4ef","su":[60,80],"dz":["plain"],"grp":"mat"},{"key":"pillowF","ko":"베개(앞)-왼쪽","def":"#f5f4ef","su":null,"dz":["plain"]},{"key":"pillowR","ko":"베개(앞)-오른쪽","def":"#f5f4ef","su":null,"dz":["plain"]},{"key":"pillowL","ko":"베개(뒤)-왼쪽","def":"#f5f4ef","su":null,"dz":["plain"]},{"key":"pillowW","ko":"베개(뒤)-오른쪽","def":"#f5f4ef","su":null,"dz":["plain"]},{"key":"bothA","ko":"이불·베개 앞면","def":"#f5f4ef","su":null,"dz":["both"],"grp":"quilt","face":"앞면"},{"key":"bothB","ko":"이불·베개 뒷면","def":"#f5f4ef","su":null,"dz":["both"],"grp":"quilt","face":"뒷면"},{"key":"bothM","ko":"매트리스커버","def":"#f5f4ef","su":[60,80],"dz":["both"],"grp":"mat"},{"key":"bothP","ko":"삥(테두리)","def":"#f5f4ef","su":null,"dz":["both"],"follow":"bothA"}];
 const DESIGNS = [{"key":"plain","ko":"무지","d":"이불 앞뒤가 같은 색","card":"card_plain.jpg","base":"base.jpg"},{"key":"both","ko":"양면","d":"이불 앞뒤를 다른 색으로","card":"card_both.jpg","base":"base_both.jpg","pilTwo":true}];
 const CARRY = {"both":{"bothA":"quilt","bothB":"quilt","bothM":"mattress"},"plain":{"quilt":"bothA","mattress":"bothM"}};
-const PIL_MODES = {"single":[{"key":"L","ko":"베개(앞)-왼쪽","qty":1,"faces":[{"part":"pillowF"}]},{"key":"R","ko":"베개(앞)-오른쪽","qty":1,"faces":[{"part":"pillowR"}]},{"key":"L2","ko":"베개(뒤)-왼쪽","qty":0,"faces":[{"part":"pillowL"}]},{"key":"R2","ko":"베개(뒤)-오른쪽","qty":0,"faces":[{"part":"pillowW"}]}],"double":[{"key":"L","ko":"베개-왼쪽","qty":1,"faces":[{"part":"bothA","face":"앞면"},{"part":"bothB","face":"뒷면"}]},{"key":"R","ko":"베개-오른쪽","qty":1,"faces":[{"part":"bothA","face":"앞면"},{"part":"bothB","face":"뒷면"}]}],"bothPlain":[{"key":"L","ko":"베개-왼쪽","qty":1,"faces":[{"part":"bothA"}]},{"key":"R","ko":"베개-오른쪽","qty":1,"faces":[{"part":"bothA"}]}]};
+const PIL_MODES = {"single":[{"key":"L","ko":"베개(앞)-왼쪽","qty":1,"faces":[{"part":"pillowF"}]},{"key":"R","ko":"베개(앞)-오른쪽","qty":1,"faces":[{"part":"pillowR"}]},{"key":"L2","ko":"베개(뒤)-왼쪽","qty":0,"faces":[{"part":"pillowL"}]},{"key":"R2","ko":"베개(뒤)-오른쪽","qty":0,"faces":[{"part":"pillowW"}]}],"bothTwo":[{"key":"B","ko":"베개커버","qty":2,"many":true,"faces":[{"part":"bothA","face":"앞면"},{"part":"bothB","face":"뒷면"}]}],"bothPlain":[{"key":"B","ko":"베개커버","qty":2,"many":true,"faces":[{"part":"bothA"}]}]};
 const TOTAL = 100;
 const PRICE = {"quilt":{"sale":{"charyeop":{"슈퍼싱글 150×210":195000,"퀸 200×230":265000,"킹 220×240":290000,"라지킹 240×240":340000},"cover":{"슈퍼싱글 160×210":170000,"퀸 200×230":190000,"킹 220×240":210000,"라지킹 240×240":240000}},"custom":10000},"mattress":{"sale":{"allinone":{"싱글 100×200":140000,"슈퍼싱글 110×200":140000,"120×200":145000,"퀸 150×200":155000,"160×200":170000,"170×200":180000,"180×200":195000,"190×200":220000,"200×200":240000,"220×200":260000},"plain":{"싱글 100×200":110000,"슈퍼싱글 110×200":110000,"120×200":110000,"퀸 150×200":120000,"160×200":135000,"170×200":145000,"180×200":155000,"190×200":170000,"200×200":180000,"220×200":195000}},"custom":10000,"height":[{"upto":35,"add":0},{"upto":45,"add":15000},{"upto":55,"add":25000},{"upto":65,"add":35000}]},"pillow":{"sale":{"40×60":28000,"50×70":28000},"custom":0,"two":{"per":2,"add":10000}}};
 const ALWAYS_CUSTOM = true;
@@ -535,7 +545,7 @@ for (const g of Object.values(SW)) {
 // 이불이 양면이어도 베개커버까지 양면인 것은 아니다. 체크를 풀면 앞면 색 한 가지로 나간다.
 const canTwo  = () => !!DESIGNS.find(d => d.key === design).pilTwo;
 const pilTwo  = () => canTwo() && $('#p_two').checked;
-const slots   = () => PIL_MODES[canTwo() ? (pilTwo() ? 'double' : 'bothPlain') : 'single'];
+const slots   = () => PIL_MODES[canTwo() ? (pilTwo() ? 'bothTwo' : 'bothPlain') : 'single'];
 const pq = k => +$('.pq[data-slot="' + k + '"]').value;
 const ps = k => $('.ps[data-slot="' + k + '"]').value;
 const pillowCount = () => slots().reduce((s, sl) => s + pq(sl.key), 0);
@@ -547,13 +557,20 @@ function pillowBySize(){
   return [...g];
 }
 function renderPillows(){
+  // 칸이 하나뿐인 모드(양면)는 말투가 달라진다 — 「칸마다」가 성립하지 않고,
+  // 칸 이름이 바로 위 제목과 같은 말이 된다.
+  const one = slots().length === 1;
   const on = new Set(slots().map(s => s.key));
   // 이 디자인에 없는 칸은 감춘다. 지우지 않는 것은 디자인을 되돌렸을 때
   // 적어둔 사이즈와 장수가 그대로 살아 있게 하기 위해서다.
   $$('.prow').forEach(r => r.hidden = !on.has(r.dataset.slot));
+  const first = $$('.prow').find(r => !r.hidden);
+  $$('.prow').forEach(r => r.classList.toggle('first', r === first));
   slots().forEach(sl => {
     const row = $('.prow[data-slot="' + sl.key + '"]');
-    row.querySelector('.pnm').textContent = sl.ko;
+    const nm = row.querySelector('.pnm');
+    nm.textContent = sl.ko;
+    nm.hidden = one;            // 칸이 하나면 바로 위 제목과 같은 말이 두 번 나온다
     const box = row.querySelector('.pcls');
     box.textContent = '';
     sl.faces.forEach(f => {
@@ -569,16 +586,21 @@ function renderPillows(){
     row.querySelector('.pq').setAttribute('aria-label', sl.ko + ' 장수');
     row.classList.toggle('zero', pq(sl.key) === 0);
   });
-  $('#pDesc').innerHTML = '②에서 고르신 <b>' + slots().length + '칸이 곧 주문하실 베개커버</b>입니다.'
+  $('#pDesc').innerHTML = (one
+      ? '베개커버는 <b>모두 같은 색</b>입니다 — 이불과 한 몸이라 한 장씩 다르게는 못 합니다.'
+      : '②에서 고르신 <b>' + slots().length + '칸이 곧 주문하실 베개커버</b>입니다.')
     + (pilTwo() ? ' <b>양면 베개커버</b>라 한 장이 앞면·뒷면 두 색입니다.' : '')
     // 양면 사진은 베개가 늘 앞뒤 두 색으로 보인다. 무지로 고르셨으면 그 말을 해줘야 한다.
     + (canTwo() && !pilTwo() ? ' 사진에는 베개 앞뒤가 다르게 보이지만,'
         + ' <b>무지로 고르셔서 앞면 색 한 가지</b>로 나갑니다.' : '')
-    + ' 칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.<br>'
-    + '사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다. '
-    + '<b>목록에 없는 사이즈</b>는 아래 <b>남기실 말</b>에 적어주세요 — 따로 안내드립니다.';
+    + (one ? ' <b>사이즈와 장수</b>만 골라주세요 — 안 사실 거면 <b>0장</b>.'
+           : ' 칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.')
+    + '<br>사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다. '
+    + '<b>목록에 없는 사이즈</b>' + (one ? '나 <b>사이즈를 섞어</b> 쓰실 때' : '')
+    + '는 아래 <b>남기실 말</b>에 적어주세요 — 따로 안내드립니다.';
   const n = pillowCount();
   $('#pTot').textContent = !n ? '전부 0장 — 베개커버는 주문하지 않는 것으로 봅니다'
+    : one ? '모두 ' + n + '장'   // 칸이 하나면 사이즈별 내역이 바로 위 줄과 같은 말이다
     : '모두 ' + n + '장  ·  ' + pillowBySize().map(([s, c]) => s + ' ' + c + '장').join(', ');
 }
 $$('.pq, .ps').forEach(s => s.onchange = renderPillows);
@@ -779,14 +801,19 @@ function renderOrder(){
   if (!$('#p_skip').checked && pillowCount()) {
     // 대표가 주문서에서 바로 알아야 하는 값이다 [대표, 2026-08-06].
     // 「무지」도 적는다 — 안 적으면 양면인지 아닌지 물어봐야 한다.
+    const one = slots().length === 1;
     L.push('■ 베개커버', '   종류 : ' + (pilTwo() ? '양면 (앞뒤 다른 색)' : '무지 (앞뒤 같은 색)'));
     pillowRows().forEach(r => {
-      const head = '   ' + r.sl.ko + ' : ' + r.size + ' · ' + r.n + '장';
+      // 칸이 하나면 칸 이름이 「베개커버」라 바로 위 줄과 겹친다. 사이즈로 적는다.
+      const head = '   ' + (one ? '사이즈' : r.sl.ko) + ' : ' + r.size + ' · ' + r.n + '장';
       // 한 색이면 한 줄에 붙이고, 양면처럼 두 색이면 색을 아래에 따로 적는다.
       if (r.sl.faces.length === 1) L.push(head + '  /  ' + label(state[r.sl.faces[0].part]));
       else { L.push(head); r.sl.faces.forEach(f => L.push('      컬러(' + f.face + ') : ' + label(state[f.part]))); }
     });
-    L.push('   모두 ' + pillowCount() + '장 (' + pillowBySize().map(([s,c]) => s + ' ' + c + '장').join(', ') + ')', '');
+    // 칸이 하나면 합계가 바로 위 줄과 같은 말이다.
+    if (!one) L.push('   모두 ' + pillowCount() + '장 ('
+      + pillowBySize().map(([s,c]) => s + ' ' + c + '장').join(', ') + ')');
+    L.push('');
   }
   if (PRICE_READY) {
     const q = quote();

@@ -162,10 +162,13 @@ for (const p of PARTS) {
 // 베개 칸 — **사이즈와 장수를 받는 단위**다. 부위(색을 칠하는 자리)와 다르다.
 // 이불이 양면이라고 베개커버까지 양면인 것은 아니다. **따로 받는다** [대표, 2026-08-06].
 //   single    : 무지. 사진의 베개 네 개를 각각 한 장씩 고른다 → 네 칸, 한 칸에 한 색
-//   double    : 양면 + 베개도 양면. 한 장이 앞면·뒷면 두 색 → 두 칸
-//   bothPlain : 양면인데 베개는 무지. 앞면 색 한 가지로 나간다 → 두 칸
-// 양면 쪽 두 모드는 색이 이불과 한 몸이라 칸마다 고를 것이 없다. 그래도 칸을 두는 것은
-// **사이즈와 장수를 받아야** 하기 때문이다.
+//   bothTwo   : 양면 + 베개도 양면. 한 장이 앞면·뒷면 두 색 → **한 칸**
+//   bothPlain : 양면인데 베개는 무지. 앞면 색 한 가지로 나간다 → **한 칸**
+// **양면은 칸이 하나다** [대표, 2026-08-06]. 베개 색이 이불과 한 몸이라 칸을 둘로 나눠봐야
+// 두 칸의 색이 늘 똑같다. 고를 것이 없는 칸을 둘씩 보여줄 이유가 없다.
+// 그래도 칸 자체는 있어야 한다 — **사이즈와 장수를 받는 자리**이기 때문이다.
+//   ★ 칸 이름(key)이 무지와 다르다. 그래야 무지의 네 칸과 양면의 한 칸이 서로
+//     적어둔 값을 덮지 않고 각각 살아남는다.
 // faces = 이 칸의 색이 어느 부위에서 오는지. 둘이면 앞면·뒷면이다.
 const PIL_MODES = {
   single: [
@@ -174,13 +177,14 @@ const PIL_MODES = {
     { key:'L2', ko:'베개(뒤)-왼쪽',   qty:0, faces:[{ part:'pillowL' }] },
     { key:'R2', ko:'베개(뒤)-오른쪽', qty:0, faces:[{ part:'pillowW' }] },
   ],
-  double: [
-    { key:'L', ko:'베개-왼쪽',   qty:1, faces:[{ part:'bothA', face:'앞면' }, { part:'bothB', face:'뒷면' }] },
-    { key:'R', ko:'베개-오른쪽', qty:1, faces:[{ part:'bothA', face:'앞면' }, { part:'bothB', face:'뒷면' }] },
+  // 한 칸이 네 칸 몫을 하므로 장수 목록을 늘려 잡는다. 안 그러면 무지에서 8장까지
+  // 되던 것이 양면에서 4장으로 조용히 줄어든다.
+  bothTwo: [
+    { key:'B', ko:'베개커버', qty:2, many:true,
+      faces:[{ part:'bothA', face:'앞면' }, { part:'bothB', face:'뒷면' }] },
   ],
   bothPlain: [
-    { key:'L', ko:'베개-왼쪽',   qty:1, faces:[{ part:'bothA' }] },
-    { key:'R', ko:'베개-오른쪽', qty:1, faces:[{ part:'bothA' }] },
+    { key:'B', ko:'베개커버', qty:2, many:true, faces:[{ part:'bothA' }] },
   ],
 };
 // 사이즈·장수 칸은 한 벌만 만들어두고 감췄다 보였다 한다.
@@ -233,6 +237,8 @@ const DEF_SIZE = { quilt:'퀸 200×230', mattress:'퀸 150×200' };
 // 이제 모든 베개 사이즈에 값이 있다. 다른 사이즈는 「남기실 말」로 받는다.
 const PILLOW = ['40×60','50×70'];
 const PIL_QTY = [0,1,2,3,4];
+// 칸이 하나뿐인 모드(양면)용. 네 칸 몫을 한 칸에서 받는다.
+const PIL_QTY_MANY = [0,1,2,3,4,5,6,7,8];
 // 이불·매트리스커버 장수. 0은 없다 — 안 살 때는 「안 할래요」로 끈다.
 const ITEM_QTY = [1,2,3,4];
 
@@ -497,7 +503,9 @@ const html = `<!doctype html><html lang="ko"><head>
 
  /* 베개 칸 — 칸마다 색·사이즈·장수. 양면은 한 칸에 색이 둘(앞면·뒷면)이다 */
  .prow{display:block;padding:11px 0;border-top:1px solid var(--line)}
- .prow:first-child{border-top:0;padding-top:2px}
+ /* 맨 위 칸에는 줄을 긋지 않는다. 감춘 칸이 앞에 있을 수 있어 :first-child 로는 안 된다 —
+    renderPillows() 가 보이는 첫 칸에 .first 를 붙인다. */
+ .prow.first{border-top:0;padding-top:2px}
  .prow[hidden]{display:none}
  .prow .pnm{font-size:13px;font-weight:600;line-height:1.35}
  .prow .pcls{margin-bottom:7px}
@@ -643,7 +651,7 @@ ${PIL_UNION.map(s=>`      <div class="prow" data-slot="${s.key}">
         <div class="pcls"></div>
         <div class="psel">
           <select class="ps" data-slot="${s.key}">${PILLOW.map(o=>`<option${o==='50×70'?' selected':''}>${o}</option>`).join('')}</select>
-          <select class="pq" data-slot="${s.key}">${PIL_QTY.map(n=>`<option value="${n}"${n===s.qty?' selected':''}>${n}장</option>`).join('')}</select>
+          <select class="pq" data-slot="${s.key}">${(s.many?PIL_QTY_MANY:PIL_QTY).map(n=>`<option value="${n}"${n===s.qty?' selected':''}>${n}장</option>`).join('')}</select>
         </div>
       </div>`).join('\n')}
       <p class="ptot" id="pTot"></p>
@@ -868,7 +876,7 @@ for (const g of Object.values(SW)) {
 // 이불이 양면이어도 베개커버까지 양면인 것은 아니다. 체크를 풀면 앞면 색 한 가지로 나간다.
 const canTwo  = () => !!DESIGNS.find(d => d.key === design).pilTwo;
 const pilTwo  = () => canTwo() && $('#p_two').checked;
-const slots   = () => PIL_MODES[canTwo() ? (pilTwo() ? 'double' : 'bothPlain') : 'single'];
+const slots   = () => PIL_MODES[canTwo() ? (pilTwo() ? 'bothTwo' : 'bothPlain') : 'single'];
 const pq = k => +$('.pq[data-slot="' + k + '"]').value;
 const ps = k => $('.ps[data-slot="' + k + '"]').value;
 const pillowCount = () => slots().reduce((s, sl) => s + pq(sl.key), 0);
@@ -880,13 +888,20 @@ function pillowBySize(){
   return [...g];
 }
 function renderPillows(){
+  // 칸이 하나뿐인 모드(양면)는 말투가 달라진다 — 「칸마다」가 성립하지 않고,
+  // 칸 이름이 바로 위 제목과 같은 말이 된다.
+  const one = slots().length === 1;
   const on = new Set(slots().map(s => s.key));
   // 이 디자인에 없는 칸은 감춘다. 지우지 않는 것은 디자인을 되돌렸을 때
   // 적어둔 사이즈와 장수가 그대로 살아 있게 하기 위해서다.
   $$('.prow').forEach(r => r.hidden = !on.has(r.dataset.slot));
+  const first = $$('.prow').find(r => !r.hidden);
+  $$('.prow').forEach(r => r.classList.toggle('first', r === first));
   slots().forEach(sl => {
     const row = $('.prow[data-slot="' + sl.key + '"]');
-    row.querySelector('.pnm').textContent = sl.ko;
+    const nm = row.querySelector('.pnm');
+    nm.textContent = sl.ko;
+    nm.hidden = one;            // 칸이 하나면 바로 위 제목과 같은 말이 두 번 나온다
     const box = row.querySelector('.pcls');
     box.textContent = '';
     sl.faces.forEach(f => {
@@ -902,16 +917,21 @@ function renderPillows(){
     row.querySelector('.pq').setAttribute('aria-label', sl.ko + ' 장수');
     row.classList.toggle('zero', pq(sl.key) === 0);
   });
-  $('#pDesc').innerHTML = '②에서 고르신 <b>' + slots().length + '칸이 곧 주문하실 베개커버</b>입니다.'
+  $('#pDesc').innerHTML = (one
+      ? '베개커버는 <b>모두 같은 색</b>입니다 — 이불과 한 몸이라 한 장씩 다르게는 못 합니다.'
+      : '②에서 고르신 <b>' + slots().length + '칸이 곧 주문하실 베개커버</b>입니다.')
     + (pilTwo() ? ' <b>양면 베개커버</b>라 한 장이 앞면·뒷면 두 색입니다.' : '')
     // 양면 사진은 베개가 늘 앞뒤 두 색으로 보인다. 무지로 고르셨으면 그 말을 해줘야 한다.
     + (canTwo() && !pilTwo() ? ' 사진에는 베개 앞뒤가 다르게 보이지만,'
         + ' <b>무지로 고르셔서 앞면 색 한 가지</b>로 나갑니다.' : '')
-    + ' 칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.<br>'
-    + '사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다. '
-    + '<b>목록에 없는 사이즈</b>는 아래 <b>남기실 말</b>에 적어주세요 — 따로 안내드립니다.';
+    + (one ? ' <b>사이즈와 장수</b>만 골라주세요 — 안 사실 거면 <b>0장</b>.'
+           : ' 칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.')
+    + '<br>사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다. '
+    + '<b>목록에 없는 사이즈</b>' + (one ? '나 <b>사이즈를 섞어</b> 쓰실 때' : '')
+    + '는 아래 <b>남기실 말</b>에 적어주세요 — 따로 안내드립니다.';
   const n = pillowCount();
   $('#pTot').textContent = !n ? '전부 0장 — 베개커버는 주문하지 않는 것으로 봅니다'
+    : one ? '모두 ' + n + '장'   // 칸이 하나면 사이즈별 내역이 바로 위 줄과 같은 말이다
     : '모두 ' + n + '장  ·  ' + pillowBySize().map(([s, c]) => s + ' ' + c + '장').join(', ');
 }
 $$('.pq, .ps').forEach(s => s.onchange = renderPillows);
@@ -1112,14 +1132,19 @@ function renderOrder(){
   if (!$('#p_skip').checked && pillowCount()) {
     // 대표가 주문서에서 바로 알아야 하는 값이다 [대표, 2026-08-06].
     // 「무지」도 적는다 — 안 적으면 양면인지 아닌지 물어봐야 한다.
+    const one = slots().length === 1;
     L.push('■ 베개커버', '   종류 : ' + (pilTwo() ? '양면 (앞뒤 다른 색)' : '무지 (앞뒤 같은 색)'));
     pillowRows().forEach(r => {
-      const head = '   ' + r.sl.ko + ' : ' + r.size + ' · ' + r.n + '장';
+      // 칸이 하나면 칸 이름이 「베개커버」라 바로 위 줄과 겹친다. 사이즈로 적는다.
+      const head = '   ' + (one ? '사이즈' : r.sl.ko) + ' : ' + r.size + ' · ' + r.n + '장';
       // 한 색이면 한 줄에 붙이고, 양면처럼 두 색이면 색을 아래에 따로 적는다.
       if (r.sl.faces.length === 1) L.push(head + '  /  ' + label(state[r.sl.faces[0].part]));
       else { L.push(head); r.sl.faces.forEach(f => L.push('      컬러(' + f.face + ') : ' + label(state[f.part]))); }
     });
-    L.push('   모두 ' + pillowCount() + '장 (' + pillowBySize().map(([s,c]) => s + ' ' + c + '장').join(', ') + ')', '');
+    // 칸이 하나면 합계가 바로 위 줄과 같은 말이다.
+    if (!one) L.push('   모두 ' + pillowCount() + '장 ('
+      + pillowBySize().map(([s,c]) => s + ' ' + c + '장').join(', ') + ')');
+    L.push('');
   }
   if (PRICE_READY) {
     const q = quote();
