@@ -88,17 +88,23 @@ const WHITE = '#f5f4ef';   // NO. 952 멜트 아이스크림 60수
 // base   = 그 디자인의 바탕 사진. 침구가 전부 흰색인 컷이다.
 // card   = 고르는 화면에 걸리는 사진. `src/tools/design-cards.js` 가 만든다.
 // pilTwo = 「베개커버도 앞뒤를 다르게」 칸을 보일지. 양면 디자인에서만 묻는다.
-// d      = 한 줄짜리. ② 화면 맨 위 띠(「무지 · 이불 앞뒤가 같은 색」)에 쓴다.
-// cd     = 카드 안에 넣을 줄들. **무엇을 만드는지 먼저, 무엇이 다른지 나중.**
-//   「무지」라고만 써두면 이불 얘기로만 읽혀서, 베개커버·매트리스커버도 같이 맞추는 줄
-//   손님이 모른다 [대표, 2026-08-07]. 두 카드에 같은 줄이 겹쳐 보이는 것은 일부러다 —
-//   어느 쪽을 골라도 셋 다 맞춘다는 뜻이다.
-const SET = '이불 · 베개커버 · 매트리스커버';
+// ko     = 카드 제목이자 손님이 보는 디자인 이름. 주문서·견적에도 이 이름이 나간다.
+//   전에는 「무지 / 양면」이었는데 [대표, 2026-08-07] 에 바꿨다. 사실 **둘 다 무지**다 —
+//   패턴이 없다는 점은 같고 다른 것은 이불 앞뒤 색뿐이라, 다른 데를 이름으로 삼았다.
+// d      = 한 줄짜리. ② 화면 맨 위 띠(「같은 컬러 · 패턴 없는 디자인」)에 쓴다.
+// cd     = 카드 안에 넣을 줄들. 두 카드가 같은 짜임이라야 나란히 놓았을 때 견주기 쉽다.
+//   ★ 「이불 · 베개커버 · 매트리스커버」와 매트리스 사이즈 맞춤 안내는 **카드에 안 쓴다.**
+//     바로 위 공통 설명에서 이미 말했다. 두 번 쓰면 카드가 지저분해진다.
+// on     = **주문서와 예상 금액에 나가는 이름.** 화면 이름(ko)보다 길게 적는다.
+//   대표는 그동안 「무지」로 불러왔고, 손님은 「같은 컬러」를 보고 고른다. 주문서에
+//   둘을 같이 적어야 양쪽이 같은 것을 가리키는 줄 안다 [대표, 2026-08-07].
+//   패턴이 없다는 점은 둘 다 같으므로 앞에 「무지」를 두고 다른 데를 뒤에 붙인다.
+const NOPAT = '패턴 없는 디자인';
 const DESIGNS = [
-  { key:'plain', ko:'무지', d:'이불 앞뒤가 같은 색',
-    cd:[SET, '이불 앞뒤가 <b>같은 색</b>'],       card:'card_plain.jpg', base:'base.jpg' },
-  { key:'both',  ko:'양면', d:'이불 앞뒤를 다른 색으로',
-    cd:[SET, '이불 앞뒤를 <b>다른 색으로</b>'],   card:'card_both.jpg',  base:'base_both.jpg',
+  { key:'plain', ko:'같은 컬러', d:NOPAT, on:'무지 · 앞뒤 같은 컬러',
+    cd:[NOPAT, '이불 앞뒤 같은 컬러'], card:'card_plain.jpg', base:'base.jpg' },
+  { key:'both',  ko:'다른 컬러', d:NOPAT, on:'무지 · 앞뒤 다른 컬러',
+    cd:[NOPAT, '이불 앞뒤 다른 컬러'], card:'card_both.jpg',  base:'base_both.jpg',
     pilTwo:true },
 ];
 // 디자인을 바꿔도 **고른 색이 날아가지 않게** 물려준다. 다시 고르게 하면 카드를 둔 뜻이 없다.
@@ -511,14 +517,15 @@ ${fontCss}
   line-height:1.65;letter-spacing:0;text-align:center;margin:0 0 40px}
  .bbody{font-size:15px;line-height:2.3;color:var(--mut);text-align:center;margin:0 auto}
  /* 카드 위 구역 이름. 표지에서 도구로 넘어가는 자리를 표시한다 */
- .bsec{text-align:center;margin:34px 0 12px}
+ .bsec{text-align:center;margin:34px 0 15px}
  /* 제목 아래 두 덩어리 — 설명 한 단, 그보다 한 단 작고 연한 보조 안내 한 단.
-    카드까지 여백을 촘촘히 잡아 답답하지 않으면서도 한 묶음으로 읽히게 한다. */
- .dlead{text-align:center;font-size:13px;line-height:1.85;color:var(--fg);
-  margin:0 0 10px;word-break:keep-all}
- .dsub{text-align:center;font-size:11.5px;line-height:1.8;color:var(--mut);
-  margin:0 0 18px;word-break:keep-all}
- .bsec .k{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em}
+    아래 여백 숫자가 곧 다음 덩어리까지의 거리다 [대표, 2026-08-07]:
+      DESIGN → 제목 4 · 제목 → 설명 15 · 설명 → 안내 15 · 안내 → 카드 30 */
+ .dlead{text-align:center;font-size:13px;line-height:1.7;color:var(--fg);
+  margin:0 0 15px;word-break:keep-all}
+ .dsub{text-align:center;font-size:11.5px;line-height:1.65;color:var(--mut);
+  margin:0 0 30px;word-break:keep-all}
+ .bsec .k{display:block;font-size:16px;font-weight:650;letter-spacing:-.01em}
  .bsec .e{display:block;font-size:10px;letter-spacing:.17em;color:var(--mut);margin-bottom:4px}
  /* 폰에서는 **표지만 한 화면**에 담고, 상품 카드는 아래로 내린다 [대표, 2026-08-06].
     100svh 를 쓰는 것은 주소창이 접혔다 펴졌다 할 때 화면이 튀지 않게 하려는 것이다.
@@ -547,16 +554,21 @@ ${fontCss}
  .cards button{display:block;width:100%;padding:0;overflow:hidden;cursor:pointer;font-family:inherit;
   text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg)}
  .cards button img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
- .cards .ct{display:block;padding:10px 11px 12px;position:relative}
- .cards .cn{display:block;font-size:14px;font-weight:650;line-height:1.4}
- /* 카드 설명은 두 줄이다 — 무엇을 만드는지 / 무엇이 다른지. 두 줄이라 줄간을 좀 벌린다.
-    폰에서 카드가 175px 남짓이라 「매트리스커버」가 넘어갈 수 있어 자간을 살짝 좁힌다. */
- .cards .cd{display:block;font-size:11.5px;color:var(--mut);line-height:1.6;letter-spacing:-.02em}
- .cards .cd b{color:var(--fg);font-weight:650}
+ /* 두 카드의 안쪽 여백을 똑같이 둔다. 글 길이가 달라도 칸 높이는 grid 가 맞춰준다. */
+ .cards .ct{display:block;padding:11px 12px 13px;position:relative}
+ /* 카드 제목만 Paperlogy [대표, 2026-08-07]. 표지 제목과 같은 글꼴이라 이름끼리 묶여 보인다.
+    심어둔 Paperlogy 는 **굵기 700 한 벌뿐**이라 700 으로 못박는다 — 650 을 주면
+    브라우저가 억지로 굵기를 만들어내(가짜 굵게) 획이 뭉개진다. */
+ .cards .cn{display:block;font-family:var(--head);font-size:15px;font-weight:700;
+  line-height:1.4;margin-bottom:3px}
+ .cards .cd{display:block;font-size:11.5px;color:var(--mut);line-height:1.5;word-break:keep-all}
  .cards button[aria-pressed="true"]{border-color:var(--fg);box-shadow:0 0 0 1.5px var(--fg)}
- .cards .cnow{display:none;font-size:10.5px;font-weight:650;color:var(--bg);background:var(--fg);
-  border-radius:999px;padding:2px 8px;margin-top:5px;width:fit-content}
- .cards button[aria-pressed="true"] .cnow{display:block}
+ /* 「고르신 것」 자리는 **늘 잡아둔다.** display 로 껐다 켜면 고른 카드만 키가 커져
+    두 카드 높이가 어긋나고, 누를 때마다 화면이 덜컥 움직인다. */
+ .cards .cnow{display:block;visibility:hidden;font-size:10.5px;font-weight:650;
+  color:var(--bg);background:var(--fg);border-radius:999px;padding:2px 8px;
+  margin-top:7px;width:fit-content}
+ .cards button[aria-pressed="true"] .cnow{visibility:visible}
  .chint{font-size:11.5px;color:var(--mut);margin:12px 0 0;line-height:1.7}
 
  /* ② 색 화면 맨 위 — 지금 어느 디자인인지 보이고, 한 번에 바꿔 돌아갈 수 있다 */
@@ -592,6 +604,15 @@ ${fontCss}
 
  /* 부위 · 팔레트 */
  .parts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+ /* 폰에서는 **두 칸씩** 줄을 맞춘다 [대표, 2026-08-07].
+    넓은 화면에서는 한 줄에 다 들어가는데, 폰에서는 알아서 접히느라 3개·2개·1개 처럼
+    들쭉날쭉해져 무엇이 몇 개인지 한눈에 안 들어왔다. */
+ @media (max-width:700px){
+  .parts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  /* 칸 폭이 정해지니 좌우 여백을 줄여 긴 이름(베개(앞)-오른쪽)이 들어갈 자리를 번다.
+     줄임표(…)는 쓰지 않는다 — 눌러야 할 단추의 이름이 잘리면 무엇인지 알 수 없다. */
+  .part{padding:7px 8px;white-space:nowrap}
+ }
  .part{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);color:var(--fg);
   border-radius:999px;padding:7px 13px 7px 8px;font-size:13px;cursor:pointer;font-family:inherit}
  .part[aria-pressed="true"]{border-color:var(--fg);background:var(--fg);color:var(--bg);font-weight:600}
@@ -1113,7 +1134,7 @@ function renderPillows(){
   $('#pDesc').innerHTML = (one
       ? '베개커버는 <b>모두 같은 색</b>입니다 — 이불과 한 몸이라 한 장씩 다르게는 못 합니다.'
       : '②에서 고르신 <b>' + slots().length + '칸이 곧 주문하실 베개커버</b>입니다.')
-    + (pilTwo() ? ' <b>양면 베개커버</b>라 한 장이 앞면·뒷면 두 색입니다.' : '')
+    + (pilTwo() ? ' <b>앞뒤 다른 컬러</b>라 한 장이 앞면·뒷면 두 색입니다.' : '')
     // 양면 사진은 베개가 늘 앞뒤 두 색으로 보인다. 무지로 고르셨으면 그 말을 해줘야 한다.
     + (canTwo() && !pilTwo() ? ' 사진에는 베개 앞뒤가 다르게 보이지만,'
         + ' <b>무지로 고르셔서 앞면 색 한 가지</b>로 나갑니다.' : '')
@@ -1167,6 +1188,8 @@ $('#m_h').oninput = checkHeight;
 
 /* ---- 종류 ---- */
 const designKo   = () => DESIGNS.find(d => d.key === design).ko;
+// 밖으로 나가는 글(주문서·견적)에는 긴 이름을 쓴다. 화면에는 짧은 이름(ko)을 쓴다.
+const designOn   = () => { const d = DESIGNS.find(x => x.key === design); return d.on || d.ko; };
 const quiltParts = () => parts().filter(p => p.grp === 'quilt');
 // 매트리스커버 부위는 디자인마다 키가 다르다 (무지 mattress / 양면 bothM).
 // 키를 박아두면 디자인을 바꿨을 때 엉뚱한 색이 주문서에 나간다.
@@ -1236,7 +1259,7 @@ function quote(){
     const k = quiltKind(), size = $('#q_size').value, n = +$('#q_qty').value;
     const p = fee(PRICE.quilt.sale[k.key][size], PRICE.quilt.custom);
     // 양면은 값이 무지와 같다 [대표, 2026-08-06]. 값은 같아도 무엇을 주문했는지는 보여야 한다.
-    const d = designKo() + ' · ' + k.ko + ' · ' + size + (n > 1 ? ' · ' + n + '장' : '');
+    const d = designOn() + ' · ' + k.ko + ' · ' + size + (n > 1 ? ' · ' + n + '장' : '');
     add(p == null ? { t:'이불', d, ask:'가격 문의' } : { t:'이불', d, a:p * n });
     if (k.snap && !snap()) notes.push('이불 연결 똑딱이 갯수를 적어주세요. 쓰시던 이불의 똑딱이 수와 맞춰 만듭니다.');
   }
@@ -1287,7 +1310,7 @@ function quote(){
   if (!$('#q_skip').checked) {
     const qp = quiltParts();
     if (qp.length > 1 && qp.every(p => state[p.key].hex === state[qp[0].key].hex))
-      notes.push('양면으로 고르셨는데 앞면과 뒷면 색이 같습니다. 그대로 하셔도 되고 ② 색에서 바꾸실 수 있습니다.');
+      notes.push('「다른 컬러」로 고르셨는데 앞면과 뒷면이 같은 색입니다. 그대로 하셔도 되고 ② 색에서 바꾸실 수 있습니다.');
   }
   if (usedCustom) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
   return { rows, sum, ask, bad, notes };
@@ -1312,7 +1335,7 @@ function renderOrder(){
   if (!$('#q_skip').checked) {
     const k = quiltKind();
     // 디자인은 늘 적는다. 「무지」라고 못박아야 양면이 아님이 분명해진다.
-    L.push('■ 이불', '   디자인 : ' + designKo(), '   종류 : ' + k.ko, '   사이즈 : ' + $('#q_size').value);
+    L.push('■ 이불', '   디자인 : ' + designOn(), '   종류 : ' + k.ko, '   사이즈 : ' + $('#q_size').value);
     if (k.oz) L.push('   두께 : ' + $('#q_oz').value);   // 이불커버는 온스가 없다
     L.push('   수량 : ' + $('#q_qty').value + '장');
     if (k.snap) L.push('   이불 연결 똑딱이 : ' + (snap() ? snap() + '개' : '안 적으심'));
@@ -1336,7 +1359,9 @@ function renderOrder(){
     // 대표가 주문서에서 바로 알아야 하는 값이다 [대표, 2026-08-06].
     // 「무지」도 적는다 — 안 적으면 양면인지 아닌지 물어봐야 한다.
     const one = slots().length === 1;
-    L.push('■ 베개커버', '   종류 : ' + (pilTwo() ? '양면 (앞뒤 다른 색)' : '무지 (앞뒤 같은 색)'));
+    // 이불 디자인 이름과 같은 말을 쓴다 — 「무지/양면」과 「같은/다른 컬러」가 섞이면
+    // 주문서에서 무엇이 무엇인지 헷갈린다 [2026-08-07].
+    L.push('■ 베개커버', '   종류 : ' + (pilTwo() ? '앞뒤 다른 컬러' : '앞뒤 같은 컬러'));
     pillowRows().forEach(r => {
       // 칸이 하나면 칸 이름이 「베개커버」라 바로 위 줄과 겹친다. 사이즈로 적는다.
       const head = '   ' + (one ? '사이즈' : r.sl.ko) + ' : ' + r.size + ' · ' + r.n + '장';
