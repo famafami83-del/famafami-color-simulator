@@ -252,7 +252,7 @@ const DEF_SIZE = { quilt:'퀸 200×230', mattress:'퀸 150×200' };
 // 수량을 따로 받으면 "4색을 골랐는데 2장" 처럼 어느 색인지 알 수 없어진다 [대표, 2026-08-04]
 // 「그 외」 선택지를 뺐다 [대표, 2026-08-05]. 사이즈가 정해지지 않아 값을 못 내는 칸이라
 // 그 줄만 「가격 문의」로 빠졌는데, 결제를 붙이면 결제가 안 되는 주문이 된다.
-// 이제 모든 베개 사이즈에 값이 있다. 다른 사이즈는 「남기실 말」로 받는다.
+// 이제 모든 베개 사이즈에 값이 있다. 다른 사이즈는 「요청사항」으로 받는다.
 const PILLOW = ['40×60','50×70'];
 const PIL_QTY = [0,1,2,3,4];
 // 칸이 하나뿐인 모드(양면)용. 네 칸 몫을 한 칸에서 받는다.
@@ -420,6 +420,11 @@ const H_MAX = HT.length ? HT[HT.length - 1].upto : null;   // 받을 수 있는 
 const HT_TEXT = HT.map((t, i) =>
   (i ? `~${t.upto}cm` : `${t.upto}cm까지`) + (t.add ? ` +${t.add.toLocaleString('ko-KR')}원` : ' 추가 없음')
 ).join(' · ');
+// 접어두는 「높이 안내」에는 한 구간씩 줄을 나눠 넣는다. 한 줄로 이으면 폰에서 못 읽는다.
+const HT_LINES = HT.map((t, i) =>
+  (i ? `~${t.upto}cm` : `${t.upto}cm까지`) + ' — '
+  + (t.add ? `+${t.add.toLocaleString('ko-KR')}원` : '추가 없음')
+).join('<br>');
 
 const hasPrice = o => Object.values(o).some(v => v && typeof v === 'object' ? hasPrice(v) : v != null);
 const PRICE_READY = hasPrice(PRICE);
@@ -430,7 +435,7 @@ const total = Object.values(SW).reduce((s,g)=>s+g.colors.length,0);
    심는 이유: 안 심으면 손님 기기에 있는 걸 빌려 쓰게 되어 **아이폰은 애플 산돌고딕,
    윈도우는 맑은 고딕**으로 사람마다 다르게 보인다.
    이름을 원본과 다르게(`FF Head`/`FF Body`) 두는 것은 일부러다 — 잘라낸 글꼴에 없는
-   글자(손님이 「남기실 말」에 적는 글자)가 나오면 뒤에 적어둔 **기기에 깔린 폰트로
+   글자(손님이 「요청사항」에 적는 글자)가 나오면 뒤에 적어둔 **기기에 깔린 폰트로
    자연스럽게 떨어진다.** 이름을 `Pretendard` 로 똑같이 주면 그 길이 막힌다.
    폰트가 아직 없으면 **멈추지 않고 넘어간다** — 처음 만들 때는 폰트가 있을 수 없다
    (글자 목록을 index.html 에서 뽑기 때문이다. 도구 머리말 참조). */
@@ -456,6 +461,10 @@ const html = `<!doctype html><html lang="ko"><head>
 <style>
 ${fontCss}
  :root{--head:${FONT_HEAD}}
+ /* 글자 크기 단계. 자리마다 숫자를 박지 않고 이 계단에서 골라 쓴다 —
+    한 곳만 고쳐도 화면 전체의 크기 관계가 유지된다. [2026-08-07]
+      t1 구역 제목 · t2 칸 제목 · t3 본문 · t4 곁말 · t5 아주 작은 라벨 */
+ :root{--t1:16px;--t2:13.5px;--t3:12.5px;--t4:11.5px;--t5:10.5px}
  /* 색 [대표, 2026-08-06] — 바탕은 크림, 글자와 강조는 **브랜드 네이비 #16203d**.
     네이비는 로고 시트 색 띠의 절반을 차지하는 주색인데 그동안 한 번도 안 쓰고 있었다.
     --fg 하나만 네이비로 바꾸면 「고른 부위」 알약, 「다음」 단추, 단계 표시, 색칩 선택
@@ -642,9 +651,32 @@ ${fontCss}
  .sw button[aria-current="true"] .n{font-weight:700}
 
  /* 입력 */
- .card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px;margin-bottom:12px}
- .card h2{font-size:13.5px;font-weight:650;margin:0 0 3px}
- .card p.d{font-size:11.5px;color:var(--mut);margin:0 0 11px}
+ /* 칸 안팎을 넉넉히 — 빽빽한 주문서가 아니라 하나씩 골라가는 자리로 보이게 [대표, 2026-08-07] */
+ .card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:17px 15px;margin-bottom:14px}
+ .card h2{font-size:var(--t2);font-weight:650;margin:0 0 9px}
+ /* 안내글은 **한 문장에 한 줄**이다 (본문에 <br> 로 끊어둔다). 그래도 한 줄이 화면보다
+    길면 넘어가는데, keep-all 을 걸어 낱말 가운데가 아니라 띄어쓰기에서 끊기게 한다. */
+ .card p.d{font-size:var(--t4);color:var(--mut);margin:0 0 11px;line-height:1.75;word-break:keep-all}
+ /* ③ 칸의 안내 — 제목 밑에 한 덩어리로 묶고, 고르는 칸까지 넉넉히 띄운다.
+    lead 는 눈에 먼저 들어오는 말, sub 는 한 단 작고 연한 곁말이다.
+    크기는 숫자로 박지 않고 :root 에 정해둔 단계(--t3/--t4)를 쓴다. */
+ .say{margin:0 0 20px}
+ .say p{margin:0 0 9px;line-height:1.75;word-break:keep-all}
+ .say p:last-child{margin-bottom:0}
+ .say .lead{font-size:var(--t3);color:var(--fg)}
+ .say .sub{font-size:var(--t4);color:var(--mut)}
+ .say p:empty{display:none}          /* 고른 것에 따라 비는 줄이 여백만 남기지 않게 */
+
+ /* 접어두는 안내 — 평소엔 한 줄로 접혀 있다가 눌러야 펴진다 */
+ .fold{margin:-6px 0 20px}
+ .fold summary{display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+  font-size:var(--t4);color:var(--mut);padding:6px 0;list-style:none}
+ .fold summary::-webkit-details-marker{display:none}
+ .fold summary::after{content:'▾';font-size:.95em;line-height:1;transition:transform .15s}
+ .fold[open] summary::after{transform:rotate(180deg)}
+ .fold .fb{font-size:var(--t4);color:var(--mut);line-height:1.95;margin:2px 0 0;
+  padding:11px 13px;background:var(--soft);border-radius:9px;word-break:keep-all}
+ .fold .fb b{color:var(--fg);font-weight:650}
  /* 설명 없는 칸 — 제목 밑 여백을 설명이 차지하던 만큼 벌린다 */
  .card.bare h2{margin-bottom:11px}
  .fld{margin-bottom:9px}
@@ -797,10 +829,17 @@ ${PARTS.filter(pickable).map(p=>`    <button class="part" data-part="${p.key}" a
 
 <!-- ③ 사이즈 -->
 <section class="step" data-step="2" aria-hidden="true">
+  <!-- ③ 은 「옵션 고르는 폼」이 아니라 **하나씩 완성해가는 자리**로 읽혀야 한다
+       [대표, 2026-08-07]. 그래서 칸마다 짜임을 똑같이 맞췄다:
+         제목 → 경험형 안내(lead) → 보조 안내(sub) → 고르는 칸 → 제외 체크
+       줄바꿈은 **뜻이 끊기는 자리**에 손으로 넣는다. 넓은 화면이라고 한 줄로 길게
+       늘이지 않는다 — 폰과 같은 호흡으로 읽히는 편이 낫다. -->
   <div class="card">
-    <h2>이불</h2>
-    <p class="d"><b>차렵이불</b>은 솜이 들어 있는 일체형입니다.
-      <b>이불커버</b>는 커버만이라 두께(온스)를 고르지 않습니다.</p>
+    <h2>이불 선택</h2>
+    <div class="say">
+      <p class="lead">원하는 계절감에 맞춰<br>선택해보세요.</p>
+      <p class="sub">차렵이불은 두께를 선택할 수 있고,<br>이불커버는 커버만 제작됩니다.</p>
+    </div>
     <div id="grpQuilt">
       <div class="fld"><label>종류</label><select id="q_kind">${QUILT_KIND.map((k,i)=>`<option value="${k.key}"${i===0?' selected':''}>${k.ko}</option>`).join('')}</select></div>
       <div class="fld"><label>사이즈</label><select id="q_size"></select></div>
@@ -809,15 +848,22 @@ ${PARTS.filter(pickable).map(p=>`    <button class="part" data-part="${p.key}" a
         <input id="q_snap" type="text" inputmode="numeric" placeholder="예: 8"></div>
       <div class="fld"><label>수량</label><select id="q_qty">${ITEM_QTY.map(n=>`<option value="${n}">${n}장</option>`).join('')}</select></div>
     </div>
-    <label class="skip"><input type="checkbox" id="q_skip"> 이불은 안 할래요</label>
+    <label class="skip"><input type="checkbox" id="q_skip"> 이불 제외</label>
   </div>
 
   <div class="card">
-    <h2>매트리스커버</h2>
-    <p class="d">매트리스 실제 사이즈가 필요합니다. <b>재실 필요 없습니다</b> — 사신 곳에 나와 있는 숫자를 적어주세요.
-      <br>값은 고르신 <b>침대 규격</b>으로 정해집니다. 가로×세로는 만들 때 쓰는 치수입니다.
-${HT.length ? `      <br>높이에 따라 값이 달라집니다 — ${HT_TEXT}.
-      <b>높이 ${H_MAX}cm까지만 주문받습니다.</b>` : ''}</p>
+    <h2>매트리스커버 선택</h2>
+    <div class="say">
+      <p class="lead">우리 집 매트리스 크기에 맞게<br>제작됩니다.</p>
+      <p class="sub">침대 프레임이 아닌<br>매트리스 실제 사이즈를 입력해주세요.</p>
+${HT.length ? `      <p class="sub">높이에 따라 추가 비용이<br>자동으로 적용됩니다.</p>` : ''}
+    </div>
+${HT.length ? `    <!-- 높이별 금액은 지우지 않고 접어둔다 [대표, 2026-08-07]. 대부분은 볼 일이 없지만
+         높은 매트리스를 쓰는 분에게는 값이 걸린 정보라 없애면 안 된다. -->
+    <details class="fold">
+      <summary>높이 안내</summary>
+      <p class="fb">${HT_LINES}<br><b>높이 ${H_MAX}cm까지만 주문받습니다.</b></p>
+    </details>` : ''}
     <div id="grpMat">
       <div class="fld"><label>종류</label><select id="m_kind">${MAT_KIND.map((k,i)=>`<option value="${k.key}"${i===0?' selected':''}>${k.ko}</option>`).join('')}</select></div>
       <div class="fld"><label>침대 규격 (값의 기준)</label><select id="m_size"></select></div>
@@ -831,12 +877,19 @@ ${HT.length ? `      <br>높이에 따라 값이 달라집니다 — ${HT_TEXT}.
       <p class="warn" id="m_hWarn" hidden></p>
       <div class="fld"><label>수량</label><select id="m_qty">${ITEM_QTY.map(n=>`<option value="${n}">${n}장</option>`).join('')}</select></div>
     </div>
-    <label class="skip"><input type="checkbox" id="m_skip"> 매트리스커버는 안 할래요</label>
+    <label class="skip"><input type="checkbox" id="m_skip"> 매트리스커버 제외</label>
   </div>
 
   <div class="card">
-    <h2>베개커버</h2>
-    <p class="d" id="pDesc"></p>
+    <h2>베개커버 선택</h2>
+    <div class="say">
+      <p class="lead">원하는 색상과 사이즈를<br>선택해주세요.</p>
+      <p class="sub">사용 중인 베개 사이즈를<br>선택하시면 됩니다.</p>
+      <p class="sub">목록에 없는 사이즈는<br>요청사항에 남겨주세요.</p>
+      <!-- 고른 디자인에 따라 달라지는 말만 여기에 넣는다. 화면 구조를 설명하는 말
+           (「②에서 고르신 4칸이…」)은 뺐다 — 손님이 알 바가 아니다. -->
+      <p class="sub" id="pDesc"></p>
+    </div>
     <div id="grpPil">
 ${PIL_UNION.map(s=>`      <div class="prow" data-slot="${s.key}">
         <div class="pnm"></div>
@@ -848,15 +901,17 @@ ${PIL_UNION.map(s=>`      <div class="prow" data-slot="${s.key}">
       </div>`).join('\n')}
       <p class="ptot" id="pTot"></p>
     </div>
-    <label class="skip"><input type="checkbox" id="p_skip"> 베개커버는 안 할래요</label>
+    <label class="skip"><input type="checkbox" id="p_skip"> 베개커버 제외</label>
   </div>
 
   <!-- 예시도 설명도 적어두지 않는다 [대표, 2026-08-06]. 자유롭게 적으시라는 칸에 보기나
        설명을 걸어두면 손님이 그 틀에 맞춰 적게 된다. 비워두면 하고 싶은 말을 그대로 적으신다.
        칸 이름이 제목뿐이라 읽어주는 기계를 위해 aria-label 을 남긴다. -->
+  <!-- 「요청사항」으로 부른다 [대표, 2026-08-07]. 베개커버 안내에서 「요청사항에
+       남겨주세요」라고 가리키므로, 그 이름이 화면에 실제로 있어야 찾아간다. -->
   <div class="card bare">
-    <h2>남기실 말</h2>
-    <div class="fld"><input id="memo" type="text" aria-label="남기실 말"></div>
+    <h2>요청사항</h2>
+    <div class="fld"><input id="memo" type="text" aria-label="요청사항"></div>
   </div>
 </section>
 
@@ -865,7 +920,7 @@ ${PIL_UNION.map(s=>`      <div class="prow" data-slot="${s.key}">
   <div class="scenebox mini" id="sceneMini"></div>
 ${PRICE_READY ? `  <div class="card">
     <h2>예상 금액</h2>
-    <p class="d">안내용 예상 금액입니다. 최종 금액은 문의 주시면 확정해 드립니다.</p>
+    <p class="d">안내용 예상 금액입니다.<br>최종 금액은 문의 주시면 확정해 드립니다.</p>
     <div id="qRows"></div>
     <div class="qsum" id="qSumBox"><span>합계</span><b id="qSum">-</b></div>
     <p class="qnote" id="qNote"></p>
@@ -1131,18 +1186,16 @@ function renderPillows(){
     row.querySelector('.pq').setAttribute('aria-label', sl.ko + ' 장수');
     row.classList.toggle('zero', pq(sl.key) === 0);
   });
-  $('#pDesc').innerHTML = (one
-      ? '베개커버는 <b>모두 같은 색</b>입니다 — 이불과 한 몸이라 한 장씩 다르게는 못 합니다.'
-      : '②에서 고르신 <b>' + slots().length + '칸이 곧 주문하실 베개커버</b>입니다.')
-    + (pilTwo() ? ' <b>앞뒤 다른 컬러</b>라 한 장이 앞면·뒷면 두 색입니다.' : '')
-    // 양면 사진은 베개가 늘 앞뒤 두 색으로 보인다. 무지로 고르셨으면 그 말을 해줘야 한다.
-    + (canTwo() && !pilTwo() ? ' 사진에는 베개 앞뒤가 다르게 보이지만,'
-        + ' <b>무지로 고르셔서 앞면 색 한 가지</b>로 나갑니다.' : '')
-    + (one ? ' <b>사이즈와 장수</b>만 골라주세요 — 안 사실 거면 <b>0장</b>.'
-           : ' 칸마다 사이즈와 장수를 골라주세요 — 안 사실 칸은 <b>0장</b>.')
-    + '<br>사이즈는 쓰시는 베개 기준입니다. 베개 사신 곳에 나와 있는 숫자면 됩니다. '
-    + '<b>목록에 없는 사이즈</b>' + (one ? '나 <b>사이즈를 섞어</b> 쓰실 때' : '')
-    + '는 아래 <b>남기실 말</b>에 적어주세요 — 따로 안내드립니다.';
+  // 고른 것에 따라 **달라지는 말만** 여기에 넣는다. 늘 같은 안내는 HTML 에 적어뒀다.
+  // 화면 구조를 설명하는 말(「②에서 고르신 4칸이…」)은 쓰지 않는다 [대표, 2026-08-07].
+  $('#pDesc').innerHTML = [
+    // 「다른 컬러」는 베개가 이불과 한 몸이라 한 장씩 다르게 못 고른다. 미리 알려야 한다.
+    one ? '베개커버는 이불과 같은 색으로 나갑니다.' : '',
+    pilTwo() ? '한 장의 앞면과 뒷면이 다른 색입니다.' : '',
+    // 사진에는 베개 앞뒤가 늘 다르게 보인다. 한 색으로 고르셨으면 그 말을 해줘야 한다.
+    canTwo() && !pilTwo() ? '사진과 달리 앞면 색 한 가지로 나갑니다.' : '',
+    '주문하지 않을 항목은 0장으로 두세요.',
+  ].filter(Boolean).join('<br>');
   const n = pillowCount();
   $('#pTot').textContent = !n ? '전부 0장 — 베개커버는 주문하지 않는 것으로 봅니다'
     : one ? '모두 ' + n + '장'   // 칸이 하나면 사이즈별 내역이 바로 위 줄과 같은 말이다
@@ -1386,7 +1439,7 @@ function renderOrder(){
     }
   }
   const memo = $('#memo').value.trim();
-  if (memo) L.push('■ 남기실 말', '   ' + memo, '');
+  if (memo) L.push('■ 요청사항', '   ' + memo, '');
   if (!L.length) L.push('선택하신 항목이 없습니다.');
   $('#orderTxt').textContent = L.join('\\n').trim();
 }
