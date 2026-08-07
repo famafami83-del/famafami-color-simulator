@@ -386,6 +386,34 @@ const BRAND = {
   body:    ['좋아하는 걸,', '하나씩 담아보세요.'],
 };
 
+/* ──────────────────────────────────────────────────────────────
+   ★ 복사한 주문을 들고 갈 곳 — **여기 한 줄만 채우면 됩니다.**
+
+   파마파미 카카오톡 채널 채팅방 주소를 적습니다. 채널 관리자센터의
+   채널 정보에서 `pf.kakao.com/_XXXXX` 를 확인하고 **뒤에 /chat 을 붙입니다.**
+     예) 'https://pf.kakao.com/_abcdEF/chat'
+
+   비워두면 지금까지처럼 **복사만** 하고 단추 이름도 「복사하기」로 남습니다.
+   채우면 단추가 「카톡으로 주문하기」가 되고, 누를 때 복사한 뒤 채팅방을 엽니다.
+
+   ★ 카카오는 **링크에 메시지 내용을 담아 보내는 길을 열어두지 않았습니다.**
+   그래서 「그대로 전송」은 할 수 없고, 손님이 채팅방에서 붙여넣기를 해야 합니다.
+   대신 복사는 우리가 해두므로 손님이 할 일은 붙여넣기 한 번입니다.
+   ────────────────────────────────────────────────────────────── */
+// 파마파미 카카오톡 채널 채팅방 [대표, 2026-08-07].
+//   카카오 관리자센터는 http:// 로 알려주지만 **https:// 로 적는다.** 그대로 열리고,
+//   요즘 브라우저는 http 링크에 경고를 띄운다. 채널 홈은 /chat 없는 주소다 — 그것을 넣으면
+//   채팅방이 아니라 소개 화면이 열리므로 빌드가 멈춘다.
+const INQUIRY = 'https://pf.kakao.com/_sxeZtb/chat';
+// 잘못 적으면 손님이 엉뚱한 데로 간다. 조용히 새지 않게 여기서 멈춘다.
+if (INQUIRY) {
+  if (!/^https:\/\//.test(INQUIRY))
+    throw new Error('INQUIRY 는 https:// 로 시작해야 합니다 — 지금 값: ' + INQUIRY);
+  // 채널 홈(/chat 없음)을 넣으면 채팅방이 아니라 소개 화면이 열린다. 제일 흔한 실수다.
+  if (/pf\.kakao\.com/.test(INQUIRY) && !/\/chat$/.test(INQUIRY))
+    throw new Error('카카오톡 채널 주소는 뒤에 /chat 을 붙여야 채팅방이 열립니다 — 지금 값: ' + INQUIRY);
+}
+
 // 이 페이지로 들어오는 주문은 색 조합을 직접 고른 것이라 전부 맞춤 제작이다.
 // 그래서 맞춤 추가금은 항상 붙는다. 기성가로만 낼 일이 생기면 false 로 바꾼다.
 const ALWAYS_CUSTOM = true;
@@ -763,6 +791,18 @@ ${fontCss}
  .nav .prev{background:transparent;color:var(--fg);flex:0 0 92px}
  .nav .next{background:var(--fg);color:var(--bg)}
  .nav button[hidden]{display:none}
+
+ /* 복사한 뒤 뜨는 알림. **하단 단추 바로 위에 붙여 고정한다** — 어디를 보고 계시든
+    눈에 들어와야 한다. ④ 글 사이에 끼워두면 스크롤 위치에 따라 안 보인다.
+    카톡으로 넘어간 뒤에도 남아 있어, 돌아오셨을 때 무엇을 하던 중이었는지 알 수 있다. */
+ .toast{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));
+  z-index:30;max-width:936px;margin:0 auto;padding:12px 14px;border-radius:10px;
+  background:var(--fg);color:var(--bg);font-size:var(--t4);line-height:1.65;
+  word-break:keep-all;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+ .toast[hidden]{display:none}
+ .toast b{display:block;font-size:var(--t3);font-weight:650;margin-bottom:2px}
+ /* 카톡이 안 열렸을 때 손수 누를 자리. 늘 보이지만 작게 둔다. */
+ .toast a{display:inline-block;margin-top:6px;color:inherit;opacity:.8}
 </style>
 </head><body>
 
@@ -946,10 +986,11 @@ ${PRICE_READY ? `  <div class="card">
   <!-- 대표가 준 문구 그대로다 [대표, 2026-08-07]. 「추가금」도 「안내용」도 쓰지 않는다.
        한 문장에 한 줄 — 넓은 화면이라고 이어 붙이지 않는다. -->
   <p class="ordnote">
-    ${PRICE_READY ? `선택하신 내용과 예상 금액을 확인해주세요.<br>
-    주문 내용을 복사해 문의해주시면 최종 금액을 안내드립니다.` :
-    `선택하신 내용을 확인해주세요.<br>
-    주문 내용을 복사해 문의해주시면 금액을 안내드립니다.`}<br>
+    ${PRICE_READY ? `선택하신 내용과 예상 금액을 확인해주세요.` : `선택하신 내용을 확인해주세요.`}<br>
+    ${INQUIRY ? `아래 <b>「카톡으로 주문하기」</b>를 누르면 주문 내용이 자동으로 복사되고 카카오톡이 열립니다.<br>
+    열린 채팅창을 길게 눌러 「붙여넣기」 후 보내주세요.<br>
+    확인 후 결제하실 수 있는 링크를 보내드립니다.`
+    : `주문 내용을 복사해 문의해주시면 ${PRICE_READY ? '최종 ' : ''}금액을 안내드립니다.`}<br><br>
     화면에서 보이는 색상과 실제 원단의 색상은 차이가 있을 수 있습니다.
   </p>
 </section>
@@ -959,6 +1000,12 @@ ${PRICE_READY ? `  <div class="card">
   <button class="prev" id="btnPrev" hidden>이전</button>
   <button class="next" id="btnNext"></button>
 </div>
+${INQUIRY ? `<!-- 복사한 뒤 뜬다. 카톡으로 넘어가도 남아 있어 돌아오시면 그대로 보인다. -->
+<div class="toast" id="toast" hidden role="status">
+  <b>✓ 주문 내용이 복사되었습니다.</b>
+  카카오톡 채팅창에 붙여넣어 보내주세요.
+  <a href="${INQUIRY}" target="_blank" rel="noopener">카카오톡이 안 열렸다면 여기를 눌러주세요</a>
+</div>` : ''}
 
 <script>
 const SW = ${JSON.stringify(SW)};
@@ -969,6 +1016,7 @@ const PIL_MODES = ${JSON.stringify(PIL_MODES)};
 const TOTAL = ${total};
 const PRICE = ${JSON.stringify(PRICE)};
 const ALWAYS_CUSTOM = ${ALWAYS_CUSTOM};
+const INQUIRY = ${JSON.stringify(INQUIRY)};
 const QUILT_KIND = ${JSON.stringify(QUILT_KIND)};
 const MAT_KIND = ${JSON.stringify(MAT_KIND)};
 const DEF_SIZE = ${JSON.stringify(DEF_SIZE)};
@@ -992,7 +1040,10 @@ let cur = parts()[0];
 /* ---- 단계 이동 ---- */
 // ① 의 단추만 「내 침구 만들기」다 [대표, 2026-08-06] — 표지에서 시작을 누르는 자리라
 // 하는 일(색 고르기)보다 **무엇을 얻는지**를 적는다. 뒤 단계는 그대로 하는 일을 적는다.
-const NEXT_LABEL = ['내 침구 만들기','사이즈 입력하기','확인하기','복사하기'];
+// 마지막 단추는 **갈 곳이 있을 때만** 「카톡으로 주문하기」다 [대표, 2026-08-07].
+// 채널 주소가 비어 있는데 그 이름을 달면, 눌러도 카톡이 안 열려 거짓말이 된다.
+const NEXT_LABEL = ['내 침구 만들기','사이즈 입력하기','확인하기',
+  INQUIRY ? '카톡으로 주문하기' : '복사하기'];
 const LAST = NEXT_LABEL.length - 1;
 function goto(s){
   step = s;
@@ -1004,6 +1055,9 @@ function goto(s){
   $('#btnNext').textContent = NEXT_LABEL[s];
   if (s === 2) { renderPillows(); checkHeight(); }
   if (s === 3) { buildMini(); renderQuote(); renderOrder(); }
+  // 단계를 옮기면 복사 알림을 지운다. ④ 를 벗어난 뒤에도 떠 있으면 고른 것을 고치는
+  // 중인데 「복사되었습니다」가 남아 이미 보낸 것처럼 보인다.
+  if (INQUIRY) $('#toast').hidden = true;
   renderSub();
   window.scrollTo({ top:0, behavior:'instant' });
 }
@@ -1025,11 +1079,36 @@ $('#btnNext').onclick = async () => {
   // 카드를 안 누르고 아래 단추로 넘어가면 지금 디자인(무지)으로 정해진 것으로 본다.
   // 안 그러면 ② 는 무지인데 ① 로 돌아왔을 때 아무것도 안 골라진 것처럼 보인다.
   if (step === 0) { chosen = true; markCards(); }
+  // ③ → ④ 는 매트리스 실제 치수가 다 적혀야 넘어간다 [대표, 2026-08-07].
+  // 막을 때는 **어디를 적어야 하는지 보여주고 커서까지 옮긴다** — 못 넘어간다는 것만
+  // 알리고 손님이 알아서 찾게 두면 어느 칸인지 몰라 헤맨다.
+  if (step === 2) {
+    const miss = matMissing();
+    if (miss.length) {
+      matTried = true;
+      checkHeight();
+      const first = $('#' + miss[0][0]);
+      first.scrollIntoView({ behavior:'smooth', block:'center' });
+      first.focus({ preventScroll:true });
+      return;
+    }
+  }
   if (step < LAST) return navigate(step+1);
   const t = $('#orderTxt').textContent;
   try { await navigator.clipboard.writeText(t); }
   catch(_) { const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
-  const b = $('#btnNext'); b.textContent='복사했습니다'; setTimeout(()=>b.textContent='복사하기',1500);
+  const b = $('#btnNext');
+  if (!INQUIRY) { b.textContent='복사했습니다'; setTimeout(()=>b.textContent=NEXT_LABEL[LAST],1500); return; }
+  // 갈 곳이 있으면 복사해두고 채팅방을 연다. 손님이 할 일은 붙여넣기 한 번이다.
+  //   ★ 알림을 **먼저 띄우고 잠깐 뒤에** 넘어간다. 바로 넘어가면 「복사되었습니다」가
+  //   보일 새가 없다. 카톡으로 화면이 바뀌기 전에 눈에 한 번 들어와야, 채팅창에서
+  //   무엇을 해야 하는지 알고 간다. 알림은 지우지 않는다 — 돌아오시면 그대로 보인다.
+  //   ★ window.open 이 아니라 location 을 쓴다. 클립보드를 기다린(await) 뒤에 여는 창은
+  //   폰 브라우저가 「손님이 누른 것이 아니다」로 보고 막는 일이 있다. 주소를 갈아타는 것은
+  //   막히지 않고, 카톡 앱으로 넘어가므로 브라우저는 뒤에 그대로 남는다.
+  $('#toast').hidden = false;
+  b.textContent = '카카오톡을 여는 중';
+  setTimeout(() => { b.textContent = NEXT_LABEL[LAST]; location.href = INQUIRY; }, 700);
 };
 
 /* ---- 색 ---- */
@@ -1106,7 +1185,7 @@ const SUB = [
   '',   // ① 은 표지라 머리글 자체를 감춘다
   '이제, 당신의 취향을 담아볼 차례입니다.<br>바꾸고 싶은 곳을 눌러 원단과 색을 직접 골라보세요.',
   '고르신 색으로 만들 크기를 정합니다.<br>필요 없는 항목은 제외하셔도 됩니다.',
-  '고르신 내용을 확인해보세요.<br>복사해서 문의 주시면 됩니다.',
+  '고르신 내용을 확인해보세요.<br>카톡으로 보내주시면 확인해 드립니다.',
 ];
 function renderSub(){ $('#sub').innerHTML = SUB[step] || ''; }
 function label(c){ return c.no ? \`NO. \${c.no} · \${c.ko} \${c.su}수\` : c.ko; }
@@ -1237,27 +1316,42 @@ function dim(id){
   const n = parseFloat(raw);
   return Number.isFinite(n) && n > 0 ? n : null;
 }
-// 가로·세로가 비었는지 보던 matWH / matWHJunk 는 지웠다 — 그것을 쓰던 곳이
-// 예상 금액의 「가로·세로를 적어주세요」 안내 하나뿐이었고, 그 안내를 뺐다 [대표, 2026-08-07].
-// 주문서에는 안 적힌 칸이 「안 적으심」으로 그대로 나간다.
 const height = () => dim('m_h');
 const heightTyped = () => dimTyped('m_h');
 const heightJunk  = () => heightTyped() && height() == null;   // 적긴 했는데 못 읽는 값
 const tooTall     = () => { const h = height(); return H_MAX != null && h != null && h > H_MAX; };
 
+/* 매트리스 실제 치수는 **안 적으면 ④로 못 넘어간다** [대표, 2026-08-07].
+   만들 때 쓰는 치수라 없으면 주문이 성립하지 않고, 높이는 값까지 달라진다.
+   전에는 예상 금액에서 「적어주세요」로 알리기만 해서 그냥 지나칠 수 있었다. */
+const MAT_DIMS = [['m_w','가로'], ['m_d','세로'], ['m_h','높이']];
+// 「매트리스커버는 안 할래요」면 아무것도 묻지 않는다.
+const matMissing = () => $('#m_skip').checked ? [] : MAT_DIMS.filter(([id]) => dim(id) == null);
+// 빈 칸을 빨갛게 짚는 것은 **한 번 막힌 뒤부터**다. 들어오자마자 빨간 칸을 보여주면
+// 아직 적을 기회도 없었는데 혼난 것처럼 보인다.
+let matTried = false;
+
 function checkHeight(){
   const off = $('#m_skip').checked;
-  const junk = !off && heightJunk(), tall = !off && tooTall();
-  $('#m_h').classList.toggle('bad', junk || tall);
-  const w = $('#m_hWarn');
-  w.hidden = !(junk || tall);
-  w.textContent = junk
-    ? '높이를 숫자로 적어주세요. (예: 30)'
-    : tall
+  const tall = !off && tooTall(), junk = !off && heightJunk();
+  const miss = matMissing();
+  MAT_DIMS.forEach(([id]) => $('#' + id).classList.toggle('bad',
+    (id === 'm_h' && (junk || tall)) || (matTried && !off && dim(id) == null)));
+  // 못 만드는 것(높이 초과)이 제일 급하고, 그다음이 막힌 이유, 마지막이 못 읽는 값이다.
+  const msg = tall
     ? '높이 ' + H_MAX + 'cm까지만 주문받습니다. 이 매트리스커버는 만들어 드릴 수 없습니다 — 「매트리스커버는 안 할래요」로 넘어가 주세요.'
+    : matTried && miss.length
+    ? miss.map(m => m[1]).join('·') + '를 숫자로 적어주세요. 만들 때 쓰는 치수입니다.'
+    : junk
+    ? '높이를 숫자로 적어주세요. (예: 30)'
     : '';
+  const w = $('#m_hWarn');
+  w.hidden = !msg;
+  w.textContent = msg;
 }
-$('#m_h').oninput = checkHeight;
+// 막혔던 분이 칸을 채우면 그 자리에서 빨간 표시가 풀려야 한다.
+MAT_DIMS.forEach(([id]) => { $('#' + id).oninput = checkHeight; });
+$('#m_skip').addEventListener('change', checkHeight);
 
 /* ---- 종류 ---- */
 const designKo   = () => DESIGNS.find(d => d.key === design).ko;
