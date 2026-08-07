@@ -87,7 +87,8 @@ const WHITE = '#f5f4ef';   // NO. 952 멜트 아이스크림 60수
 //   자세한 것은 `src/tools/split-piping.js` 머리말에 적어두었다.
 // base   = 그 디자인의 바탕 사진. 침구가 전부 흰색인 컷이다.
 // card   = 고르는 화면에 걸리는 사진. `src/tools/design-cards.js` 가 만든다.
-// pilTwo = 「베개커버도 앞뒤를 다르게」 칸을 보일지. 양면 디자인에서만 묻는다.
+// pilTwo = 베개커버도 앞뒤를 다르게 만드는 디자인인지. 켜면 **묻지 않고 늘 양면**이다
+//   [대표, 2026-08-07]. 전에는 체크칸으로 물었지만 지금은 물음 자체가 없다.
 // ko     = 카드 제목이자 손님이 보는 디자인 이름. 주문서·견적에도 이 이름이 나간다.
 //   전에는 「무지 / 양면」이었는데 [대표, 2026-08-07] 에 바꿨다. 사실 **둘 다 무지**다 —
 //   패턴이 없다는 점은 같고 다른 것은 이불 앞뒤 색뿐이라, 다른 데를 이름으로 삼았다.
@@ -95,15 +96,16 @@ const WHITE = '#f5f4ef';   // NO. 952 멜트 아이스크림 60수
 // cd     = 카드 안에 넣을 줄들. 두 카드가 같은 짜임이라야 나란히 놓았을 때 견주기 쉽다.
 //   ★ 「이불 · 베개커버 · 매트리스커버」와 매트리스 사이즈 맞춤 안내는 **카드에 안 쓴다.**
 //     바로 위 공통 설명에서 이미 말했다. 두 번 쓰면 카드가 지저분해진다.
-// on     = **주문서와 예상 금액에 나가는 이름.** 화면 이름(ko)보다 길게 적는다.
-//   대표는 그동안 「무지」로 불러왔고, 손님은 「같은 컬러」를 보고 고른다. 주문서에
-//   둘을 같이 적어야 양쪽이 같은 것을 가리키는 줄 안다 [대표, 2026-08-07].
-//   패턴이 없다는 점은 둘 다 같으므로 앞에 「무지」를 두고 다른 데를 뒤에 붙인다.
+// on     = **밖으로 나가는 이름** (예상 금액 · 주문서). 화면 이름(ko)보다 길게 적는다.
+//   **「무지」는 붙이지 않는다** [대표, 2026-08-07]. 2026-08-06 까지는 대표가 그동안
+//   불러온 이름이라 「무지 · 앞뒤 같은 컬러」로 둘을 같이 적었는데, 패턴이 없다는 점은
+//   두 디자인이 똑같아서 **가리는 말이 못 되고** 같은 말만 겹쳐 보였다.
+//   베개커버 주문서도 「앞뒤 같은 컬러 / 앞뒤 다른 컬러」라 이제 온 페이지가 한 말을 쓴다.
 const NOPAT = '패턴 없는 디자인';
 const DESIGNS = [
-  { key:'plain', ko:'같은 컬러', d:NOPAT, on:'무지 · 앞뒤 같은 컬러',
+  { key:'plain', ko:'같은 컬러', d:NOPAT, on:'앞뒤 같은 컬러',
     cd:[NOPAT, '이불 앞뒤 같은 컬러'], card:'card_plain.jpg', base:'base.jpg' },
-  { key:'both',  ko:'다른 컬러', d:NOPAT, on:'무지 · 앞뒤 다른 컬러',
+  { key:'both',  ko:'다른 컬러', d:NOPAT, on:'앞뒤 다른 컬러',
     cd:[NOPAT, '이불 앞뒤 다른 컬러'], card:'card_both.jpg',  base:'base_both.jpg',
     pilTwo:true },
 ];
@@ -201,6 +203,10 @@ const PIL_MODES = {
     { key:'B', ko:'베개커버', qty:2, many:true,
       faces:[{ part:'bothA', face:'앞면' }, { part:'bothB', face:'뒷면' }] },
   ],
+  // ★ bothPlain 은 **지금 안 씁니다** [대표, 2026-08-07]. 「베개커버도 앞뒤를 다르게」
+  //   체크칸을 없애면서 「다른 컬러 + 베개는 한 색」이라는 경우가 사라졌습니다.
+  //   지우지 않고 두는 것은 되살릴 때 다시 짜지 않아도 되게 하려는 것입니다.
+  //   되살리려면 체크칸을 만들고 slots() 에서 이 칸을 다시 고르게 하면 됩니다.
   bothPlain: [
     { key:'B', ko:'베개커버', qty:2, many:true, faces:[{ part:'bothA' }] },
   ],
@@ -345,9 +351,14 @@ const PRICE = {
     //   맞춤 추가금은 원래 없다 — 대표가 2장 56,000 을 짚어 주면서 드러났다.
     //   0 을 null 로 두면 「가격 문의」로 새어나간다. 반드시 0 이어야 한다.
     custom: 0,
-    // 양면 베개커버 추가금 — **장수로 붙는다.** 2장까지 10,000원 [대표, 2026-08-06].
+    // 양면 베개커버 — **1장당 5,000원**이 더 든다 [대표, 2026-08-07].
     // 천이 두 종류라 무지와 값이 같을 수 없다. 이불 양면은 값이 같지만 베개는 다르다.
-    two: { per: 2, add: 10000 },
+    //   ★ 이 값은 **단가에 녹여서** 계산하고 손님에게는 말하지 않는다. 그래서 화면에는
+    //   양면 베개커버가 그냥 「33,000원」으로 보인다 (28,000 + 5,000). 줄을 따로 내거나
+    //   「2장까지 10,000원」처럼 적어뒀더니 추가금이 또 붙는 것으로 읽혔다.
+    //   2026-08-06 까지는 「2장까지 10,000원」을 **덩어리로** 붙였다. 3장이면 20,000원이
+    //   되어 장당 값이 들쭉날쭉했는데, 이제 장수에 그대로 비례한다.
+    two: { add: 5000 },
   },
 };
 
@@ -399,15 +410,15 @@ for (const [group, list, kinds] of [['quilt', null, QUILT_KIND], ['mattress', nu
   }
 }
 
-// 양면 베개커버 추가금 — per 가 0이나 음수면 나누기에서 무한대가 나와 값이 폭주한다.
+// 양면 베개커버 값 — 1장당 붙는 값이라 음수면 단가가 깎인다.
+// 예전에 쓰던 per(몇 장까지 한 덩어리) 는 없앴다. 남아 있으면 옛 표를 그대로 둔 것이므로 멈춘다.
 {
   const t = PRICE.pillow.two;
-  if (t && (!(t.per >= 1) || !(t.add >= 0)))
-    throw new Error('PRICE.pillow.two 는 per 가 1 이상, add 가 0 이상이어야 합니다');
+  if (t && !(t.add >= 0))
+    throw new Error('PRICE.pillow.two.add 는 0 이상이어야 합니다 (1장당 붙는 값)');
+  if (t && t.per != null)
+    throw new Error('PRICE.pillow.two.per 는 없앴습니다 — add 만 두고 1장당 값으로 적으십시오');
 }
-// 손님이 체크칸에서 미리 알 수 있게 문구를 표에서 만든다. 손으로 적으면 값만 고쳤을 때 어긋난다.
-const PIL_TWO_TEXT = PRICE.pillow.two && PRICE.pillow.two.add
-  ? `${PRICE.pillow.two.per}장까지 ${PRICE.pillow.two.add.toLocaleString('ko-KR')}원이 더 붙습니다.` : '';
 
 // 높이 구간은 낮은 것부터 와야 한다. 뒤집히면 엉뚱한 칸이 먼저 걸린다.
 const HT = PRICE.mattress.height || [];
@@ -605,7 +616,8 @@ ${fontCss}
  .step{display:none}
  .step[aria-hidden="false"]{display:block}
 
- /* 베개커버를 양면으로 할지 — 이불이 양면이어도 베개는 따로 받는다 */
+ /* 베개커버를 양면으로 할지 묻던 체크칸. **지금은 그 칸이 없습니다** [대표, 2026-08-07] —
+    「다른 컬러」면 베개커버도 무조건 양면입니다. 되살릴 때 쓰려고 남겨둡니다. */
  .ptwo{display:flex;align-items:flex-start;gap:9px;margin:0 0 11px;padding:10px 12px;
   border:1px solid var(--line);border-radius:9px;background:var(--card);
   font-size:11.5px;color:var(--mut);line-height:1.55;cursor:pointer}
@@ -729,7 +741,12 @@ ${fontCss}
  .qsum{display:flex;justify-content:space-between;align-items:baseline;
   margin-top:11px;padding-top:11px;border-top:1.5px solid var(--fg);font-size:13.5px}
  .qsum b{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
- .qnote{font-size:11.5px;color:var(--mut);margin:9px 0 0;line-height:1.65}
+ /* 합계 아래 안내. **합계보다 한 단계 낮게** — 크기도 색도 낮춰 금액이 먼저 읽히게 한다.
+    문장이 끝나는 자리에서 <br> 로 손수 끊고, 그래도 넘칠 때는 keep-all 로 띄어쓰기에서
+    갈라지게 둔다. 넓은 화면이라고 한 줄로 늘이지 않는다 [대표, 2026-08-07] */
+ .qfoot{font-size:var(--t4);color:var(--mut);margin:10px 0 0;line-height:1.7;word-break:keep-all}
+ /* 이쪽은 **그 주문에만 뜨는 말**이다 (주문 불가, 앞뒤가 같은 색 …). 없으면 통째로 감춘다. */
+ .qnote{font-size:var(--t4);color:var(--mut);margin:7px 0 0;line-height:1.65;word-break:keep-all}
 
  /* 확인 */
  pre{margin:0 0 10px;padding:13px;background:var(--card);border:1px solid var(--line);border-radius:9px;
@@ -812,12 +829,9 @@ ${DESIGNS.map(d=>`    <div class="scene" data-design="${d.key}"${d.key===DESIGNS
 ${PARTS.filter(p=>inDz(p,d.key)).map(p=>{const u=b64(`mask_${p.key}.png`,'image/png');return `      <div class="layer" data-part="${p.key}" style="background-color:${p.def};-webkit-mask-image:url('${u}');mask-image:url('${u}')"></div>`;}).join('\n')}
     </div>`).join('\n')}
   </div>
-  <label class="ptwo" id="pTwoWrap" hidden>
-    <input type="checkbox" id="p_two" checked>
-    <span><b>베개커버도 앞뒤를 다르게</b>${PIL_TWO_TEXT ? ` <b>${PIL_TWO_TEXT}</b>` : ''}<br>
-      사진처럼 베개 <b>한 장의 앞뒤</b>를 다른 색으로 만듭니다.
-      체크를 푸시면 베개는 <b>앞면 색 한 가지</b>로 나가고 추가금도 없습니다.</span>
-  </label>
+  <!-- 「베개커버도 앞뒤를 다르게」 체크칸은 없앴다 [대표, 2026-08-07].
+       「다른 컬러」를 고르셨으면 베개커버도 **무조건 양면**이다. 물을 것이 없어졌다.
+       되살리려면 이 자리에 체크칸을 두고 pilTwo() 를 그 값에 다시 묶으면 된다. -->
   <div class="parts">
 ${PARTS.filter(pickable).map(p=>`    <button class="part" data-part="${p.key}" aria-pressed="false"><span class="dot" style="background:${p.def}"></span>${p.ko}</button>`).join('\n')}
   </div>
@@ -922,19 +936,21 @@ ${PIL_UNION.map(s=>`      <div class="prow" data-slot="${s.key}">
   <div class="scenebox mini" id="sceneMini"></div>
 ${PRICE_READY ? `  <div class="card">
     <h2>예상 금액</h2>
-    <p class="d">안내용 예상 금액입니다.<br>최종 금액은 문의 주시면 확정해 드립니다.</p>
     <div id="qRows"></div>
     <div class="qsum" id="qSumBox"><span>합계</span><b id="qSum">-</b></div>
+    <p class="qfoot">선택하신 옵션을 기준으로 계산된 예상 금액입니다.<br>
+      제작 전 주문 내용을 확인한 후 최종 금액을 안내드립니다.</p>
     <p class="qnote" id="qNote"></p>
   </div>
 ` : ''}  <pre id="orderTxt"></pre>
+  <!-- 대표가 준 문구 그대로다 [대표, 2026-08-07]. 「추가금」도 「안내용」도 쓰지 않는다.
+       한 문장에 한 줄 — 넓은 화면이라고 이어 붙이지 않는다. -->
   <p class="ordnote">
-    ${PRICE_READY ? `<b>위 금액은 안내용입니다.</b> 맞춤 추가금까지 넣은 금액이지만,
-    원단 사정이나 실제 치수에 따라 조금 달라질 수 있습니다.
-    복사해서 문의 주시면 최종 금액을 확정해 드립니다.` :
-    `<b>기성 상품에 없는 조합은 맞춤 제작입니다.</b> 복사해서 문의 주시면 금액을 안내드립니다.`}<br><br>
-    화면 색과 실물은 조금 다를 수 있습니다. <b>번호와 이름은 원단 컬러차트 그대로</b>라
-    그대로 알려주시면 됩니다.
+    ${PRICE_READY ? `선택하신 내용과 예상 금액을 확인해주세요.<br>
+    주문 내용을 복사해 문의해주시면 최종 금액을 안내드립니다.` :
+    `선택하신 내용을 확인해주세요.<br>
+    주문 내용을 복사해 문의해주시면 금액을 안내드립니다.`}<br>
+    화면에서 보이는 색상과 실제 원단의 색상은 차이가 있을 수 있습니다.
   </p>
 </section>
 </div>
@@ -1053,7 +1069,6 @@ function syncDesign(){
       dots[p.key].style.background = state[p.key].hex;
     }
   });
-  $('#pTwoWrap').hidden = !DESIGNS.find(d => d.key === design).pilTwo;
   renderPillows();
   markCards();
   const d = DESIGNS.find(x => x.key === design);
@@ -1149,8 +1164,11 @@ for (const g of Object.values(SW)) {
    무지는 네 칸, 양면은 두 칸이고 한 칸이 앞면·뒷면 두 색을 갖는다. */
 // 이불이 양면이어도 베개커버까지 양면인 것은 아니다. 체크를 풀면 앞면 색 한 가지로 나간다.
 const canTwo  = () => !!DESIGNS.find(d => d.key === design).pilTwo;
-const pilTwo  = () => canTwo() && $('#p_two').checked;
-const slots   = () => PIL_MODES[canTwo() ? (pilTwo() ? 'bothTwo' : 'bothPlain') : 'single'];
+// 「다른 컬러」면 베개커버도 **무조건 양면**이다 [대표, 2026-08-07].
+// 전에는 체크칸으로 물었는데, 사진이 이미 베개 앞뒤를 다르게 보여주고 있어서
+// 체크를 푸는 쪽이 오히려 사진과 어긋났다. 물음 자체를 없앴다.
+const pilTwo  = () => canTwo();
+const slots   = () => PIL_MODES[canTwo() ? 'bothTwo' : 'single'];
 const pq = k => +$('.pq[data-slot="' + k + '"]').value;
 const ps = k => $('.ps[data-slot="' + k + '"]').value;
 const pillowCount = () => slots().reduce((s, sl) => s + pq(sl.key), 0);
@@ -1196,9 +1214,8 @@ function renderPillows(){
   $('#pDesc').innerHTML = [
     // 「다른 컬러」는 베개가 이불과 한 몸이라 한 장씩 다르게 못 고른다. 미리 알려야 한다.
     one ? '베개커버는 이불과 같은 색으로 나갑니다.' : '',
+    // 체크칸을 없앤 뒤로 「다른 컬러」면 늘 앞뒤가 다르다. 사진 그대로라는 말이 된다.
     pilTwo() ? '한 장의 앞면과 뒷면이 다른 색입니다.' : '',
-    // 사진에는 베개 앞뒤가 늘 다르게 보인다. 한 색으로 고르셨으면 그 말을 해줘야 한다.
-    canTwo() && !pilTwo() ? '사진과 달리 앞면 색 한 가지로 나갑니다.' : '',
     '주문하지 않을 항목은 0장으로 두세요.',
   ].filter(Boolean).join('<br>');
   const n = pillowCount();
@@ -1207,8 +1224,6 @@ function renderPillows(){
     : '모두 ' + n + '장  ·  ' + pillowBySize().map(([s, c]) => s + ' ' + c + '장').join(', ');
 }
 $$('.pq, .ps').forEach(s => s.onchange = renderPillows);
-// 베개 양면 여부가 바뀌면 부위 이름·미리보기·칸 수가 한꺼번에 따라간다.
-$('#p_two').onchange = () => { syncDesign(); };
 
 /* ---- 매트리스 높이: 받을 수 있는 최대 높이를 넘으면 그 자리에서 알린다 ---- */
 const HT_ALL = PRICE.mattress.height || [];
@@ -1222,9 +1237,9 @@ function dim(id){
   const n = parseFloat(raw);
   return Number.isFinite(n) && n > 0 ? n : null;
 }
-// 가로·세로는 **둘 다** 있어야 치수가 된다. 하나만 적힌 것은 치수가 아니다.
-const matWH = () => { const w = dim('m_w'), d = dim('m_d'); return w && d ? w + '×' + d : ''; };
-const matWHJunk = () => ['m_w','m_d'].some(id => dimTyped(id) && dim(id) == null);
+// 가로·세로가 비었는지 보던 matWH / matWHJunk 는 지웠다 — 그것을 쓰던 곳이
+// 예상 금액의 「가로·세로를 적어주세요」 안내 하나뿐이었고, 그 안내를 뺐다 [대표, 2026-08-07].
+// 주문서에는 안 적힌 칸이 「안 적으심」으로 그대로 나간다.
 const height = () => dim('m_h');
 const heightTyped = () => dimTyped('m_h');
 const heightJunk  = () => heightTyped() && height() == null;   // 적긴 했는데 못 읽는 값
@@ -1248,6 +1263,16 @@ $('#m_h').oninput = checkHeight;
 const designKo   = () => DESIGNS.find(d => d.key === design).ko;
 // 밖으로 나가는 글(주문서·견적)에는 긴 이름을 쓴다. 화면에는 짧은 이름(ko)을 쓴다.
 const designOn   = () => { const d = DESIGNS.find(x => x.key === design); return d.on || d.ko; };
+// 두께는 화면에서 「간절기용 (8온스)」로 고르지만 금액 줄에는 괄호 안만 쓴다.
+// 줄이 길어지면 폰에서 접혀 정작 봐야 할 사이즈가 아래로 밀린다.
+//   ★ 여기서 정규식을 쓰지 않는 것은 일부러입니다. 이 코드는 build.js 의 템플릿 리터럴
+//   안에 있어서 \\( 처럼 겹쳐 쓰지 않으면 **역슬래시가 먹힙니다.** /\\(([^)]+)\\)/ 로
+//   적었다가 페이지에는 /(([^)]+))/ 로 나가 「간절기용 (8온스」가 찍혔습니다.
+//   괄호가 없는 값이 오면 통째로 그대로 씁니다. [2026-08-07]
+const ozShort    = v => {
+  const i = v.indexOf('('), j = v.lastIndexOf(')');
+  return i >= 0 && j > i ? v.slice(i + 1, j).trim() : v.trim();
+};
 const quiltParts = () => parts().filter(p => p.grp === 'quilt');
 // 매트리스커버 부위는 디자인마다 키가 다르다 (무지 mattress / 양면 bothM).
 // 키를 박아두면 디자인을 바꿨을 때 엉뚱한 색이 주문서에 나간다.
@@ -1304,12 +1329,11 @@ function quote(){
   const rows = [], notes = [];
   let sum = 0, ask = false, bad = false;
   const add = r => { rows.push(r); if (r.bad) bad = true; else if (r.ask) ask = true; else sum += r.a; };
-  // 맞춤 추가금이 실제로 붙은 줄이 하나라도 있어야 「추가금이 포함된 금액」이라고 말한다.
-  // 베개커버만 사시면 추가금이 0이라, 늘 말하면 거짓말이 된다. [2026-08-06]
-  let usedCustom = false;
+  // 맞춤 추가금은 값에 **넣기만 하고 말하지 않는다** [대표, 2026-08-07].
+  // 「맞춤 추가금이 포함된 금액입니다」라고 적어뒀더니, 이미 다 들어간 값인데도
+  // 뭔가 더 붙는 것으로 읽혔다. 높이 추가금도 같은 이유로 말하지 않는다.
   const fee = (sale, custom) => {
     if (sale == null || (ALWAYS_CUSTOM && custom == null)) return null;
-    if (ALWAYS_CUSTOM && custom) usedCustom = true;
     return sale + (ALWAYS_CUSTOM ? custom : 0);
   };
 
@@ -1317,7 +1341,11 @@ function quote(){
     const k = quiltKind(), size = $('#q_size').value, n = +$('#q_qty').value;
     const p = fee(PRICE.quilt.sale[k.key][size], PRICE.quilt.custom);
     // 양면은 값이 무지와 같다 [대표, 2026-08-06]. 값은 같아도 무엇을 주문했는지는 보여야 한다.
-    const d = designOn() + ' · ' + k.ko + ' · ' + size + (n > 1 ? ' · ' + n + '장' : '');
+    // 두께는 **값이 달라지는 선택이 아닌데도** 적는다 — 차렵이불에서 손님이 고른 것이고,
+    // 금액 줄에 없으면 「내가 고른 8온스가 맞나」를 확인할 데가 없다 [대표, 2026-08-07].
+    // 이불커버는 솜이 없어 온스 칸 자체가 안 뜨므로(k.oz) 여기서도 빠진다.
+    const d = [designOn(), k.ko, k.oz ? ozShort($('#q_oz').value) : null, size,
+               n > 1 ? n + '장' : null].filter(Boolean).join(' · ');
     add(p == null ? { t:'이불', d, ask:'가격 문의' } : { t:'이불', d, a:p * n });
     if (k.snap && !snap()) notes.push('이불 연결 똑딱이 갯수를 적어주세요. 쓰시던 이불의 똑딱이 수와 맞춰 만듭니다.');
   }
@@ -1327,39 +1355,34 @@ function quote(){
         d = k.short + ' · ' + size, tall = false;
     if (unit != null && HT_ALL.length) {
       const h = height();
-      if (h == null) {
-        notes.push(heightJunk()
-          ? '매트리스 높이를 숫자로 적어주세요. 지금은 높이 추가금 없이 계산했습니다.'
-          : '매트리스 높이를 적어주세요. ' + HT_ALL[0].upto + 'cm까지는 추가금이 없고, 넘으면 높이에 따라 더 붙습니다.');
-      } else {
+      // 높이를 안 적으셨으면 추가금 없이 계산한다. 그 사실을 여기서 말하지는 않는다 —
+      // ③ 높이 칸이 물어보는 자리고, 금액 줄에서 다시 말하면 재촉으로 읽힌다.
+      if (h != null) {
         const t = HT_ALL.find(t => h <= t.upto);
         d += ' · 높이 ' + h + 'cm';
+        // 주문 불가는 값 이야기가 아니라 **못 만든다는 이야기**라 반드시 남긴다.
         if (!t) { tall = true; notes.push('매트리스 높이는 ' + H_MAX + 'cm까지만 주문받습니다. 이 매트리스커버는 만들어 드릴 수 없습니다.'); }
-        else if (t.add) { unit += t.add; d += ' (+' + won(t.add) + ')'; }
+        // 높이 추가금은 값에 더하기만 하고 「(+15,000원)」처럼 드러내지 않는다.
+        // 이미 오른쪽 금액에 들어가 있어, 적어두면 거기서 또 붙는 것처럼 보인다. [대표, 2026-08-07]
+        else if (t.add) unit += t.add;
       }
     }
-    if (!matWH()) notes.push(matWHJunk()
-      ? '매트리스 가로·세로를 숫자로 적어주세요. (예: 가로 150, 세로 200)'
-      : '매트리스 가로·세로를 적어주세요. 만들 때 쓰는 치수입니다.');
     if (n > 1) d += ' · ' + n + '장';
     add(tall ? { t:'매트리스커버', d, ask:'주문 불가', bad:true }
       : unit == null ? { t:'매트리스커버', d, ask:'가격 문의' } : { t:'매트리스커버', d, a:unit * n });
   }
   if (!$('#p_skip').checked) {
+    // 양면이면 1장당 값이 더 든다. **단가에 녹여** 넣고 줄을 따로 내지 않는다 —
+    // 「양면 2장 · 2장까지 10,000원」을 한 줄로 뽑았더니 이미 든 값인데도 추가금으로
+    // 읽혔다 [대표, 2026-08-07]. 손님에게는 그냥 베개커버 값으로 보인다.
+    const two = (pilTwo() && PRICE.pillow.two) ? PRICE.pillow.two.add : 0;
     // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다.
     for (const [size, n] of pillowBySize()) {
-      const unit = fee(PRICE.pillow.sale[size], PRICE.pillow.custom);
+      let unit = fee(PRICE.pillow.sale[size], PRICE.pillow.custom);
+      if (unit != null) unit += two;
       const d = size + ' · ' + n + '장';
       // k = 줄이 여럿일 때 구분하는 꼬리표. 복사 텍스트에서 "베개커버"만 두 줄 나오는 걸 막는다.
       add(unit == null ? { t:'베개커버', k:size, d, ask:'가격 문의' } : { t:'베개커버', k:size, d, a:unit * n });
-    }
-    // 양면 베개커버 추가금 — 천이 두 종류라 붙는다. 사이즈와 무관해 한 줄로 낸다.
-    const TW = PRICE.pillow.two, np = pillowCount();
-    if (pilTwo() && TW && np) {
-      const blocks = Math.ceil(np / TW.per);
-      add({ t:'베개커버', k:'양면 추가', a:TW.add * blocks,
-        d:'양면 ' + np + '장 · ' + TW.per + '장까지 ' + won(TW.add)
-          + (blocks > 1 ? ' × ' + blocks : '') });
     }
   }
   // 양면으로 고르셨는데 앞뒤 색이 같으면 알린다. 그대로 둬도 값은 같지만,
@@ -1370,7 +1393,6 @@ function quote(){
     if (qp.length > 1 && qp.every(p => state[p.key].hex === state[qp[0].key].hex))
       notes.push('「다른 컬러」로 고르셨는데 앞면과 뒷면이 같은 색입니다. 그대로 하셔도 되고 ② 색에서 바꾸실 수 있습니다.');
   }
-  if (usedCustom) notes.unshift('맞춤 제작 추가금이 포함된 금액입니다.');
   return { rows, sum, ask, bad, notes };
 }
 function renderQuote(){
@@ -1385,6 +1407,8 @@ function renderQuote(){
   $('#qSumBox').style.display = priced ? '' : 'none';
   // 주문 불가한 줄은 합계에서 빠진 것이지 문의로 넘어간 게 아니다.
   $('#qSum').textContent = won(sum) + (ask ? ' + 문의' : '');
+  // 뜰 말이 없으면 빈 <p> 가 남아 합계 아래 여백만 벌어진다.
+  $('#qNote').hidden = !notes.length;
   $('#qNote').innerHTML = notes.map(n => '· ' + n).join('<br>');
 }
 
@@ -1392,7 +1416,7 @@ function renderOrder(){
   const L = [];
   if (!$('#q_skip').checked) {
     const k = quiltKind();
-    // 디자인은 늘 적는다. 「무지」라고 못박아야 양면이 아님이 분명해진다.
+    // 디자인은 늘 적는다. 앞뒤가 같은 색인지 다른 색인지가 만들 때 갈리는 자리다.
     L.push('■ 이불', '   디자인 : ' + designOn(), '   종류 : ' + k.ko, '   사이즈 : ' + $('#q_size').value);
     if (k.oz) L.push('   두께 : ' + $('#q_oz').value);   // 이불커버는 온스가 없다
     L.push('   수량 : ' + $('#q_qty').value + '장');
@@ -1438,7 +1462,8 @@ function renderOrder(){
       L.push('■ 예상 금액');
       q.rows.forEach(r => L.push('   ' + r.t + (r.k ? ' ' + r.k : '') + ' : ' + (r.ask ? r.ask : won(r.a))));
       if (q.rows.some(r => !r.ask)) L.push('   합계 : ' + won(q.sum) + (q.ask ? ' + 문의' : ''));
-      L.push('   ※ 안내용 예상 금액입니다.');
+      // 복사해서 보내는 글이라 「복사해 문의해주시면…」을 여기 넣으면 순환이 된다.
+      // 화면 안내(.ordnote)가 그 말을 하므로 주문서에는 아무 말도 붙이지 않는다. [대표, 2026-08-07]
       q.notes.forEach(n => L.push('   ※ ' + n));
       L.push('');
     }
