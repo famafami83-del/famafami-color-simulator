@@ -496,6 +496,13 @@ const FONT_HEAD = "'FF Head'," + FONT_BODY;
 const html = `<!doctype html><html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 카톡 채팅방에 붙는 「이전 페이지」 주소를 **끝까지** 넘긴다 [대표, 2026-08-07].
+     브라우저는 다른 도메인으로 넘어갈 때 기본으로 주소의 **앞부분만**(도메인까지) 넘긴다.
+     그래서 카카오가 famafami83-del.github.io 만 받아 적었고, 그 주소에는 아무것도 없어서
+     손님과 대표 화면에 **404 가 떴다.** 이 페이지는 /famafami-color-simulator/ 아래 있다.
+     주소에 개인정보가 실리지 않는 페이지라 통째로 넘겨도 된다 — 고르신 색도 사이즈도
+     주소가 아니라 화면 안에만 있다. -->
+<meta name="referrer" content="unsafe-url">
 <title>FAMAFAMI MADE</title>
 <style>
 ${fontCss}
