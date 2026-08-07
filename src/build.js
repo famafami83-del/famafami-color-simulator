@@ -486,7 +486,9 @@ ${fontCss}
 
  header{margin-bottom:12px}
  h1{font-size:17px;font-weight:650;margin:0 0 2px;letter-spacing:-.01em}
- .sub{font-size:12.5px;color:var(--mut);margin:0}
+ /* 머리글 아래 한 마디. 두 줄로 끊어 쓰므로 줄간을 조금 벌리고,
+    어쩔 수 없이 더 넘어갈 때는 띄어쓰기에서 끊기게 한다. */
+ .sub{font-size:var(--t3);color:var(--mut);margin:0;line-height:1.75;word-break:keep-all}
 
  /* 진행 표시 */
  .steps{display:flex;gap:6px;margin:14px 0 16px}
@@ -1082,13 +1084,16 @@ $('#dchg').onclick = () => navigate(0);
 $('#bmore').onclick = () => $('#designs').scrollIntoView({ behavior:'smooth', block:'center' });
 // 화면마다 할 말이 다르다. 색 화면에서는 처음에 전부 흰색이라 그 말을 해주는데,
 // 색을 하나라도 바꾸면 더는 사실이 아니므로 말을 바꾼다.
-function renderSub(){
-  if (step === 0) return $('#sub').textContent = '디자인을 고르시면 색을 고르는 화면으로 넘어갑니다.';
-  const ps = parts(), white = ps.every(p => state[p.key].hex === p.def);
-  $('#sub').textContent = white
-    ? \`지금은 \${ps.length}곳 모두 흰색입니다. 부위를 눌러 원단 \${TOTAL}색 중에서 바꿔보세요.\`
-    : \`부위 \${ps.length}곳을 원단 \${TOTAL}색에서 고릅니다.\`;
-}
+// 머리글 아래 한 마디. 단계마다 **지금 무엇을 하는 자리인지**를 말한다.
+// 전에는 어느 단계에서나 색 이야기(「지금은 6곳 모두 흰색입니다…」)가 떠서,
+// 사이즈·확인 화면에서 엉뚱했다. 두 줄로 끊어 폰에서도 읽히게 한다. [대표, 2026-08-07]
+const SUB = [
+  '',   // ① 은 표지라 머리글 자체를 감춘다
+  '이제, 당신의 취향을 담아볼 차례입니다.<br>바꾸고 싶은 곳을 눌러 원단과 색을 직접 골라보세요.',
+  '고르신 색으로 만들 크기를 정합니다.<br>필요 없는 항목은 제외하셔도 됩니다.',
+  '고르신 내용을 확인해보세요.<br>복사해서 문의 주시면 됩니다.',
+];
+function renderSub(){ $('#sub').innerHTML = SUB[step] || ''; }
 function label(c){ return c.no ? \`NO. \${c.no} · \${c.ko} \${c.su}수\` : c.ko; }
 function apply(c){
   state[cur.key] = c;
