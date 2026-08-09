@@ -3,18 +3,54 @@
  *   실행:  node src/build.js       (어느 폴더에서 실행해도 된다)
  *   결과:  index.html  ← 저장소 루트에 덮어쓴다. 이 파일이 그대로 배포된다.
  *
- * 이미지는 전부 base64로 안에 넣는다. CSS 마스크는 file:// 에서 외부 파일을
- * 못 읽으므로, 분리해두면 로컬에서 색이 안 먹힌다.
+ * 그림은 두 갈래로 나뉜다.
+ *   b64() — **첫 화면에 바로 보이는 것**(표지·워드마크·디자인 카드·폰트)은 페이지 안에
+ *           base64 로 넣는다. 파일을 따로 받으러 가지 않으니 열자마자 그려진다.
+ *   ext() — **디자인마다 딸린 사진과 마스크**는 `assets/` 폴더에 밖으로 뺀다.
+ *           디자인이 몇 가지로 늘어도 첫 화면은 그대로고, **고른 디자인 것만 그때 받는다.**
+ *
+ * ★ 그래서 `index.html` 을 두 번 눌러 여는 방식은 ② 색 화면에서 깨진다 — CSS 마스크는
+ *   file:// 에서 밖의 파일을 못 읽는다. 확인은 `node src/tools/preview.js` 로 한다.
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const SRC    = __dirname;
 const ROOT   = path.join(SRC, '..');
 const ASSETS = path.join(SRC, 'assets');
+const OUT    = path.join(ROOT, 'assets');   // 밖으로 뺀 사진·마스크가 놓이는 자리
 
 const SW = JSON.parse(fs.readFileSync(path.join(SRC, 'swatches.json'), 'utf8'));
 const b64 = (f, m) => `data:${m};base64,` + fs.readFileSync(path.join(ASSETS, f)).toString('base64');
+
+// 페이지 밖 파일로 내보낸다. 돌려주는 것은 그 파일의 주소다.
+//   주소에 붙는 `?v=` 는 **파일 내용에서 뽑은 값**이다. 사진을 다시 뽑았는데 폰이 옛것을
+//   붙들고 있는 일을 막는다. 내용이 그대로면 값도 그대로라 쓸데없이 다시 받지 않는다.
+const OUTFILES = new Map();                 // 내보낼 파일 이름 → 원본 경로
+const ext = f => {
+  const src = path.join(ASSETS, f);
+  const v = crypto.createHash('md5').update(fs.readFileSync(src)).digest('hex').slice(0, 8);
+  OUTFILES.set(f, src);
+  return `assets/${f}?v=${v}`;
+};
+
+// 사진의 원래 크기. `<img>` 에 적어두면 사진이 오기 전에 **자리를 미리 잡는다.**
+// 안 적으면 사진이 뜨는 순간 아래 내용이 밀려 내려간다 — 밖으로 뺐기 때문에 생긴 일이다.
+const imgSize = f => {
+  const b = fs.readFileSync(path.join(ASSETS, f));
+  if (b[0] === 0x89 && b[1] === 0x50)                          // PNG — IHDR 이 맨 앞에 있다
+    return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+  for (let i = 2; i + 9 < b.length; ) {                        // JPEG — SOF 표를 찾아간다
+    if (b[i] !== 0xff) { i++; continue; }
+    const m = b[i + 1];
+    if (m === 0xff) { i++; continue; }                          // 채움 바이트
+    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc)
+      return { h: b.readUInt16BE(i + 5), w: b.readUInt16BE(i + 7) };
+    i += 2 + b.readUInt16BE(i + 2);
+  }
+  throw new Error(`${f} 의 가로세로를 못 읽었습니다 — 사진이 깨졌는지 보십시오`);
+};
 
 // 팔레트에서 빼는 색 — 번호로 적는다.
 // swatches.json 은 컬러차트를 그대로 옮긴 것이라 손대지 않는다. 차트에는 있지만
@@ -101,6 +137,7 @@ const WHITE = '#f5f4ef';   // NO. 952 멜트 아이스크림 60수
 //   불러온 이름이라 「무지 · 앞뒤 같은 컬러」로 둘을 같이 적었는데, 패턴이 없다는 점은
 //   두 디자인이 똑같아서 **가리는 말이 못 되고** 같은 말만 겹쳐 보였다.
 //   베개커버 주문서도 「앞뒤 같은 컬러 / 앞뒤 다른 컬러」라 이제 온 페이지가 한 말을 쓴다.
+// pilMode = 베개커버 칸 구성. 없으면 pilTwo 를 보고 정한다 (PIL_MODES 참조).
 const NOPAT = '패턴 없는 디자인';
 const DESIGNS = [
   { key:'plain', ko:'같은 컬러', d:NOPAT, on:'앞뒤 같은 컬러',
@@ -108,19 +145,44 @@ const DESIGNS = [
   { key:'both',  ko:'다른 컬러', d:NOPAT, on:'앞뒤 다른 컬러',
     cd:[NOPAT, '이불 앞뒤 다른 컬러'], card:'card_both.jpg',  base:'base_both.jpg',
     pilTwo:true },
+  // 삥(테두리) — **사진은 「다른 컬러」와 같은 컷이다.** 다른 것은 테두리를 손님이
+  // 따로 고르느냐뿐이다. 「다른 컬러」에서는 앞면 색으로 덮어 안 보이게 하고
+  // (`bothP` 의 follow), 여기서는 `pipP` 로 내어 고르게 한다.
+  //   ★ 이름과 값은 대표 확인이 필요하다 — 지금은 「다른 컬러」와 같은 값으로 계산된다.
+  //   onSame — 앞뒤를 **같은 색으로** 고르셨을 때 밖으로 나가는 이름. 값이 그렇게
+  //   갈리므로(PRICE.design.piping.twoByColor) 주문서 이름도 같이 갈려야 한다.
+  { key:'piping', ko:'삥 컬러', d:NOPAT, on:'앞뒤 다른 컬러 · 삥', onSame:'앞뒤 같은 컬러 · 삥',
+    cd:[NOPAT, '이불 앞뒤 다른 컬러', '테두리(삥) 색 따로'],
+    card:'card_piping.jpg', base:'base_both.jpg',
+    pilTwo:true, pilMode:'bothPip' },
+  // 날개형 [대표, 2026-08-09] — 사진이 **따로**다. 이불 앞뒤가 한 색이고 테두리에
+  // 넓은 날개가 둘러 있다. 베개에도 같은 날개가 있어 값과 주문서에 같이 나간다.
+  //   ★ 이름과 값은 대표 확인 전이다. 지금은 「같은 컬러」와 같은 값으로 계산된다.
+  { key:'wing', ko:'날개 컬러', d:NOPAT, on:'날개형',
+    cd:[NOPAT, '이불 앞뒤 같은 컬러', '날개(테두리) 색 따로'],
+    card:'card_wing.jpg', base:'base_wing.jpg', pilMode:'wing' },
 ];
 // 디자인을 바꿔도 **고른 색이 날아가지 않게** 물려준다. 다시 고르게 하면 카드를 둔 뜻이 없다.
 // 그 부위에 아직 손을 안 댔을 때만 물려준다 — 갈 때마다 덮으면 무지↔양면을 오가는 사이에
 // 양면에서 고른 뒷면 색이 앞면 색으로 지워진다.
 //   베개 색은 못 물려준다. 무지는 베개가 네 부위고 양면은 이불과 한 몸이라 짝이 없다.
+//   양면↔삥 은 **부위 키가 같아서** 물려줄 것이 없다 — 고른 색이 그대로 살아 있다.
 const CARRY = {
-  both:  { bothA:'quilt', bothB:'quilt', bothM:'mattress' },  // 무지 → 양면 : 앞뒤 모두 쓰던 색으로
-  plain: { quilt:'bothA', mattress:'bothM' },                 // 양면 → 무지 : 앞면 색을 가져온다
+  both:   { bothA:'quilt', bothB:'quilt', bothM:'mattress' }, // 무지 → 양면 : 앞뒤 모두 쓰던 색으로
+  piping: { bothA:'quilt', bothB:'quilt', bothM:'mattress' }, // 무지 → 삥  : 위와 같다
+  plain:  { quilt:'bothA', mattress:'bothM' },                // 양면·삥 → 무지 : 앞면 색을 가져온다
+  wing:   { wQuilt:'quilt', wMat:'mattress' },                // 무지 → 날개형 : 이불·매트리스만
 };
 // dz     = 이 부위가 나오는 디자인. 없으면 모든 디자인에 나온다.
+//   ★ 한 부위가 여러 디자인에 나올 수 있다 (양면·삥은 사진이 같다). 그때는 사진마다
+//     층이 하나씩 생기고 **색을 고르면 전부 같이 칠해진다** — 페이지 안 `layers` 참조.
 // grp    = 주문서에서 한 덩어리로 묶는 이름. 양면이면 이불이 두 부위라 묶을 데가 필요하다.
 // face   = 주문서에 「컬러(앞면)」처럼 붙일 말. 한 면뿐이면 없다.
 // follow = 손님이 고르지 않고 **다른 부위 색을 따라가는** 자리. 단추도 안 만든다.
+// mask   = 마스크 파일 이름. 없으면 `mask_{key}.png`. 다른 부위와 **같은 마스크를
+//          나눠 쓸 때** 적는다 (삥은 양면과 같은 자리를 가리킨다).
+// trim   = 이불의 **테두리**다. 이불 덩어리에 같이 적히지만 「앞뒤가 같은 색인가」를
+//          따질 때는 빠진다 — 그것은 앞면·뒷면끼리의 이야기다.
 const PARTS = [
   // ── 무지 (base.jpg)
   { key:'quilt',    ko:'이불',            def:WHITE, su:null,     dz:['plain'], grp:'quilt' },
@@ -129,21 +191,37 @@ const PARTS = [
   { key:'pillowR',  ko:'베개(앞)-오른쪽',  def:WHITE, su:null,     dz:['plain'] },
   { key:'pillowL',  ko:'베개(뒤)-왼쪽',    def:WHITE, su:null,     dz:['plain'] },
   { key:'pillowW',  ko:'베개(뒤)-오른쪽',  def:WHITE, su:null,     dz:['plain'] },
-  // ── 양면 (base_both.jpg). 이불과 베개가 한 부위다 — 이름에 그렇게 적어둔다.
-  { key:'bothA',    ko:'이불·베개 앞면',   def:WHITE, su:null,     dz:['both'], grp:'quilt', face:'앞면' },
-  { key:'bothB',    ko:'이불·베개 뒷면',   def:WHITE, su:null,     dz:['both'], grp:'quilt', face:'뒷면' },
-  { key:'bothM',    ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['both'], grp:'mat' },
-  // 삥(테두리)은 사진에만 있고 이 제품에는 없다. 앞면 색으로 덮어 안 보이게 한다.
-  //   ★ 삥 제품을 팔게 되면 follow 를 지우고 DESIGNS 에 카드 한 장만 더하면 된다.
-  //     마스크도 사진도 이미 들어 있어 용량이 늘지 않는다.
-  { key:'bothP',    ko:'삥(테두리)',       def:WHITE, su:null,     dz:['both'], follow:'bothA' },
+  // ── 양면·삥 (base_both.jpg 한 장을 나눠 쓴다). 이불과 베개가 한 부위다.
+  { key:'bothA',    ko:'이불·베개 앞면',   def:WHITE, su:null,     dz:['both','piping'], grp:'quilt', face:'앞면' },
+  { key:'bothB',    ko:'이불·베개 뒷면',   def:WHITE, su:null,     dz:['both','piping'], grp:'quilt', face:'뒷면' },
+  { key:'bothM',    ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['both','piping'], grp:'mat' },
+  // 같은 자리(삥)를 디자인마다 다르게 쓴다. 마스크는 한 장을 나눠 쓴다.
+  //   bothP — 「다른 컬러」에는 삥이 **없는 제품**이라, 앞면 색으로 덮어 봉제선처럼 보이게 한다.
+  //   pipP  — 「삥 컬러」에서는 손님이 **직접 고르는 자리**다.
+  { key:'bothP',    ko:'삥(테두리)',       def:WHITE, su:null,     dz:['both'],   follow:'bothA' },
+  //   face 는 「컬러(삥)」으로 짧게 적는다 — 「컬러(삥(테두리))」는 괄호가 겹쳐 읽기 나쁘다.
+  //   단추에 뜨는 이름(ko)만 「삥(테두리)」로 둔다. 손님은 「삥」을 모를 수 있다.
+  { key:'pipP',     ko:'삥(테두리)',       def:WHITE, su:null,     dz:['piping'], grp:'quilt',
+    face:'삥', trim:true, mask:'mask_bothP.png' },
+  // ── 날개형 (base_wing.jpg). 사진이 따로다 — 이불 앞뒤가 한 색이고 테두리에 날개가 있다.
+  //   마스크는 `src/tools/extract-wing.js` 가 뽑는다.
+  { key:'wQuilt',   ko:'이불',            def:WHITE, su:null,     dz:['wing'], grp:'quilt' },
+  { key:'wPillow',  ko:'베개',            def:WHITE, su:null,     dz:['wing'] },
+  { key:'wMat',     ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['wing'], grp:'mat' },
+  { key:'wWing',    ko:'날개(테두리)',     def:WHITE, su:null,     dz:['wing'], grp:'quilt',
+    face:'날개', trim:true },
+  // 뒤에 놓인 베개. 사진에 조금 보이는데 **혼자 흰색으로 남으면 고장 난 것처럼 보인다.**
+  // 손님이 따로 고를 것은 아니라 단추를 만들지 않고 베개 색을 따라가게 둔다.
+  //   ★ 따로 고르게 하려면 follow 만 지우면 된다 — 마스크는 이미 있다.
+  { key:'wPillowB', ko:'뒤 베개',          def:WHITE, su:null,     dz:['wing'], follow:'wPillow' },
 ];
 const inDz  = (p, d) => !p.dz || p.dz.includes(d);
 const pickable = p => !p.follow;          // 손님이 눌러서 고르는 부위인가
+const maskOf = p => p.mask || `mask_${p.key}.png`;
 // 마스크가 없는 부위를 적어두면 그 자리만 색이 안 먹는 페이지가 조용히 나간다.
 for (const p of PARTS)
-  if (!fs.existsSync(path.join(ASSETS, `mask_${p.key}.png`)))
-    throw new Error(`${p.ko}(${p.key}) 마스크가 없습니다 — src/tools/ 의 마스크 도구를 돌리셨습니까`);
+  if (!fs.existsSync(path.join(ASSETS, maskOf(p))))
+    throw new Error(`${p.ko}(${p.key}) 마스크 ${maskOf(p)} 가 없습니다 — src/tools/ 의 마스크 도구를 돌리셨습니까`);
 for (const d of DESIGNS)
   for (const [what, f] of [['카드 사진', d.card], ['바탕 사진', d.base]])
     if (!fs.existsSync(path.join(ASSETS, f)))
@@ -209,6 +287,21 @@ const PIL_MODES = {
   //   되살리려면 체크칸을 만들고 slots() 에서 이 칸을 다시 고르게 하면 됩니다.
   bothPlain: [
     { key:'B', ko:'베개커버', qty:2, many:true, faces:[{ part:'bothA' }] },
+  ],
+  // 삥 — 양면과 같은 한 칸인데 색이 하나 더 붙는다. 베개에도 삥이 둘러 있어
+  // 주문서에 **테두리 색까지** 적어야 대표가 물어보지 않는다.
+  //   칸 이름(key)을 양면과 같은 'B' 로 둔다 — 그래야 적어둔 사이즈와 장수가
+  //   양면↔삥을 오가도 살아남는다 (PIL_UNION 이 키로 묶는다).
+  bothPip: [
+    { key:'B', ko:'베개커버', qty:2, many:true,
+      faces:[{ part:'bothA', face:'앞면' }, { part:'bothB', face:'뒷면' },
+             { part:'pipP',  face:'삥' }] },
+  ],
+  // 날개형 — 몸판 한 색 + 날개. 앞뒤가 갈리지 않아 「바탕」이라고 적는다.
+  //   칸 이름(key)을 양면과 같은 'B' 로 둔다 — 디자인을 오가도 사이즈·장수가 살아남는다.
+  wing: [
+    { key:'B', ko:'베개커버', qty:2, many:true,
+      faces:[{ part:'wPillow', face:'바탕' }, { part:'wWing', face:'날개' }] },
   ],
 };
 // 사이즈·장수 칸은 한 벌만 만들어두고 감췄다 보였다 한다.
@@ -360,6 +453,24 @@ const PRICE = {
     //   되어 장당 값이 들쭉날쭉했는데, 이제 장수에 그대로 비례한다.
     two: { add: 5000 },
   },
+  // 디자인마다 붙는 웃돈 [대표, 2026-08-09]. **「같은 컬러」를 0 으로 놓고** 그보다 얼마나
+  // 더 받는지를 적는다. 적어두지 않은 디자인은 웃돈이 없다 (「다른 컬러」가 그렇다 —
+  // 이불 값은 같고 베개만 양면 웃돈 5,000 이 붙는다).
+  //   quilt      : 이불 1장당 더 받는 값
+  //   pillow     : 베개커버 1장당 더 받는 값. **양면 웃돈 위에 얹는다** (대신하지 않는다).
+  //   twoByColor : 양면 웃돈(pillow.two.add)을 **손님이 실제로 앞뒤를 다른 색으로
+  //                고르셨을 때만** 붙인다.
+  //     대표 말 [2026-08-09]: 「앞뒤를 같은 컬러로 하면 무지에 추가금이 붙고,
+  //     양면을 다른 컬러로 선택하면 양면 디자인 가격에 추가금이 붙게.」
+  //     삥은 **테두리를 고르는 디자인**이지 양면을 고르는 디자인이 아니다. 앞뒤를 같은
+  //     색으로 두시면 천이 한 종류라 「같은 컬러」 값이 기준이 된다.
+  //       앞뒤 같은 색 → 28,000 + 1,000 = 29,000
+  //       앞뒤 다른 색 → 28,000 + 5,000 + 1,000 = 34,000
+  //     ★ 「다른 컬러」에는 이 규칙을 두지 않는다. 그쪽은 **양면 제품을 고르신 것**이라
+  //       앞뒤를 같은 색으로 하셔도 천은 두 종류로 만든다 — 값이 바뀌면 안 된다.
+  design: {
+    piping: { quilt: 10000, pillow: 1000, twoByColor: true },
+  },
 };
 
 // 첫 화면에 거는 브랜드 이야기 [대표, 2026-08-06].
@@ -446,6 +557,18 @@ for (const [group, list, kinds] of [['quilt', null, QUILT_KIND], ['mattress', nu
     throw new Error('PRICE.pillow.two.add 는 0 이상이어야 합니다 (1장당 붙는 값)');
   if (t && t.per != null)
     throw new Error('PRICE.pillow.two.per 는 없앴습니다 — add 만 두고 1장당 값으로 적으십시오');
+}
+// 디자인 웃돈 — 없는 디자인에 값을 매겨두면 **아무 데도 안 붙는 채로 조용히 잊힌다.**
+for (const [key, o] of Object.entries(PRICE.design || {})) {
+  if (!DESIGNS.some(d => d.key === key))
+    throw new Error(`PRICE.design.${key} 는 없는 디자인입니다 (DESIGNS 에 ${key} 가 없습니다)`);
+  for (const [what, v] of Object.entries(o)) {
+    if (what === 'twoByColor') continue;                 // 값이 아니라 규칙이다
+    if (!(v >= 0)) throw new Error(`PRICE.design.${key}.${what} 는 0 이상이어야 합니다 (1장당 더 받는 값)`);
+  }
+  // 앞뒤가 갈리지 않는 디자인에 이 규칙을 걸어두면 아무 일도 안 하고 잊힌다.
+  if (o.twoByColor && !DESIGNS.find(d => d.key === key).pilTwo)
+    throw new Error(`PRICE.design.${key}.twoByColor 는 베개가 양면인 디자인에만 씁니다 (pilTwo 가 없습니다)`);
 }
 
 // 높이 구간은 낮은 것부터 와야 한다. 뒤집히면 엉뚱한 칸이 먼저 걸린다.
@@ -871,10 +994,10 @@ ${DESIGNS.map((d,i)=>`    <button data-design="${d.key}" aria-pressed="${i===0}"
     <button type="button" id="dchg">디자인 바꾸기</button>
   </div>
   <div class="scenebox" id="sceneMain">
-${DESIGNS.map(d=>`    <div class="scene" data-design="${d.key}"${d.key===DESIGNS[0].key?'':' hidden'}>
-      <img src="${b64(d.base,'image/jpeg')}" alt="${d.ko} 미리보기">
-${PARTS.filter(p=>inDz(p,d.key)).map(p=>{const u=b64(`mask_${p.key}.png`,'image/png');return `      <div class="layer" data-part="${p.key}" style="background-color:${p.def};-webkit-mask-image:url('${u}');mask-image:url('${u}')"></div>`;}).join('\n')}
-    </div>`).join('\n')}
+${DESIGNS.map(d=>{const z=imgSize(d.base);return `    <div class="scene" data-design="${d.key}"${d.key===DESIGNS[0].key?'':' hidden'}>
+      <img data-src="${ext(d.base)}" width="${z.w}" height="${z.h}" alt="${d.ko} 미리보기">
+${PARTS.filter(p=>inDz(p,d.key)).map(p=>`      <div class="layer" data-part="${p.key}" data-mask="${ext(maskOf(p))}" style="background-color:${p.def}"></div>`).join('\n')}
+    </div>`;}).join('\n')}
   </div>
   <!-- 「베개커버도 앞뒤를 다르게」 체크칸은 없앴다 [대표, 2026-08-07].
        「다른 컬러」를 고르셨으면 베개커버도 **무조건 양면**이다. 물을 것이 없어졌다.
@@ -1119,8 +1242,12 @@ $('#btnNext').onclick = async () => {
 };
 
 /* ---- 색 ---- */
+// 한 부위가 **여러 사진에 걸쳐 있을 수 있다** — 양면과 삥은 같은 컷을 쓰므로
+// 「이불·베개 앞면」층이 두 장에 하나씩 있다. 색을 고르면 둘 다 칠해야 한다.
+// 하나만 붙들고 있으면 디자인을 바꾼 순간 색이 흰색으로 되돌아간 것처럼 보인다.
 const layers = {}, dots = {}, btns = {};
-$$('#sceneMain .layer').forEach(l => layers[l.dataset.part] = l);
+const paint = (key, hex) => (layers[key] || []).forEach(l => l.style.backgroundColor = hex);
+$$('#sceneMain .layer').forEach(l => (layers[l.dataset.part] = layers[l.dataset.part] || []).push(l));
 $$('.part').forEach(b => {
   btns[b.dataset.part] = b;
   dots[b.dataset.part] = b.querySelector('.dot');
@@ -1145,11 +1272,30 @@ function markCards(){
   $$('#designs button').forEach(b =>
     b.setAttribute('aria-pressed', chosen && b.dataset.design === design));
 }
+/* 사진과 마스크는 **페이지 밖 파일**이다. 고른 디자인 것만 그때 받는다 —
+   디자인이 몇 가지로 늘어도 첫 화면이 무거워지지 않는 까닭이 이것이다.
+   주소를 data-src / data-mask 에 적어두었다가 여기서 진짜 자리로 옮겨 심는다. */
+const sceneReady = new Set();
+function sceneLoad(key){
+  if (sceneReady.has(key)) return;
+  const s = $('#sceneMain .scene[data-design="' + key + '"]');
+  if (!s) return;
+  sceneReady.add(key);
+  const im = s.querySelector('img[data-src]');
+  if (im) { im.src = im.dataset.src; im.removeAttribute('data-src'); }
+  s.querySelectorAll('.layer[data-mask]').forEach(l => {
+    const u = "url('" + l.dataset.mask + "')";
+    l.style.webkitMaskImage = u;   // 사파리·크롬
+    l.style.maskImage = u;
+    l.removeAttribute('data-mask');
+  });
+}
 function syncDesign(){
   // 사진은 디자인마다 한 장씩 있고 고른 것만 보인다. 층은 그 사진 안에만 있다.
+  sceneLoad(design);
   $$('#sceneMain .scene').forEach(s => s.hidden = s.dataset.design !== design);
   PARTS.forEach(p => {
-    layers[p.key].style.backgroundColor = paintOf(p);
+    paint(p.key, paintOf(p));
     if (pickable(p)) {
       btns[p.key].hidden = !inDz(p, design);
       dots[p.key].style.background = state[p.key].hex;
@@ -1199,10 +1345,10 @@ function label(c){ return c.no ? \`NO. \${c.no} · \${c.ko} \${c.su}수\` : c.ko
 function apply(c){
   state[cur.key] = c;
   touched[cur.key] = 1;
-  layers[cur.key].style.backgroundColor = c.hex;
+  paint(cur.key, c.hex);
   dots[cur.key].style.background = c.hex;
   // 이 부위를 따라가는 자리(삥)도 같이 칠한다. 안 하면 앞면만 바뀌고 테두리가 흰 채로 남는다.
-  PARTS.forEach(p => { if (p.follow === cur.key) layers[p.key].style.backgroundColor = c.hex; });
+  PARTS.forEach(p => { if (p.follow === cur.key) paint(p.key, c.hex); });
   renderColor();
 }
 function renderColor(){
@@ -1254,7 +1400,38 @@ const canTwo  = () => !!DESIGNS.find(d => d.key === design).pilTwo;
 // 전에는 체크칸으로 물었는데, 사진이 이미 베개 앞뒤를 다르게 보여주고 있어서
 // 체크를 푸는 쪽이 오히려 사진과 어긋났다. 물음 자체를 없앴다.
 const pilTwo  = () => canTwo();
-const slots   = () => PIL_MODES[canTwo() ? 'bothTwo' : 'single'];
+// 이 부위들이 실제로 **여러 색으로** 만들어지는가. 테두리(삥)는 뺀다 — 천이 갈리는 것은
+// 앞면과 뒷면 이야기다.
+const facesDiffer = keys => {
+  const k = keys.filter(x => !(PARTS.find(p => p.key === x) || {}).trim);
+  return k.length > 1 && !k.every(x => state[x].hex === state[k[0]].hex);
+};
+// **양면으로 만드는가.** 값과 주문서가 반드시 같은 판단을 써야 한다.
+//   보통은 디자인이 정한다 — 「다른 컬러」는 앞뒤를 같은 색으로 고르셔도 양면 제품이다.
+//   twoByColor 인 디자인(삥)만 **실제로 고르신 색**을 보고 정한다 [대표, 2026-08-09].
+//   ★ 주석에 백틱을 쓰지 말 것 — 이 코드는 build.js 의 템플릿 리터럴 안에 있어서
+//     백틱 하나가 문자열을 끊어버린다. 달러+중괄호와 역슬래시도 마찬가지다.
+const twoByColor = () => !!((PRICE.design || {})[design] || {}).twoByColor;
+const madeTwo = () => {
+  if (!pilTwo()) return false;
+  if (!twoByColor()) return true;
+  return facesDiffer(slots().flatMap(s => s.faces).map(f => f.part));
+};
+// 주문서에 적을 베개커버 종류. **이불 디자인 이름을 그대로 베끼지 않는다** — 베개커버가
+// 이불과 달라지는 경우(bothPlain)를 되살리면 그때 어긋난다. 지금 칸이 실제로 무슨
+// 색을 받는지에서 지어낸다. 삥이 걸린 칸이면 테두리도 있다고 적는다.
+const pilKind = () => {
+  const base = madeTwo() ? '앞뒤 다른 컬러' : '앞뒤 같은 컬러';
+  // 테두리 이름은 디자인마다 다르다 (삥 / 날개). 박아두지 말고 부위에서 가져온다.
+  const t = slots().flatMap(s => s.faces).map(f => PARTS.find(p => p.key === f.part))
+    .find(p => p && p.trim);
+  return t ? base + ' · ' + (t.face || t.ko) : base;
+};
+// 디자인이 칸 구성을 직접 지정할 수 있다 (삥은 색이 하나 더 붙는다). 없으면 예전대로.
+const slots   = () => {
+  const d = DESIGNS.find(x => x.key === design);
+  return PIL_MODES[d.pilMode || (canTwo() ? 'bothTwo' : 'single')];
+};
 const pq = k => +$('.pq[data-slot="' + k + '"]').value;
 const ps = k => $('.ps[data-slot="' + k + '"]').value;
 const pillowCount = () => slots().reduce((s, sl) => s + pq(sl.key), 0);
@@ -1301,7 +1478,8 @@ function renderPillows(){
     // 「다른 컬러」는 베개가 이불과 한 몸이라 한 장씩 다르게 못 고른다. 미리 알려야 한다.
     one ? '베개커버는 이불과 같은 색으로 나갑니다.' : '',
     // 체크칸을 없앤 뒤로 「다른 컬러」면 늘 앞뒤가 다르다. 사진 그대로라는 말이 된다.
-    pilTwo() ? '한 장의 앞면과 뒷면이 다른 색입니다.' : '',
+    //   삥은 앞뒤를 같은 색으로 두실 수 있고 그러면 사실이 아니게 되므로 madeTwo 를 본다.
+    madeTwo() ? '한 장의 앞면과 뒷면이 다른 색입니다.' : '',
     '주문하지 않을 항목은 0장으로 두세요.',
   ].filter(Boolean).join('<br>');
   const n = pillowCount();
@@ -1363,7 +1541,14 @@ $('#m_skip').addEventListener('change', checkHeight);
 /* ---- 종류 ---- */
 const designKo   = () => DESIGNS.find(d => d.key === design).ko;
 // 밖으로 나가는 글(주문서·견적)에는 긴 이름을 쓴다. 화면에는 짧은 이름(ko)을 쓴다.
-const designOn   = () => { const d = DESIGNS.find(x => x.key === design); return d.on || d.ko; };
+const designOn   = () => {
+  const d = DESIGNS.find(x => x.key === design);
+  // 삥처럼 **고르신 색으로 만드는 법이 갈리는** 디자인은 그것을 이름에 적는다.
+  // 이불 값은 앞뒤가 같든 다르든 같지만(대표, 2026-08-06), 만들 때 갈리는 자리라
+  // 주문서에 그대로 나가야 한다. 값과 이름이 따로 놀면 대표가 어느 쪽을 믿을지 모른다.
+  if (d.onSame && !facesDiffer(quiltParts().map(p => p.key))) return d.onSame;
+  return d.on || d.ko;
+};
 // 두께는 화면에서 「간절기용 (8온스)」로 고르지만 금액 줄에는 괄호 안만 쓴다.
 // 줄이 길어지면 폰에서 접혀 정작 봐야 할 사이즈가 아래로 밀린다.
 //   ★ 여기서 정규식을 쓰지 않는 것은 일부러입니다. 이 코드는 build.js 의 템플릿 리터럴
@@ -1437,10 +1622,14 @@ function quote(){
     if (sale == null || (ALWAYS_CUSTOM && custom == null)) return null;
     return sale + (ALWAYS_CUSTOM ? custom : 0);
   };
+  // 고른 디자인에 붙는 웃돈. 「같은 컬러」 기준이라 적어두지 않은 디자인은 0 이다.
+  // 값은 **단가에 녹여** 넣고 줄을 따로 내지 않는다 — 맞춤·높이 추가금과 같은 이유다.
+  const dAdd = what => ((PRICE.design || {})[design] || {})[what] || 0;
 
   if (!$('#q_skip').checked) {
     const k = quiltKind(), size = $('#q_size').value, n = +$('#q_qty').value;
-    const p = fee(PRICE.quilt.sale[k.key][size], PRICE.quilt.custom);
+    const base = fee(PRICE.quilt.sale[k.key][size], PRICE.quilt.custom);
+    const p = base == null ? null : base + dAdd('quilt');
     // 양면은 값이 무지와 같다 [대표, 2026-08-06]. 값은 같아도 무엇을 주문했는지는 보여야 한다.
     // 두께는 **값이 달라지는 선택이 아닌데도** 적는다 — 차렵이불에서 손님이 고른 것이고,
     // 금액 줄에 없으면 「내가 고른 8온스가 맞나」를 확인할 데가 없다 [대표, 2026-08-07].
@@ -1476,7 +1665,11 @@ function quote(){
     // 양면이면 1장당 값이 더 든다. **단가에 녹여** 넣고 줄을 따로 내지 않는다 —
     // 「양면 2장 · 2장까지 10,000원」을 한 줄로 뽑았더니 이미 든 값인데도 추가금으로
     // 읽혔다 [대표, 2026-08-07]. 손님에게는 그냥 베개커버 값으로 보인다.
-    const two = (pilTwo() && PRICE.pillow.two) ? PRICE.pillow.two.add : 0;
+    // 양면 웃돈은 **양면으로 만들 때만** 붙는다. 삥은 앞뒤를 같은 색으로 고르시면
+    // 천이 한 종류라 안 붙는다 (madeTwo). 디자인 웃돈은 그 위에 얹는다.
+    //   앞뒤 같은 색 삥 → 28,000 + 1,000 = 29,000
+    //   앞뒤 다른 색 삥 → 28,000 + 5,000 + 1,000 = 34,000
+    const two = ((madeTwo() && PRICE.pillow.two) ? PRICE.pillow.two.add : 0) + dAdd('pillow');
     // 사이즈마다 값이 다르므로 사이즈별로 한 줄씩 낸다.
     for (const [size, n] of pillowBySize()) {
       let unit = fee(PRICE.pillow.sale[size], PRICE.pillow.custom);
@@ -1489,10 +1682,13 @@ function quote(){
   // 양면으로 고르셨는데 앞뒤 색이 같으면 알린다. 그대로 둬도 값은 같지만,
   // 손님이 뒷면을 안 고른 것일 수 있고 그러면 대표가 「양면인데 왜 한 색?」을 물어봐야 한다.
   // 양면인데 앞뒤가 같은 색이면 알린다. 베개까지 같은 색을 쓰므로 한 번만 말하면 된다.
-  if (!$('#q_skip').checked) {
-    const qp = quiltParts();
-    if (qp.length > 1 && qp.every(p => state[p.key].hex === state[qp[0].key].hex))
-      notes.push('「다른 컬러」로 고르셨는데 앞면과 뒷면이 같은 색입니다. 그대로 하셔도 되고 ② 색에서 바꾸실 수 있습니다.');
+  // ★ 삥처럼 twoByColor 인 디자인에서는 **말하지 않는다.** 거기서 앞뒤를 같은 색으로
+  //   두는 것은 실수가 아니라 **고르실 수 있는 것**이고, 값도 그만큼 싸게 나간다.
+  //   그런데도 「같은 색입니다」라고 짚으면 잘못 고른 것처럼 읽힌다.
+  {
+    const qf = quiltParts().filter(p => !p.trim).map(p => p.key);   // 테두리는 뺀다
+    if (!$('#q_skip').checked && !twoByColor() && qf.length > 1 && !facesDiffer(qf))
+      notes.push('「' + designKo() + '」로 고르셨는데 앞면과 뒷면이 같은 색입니다. 그대로 하셔도 되고 ② 색에서 바꾸실 수 있습니다.');
   }
   return { rows, sum, ask, bad, notes };
 }
@@ -1544,7 +1740,7 @@ function renderOrder(){
     const one = slots().length === 1;
     // 이불 디자인 이름과 같은 말을 쓴다 — 「무지/양면」과 「같은/다른 컬러」가 섞이면
     // 주문서에서 무엇이 무엇인지 헷갈린다 [2026-08-07].
-    L.push('■ 베개커버', '   종류 : ' + (pilTwo() ? '앞뒤 다른 컬러' : '앞뒤 같은 컬러'));
+    L.push('■ 베개커버', '   종류 : ' + pilKind());
     pillowRows().forEach(r => {
       // 칸이 하나면 칸 이름이 「베개커버」라 바로 위 줄과 겹친다. 사이즈로 적는다.
       const head = '   ' + (one ? '사이즈' : r.sl.ko) + ' : ' + r.size + ' · ' + r.n + '장';
@@ -1588,7 +1784,19 @@ fs.writeFileSync(path.join(ROOT, 'index.html'), html, 'utf8');
 fs.writeFileSync(path.join(ROOT, 'colors.json'),
   JSON.stringify(SW, (key, v) => key === 'k' ? undefined : v, 1), 'utf8');
 
+// 밖으로 뺀 사진·마스크를 `assets/` 에 내보낸다. **이 폴더도 같이 올라가야 한다**
+// (`.github/workflows/deploy.yml`). 안 올리면 ② 색 화면이 흰 종이로 나간다.
+//   지난번에 내보냈다가 이제 안 쓰는 파일은 지운다. 남겨두면 죽은 사진이 딸려 올라가고,
+//   나중에 「이 사진 아직 쓰나」를 아무도 모르게 된다.
+fs.mkdirSync(OUT, { recursive: true });
+for (const f of fs.readdirSync(OUT))
+  if (!OUTFILES.has(f) && fs.statSync(path.join(OUT, f)).isFile()) fs.unlinkSync(path.join(OUT, f));
+for (const [f, src] of OUTFILES) fs.copyFileSync(src, path.join(OUT, f));
+
 const kb = Math.round(fs.statSync(path.join(ROOT,'index.html')).size / 1024);
+const akb = Math.round([...OUTFILES.keys()]
+  .reduce((s, f) => s + fs.statSync(path.join(OUT, f)).size, 0) / 1024);
 const dz = DESIGNS.map(d => `${d.ko} ${PARTS.filter(p => inDz(p, d.key) && pickable(p)).length}곳`).join(' · ');
 const steps = (html.match(/<section class="step"/g) || []).length;
-console.log(`index.html 생성 — 원단 ${total}색 / 디자인 ${DESIGNS.length}가지 (${dz}) / ${steps}단계 / ${kb}KB`);
+console.log(`index.html 생성 — 원단 ${total}색 / 디자인 ${DESIGNS.length}가지 (${dz}) / ${steps}단계`);
+console.log(`  첫 화면 ${kb}KB  +  assets/ ${akb}KB (${OUTFILES.size}장 — 고른 디자인 것만 받는다)`);

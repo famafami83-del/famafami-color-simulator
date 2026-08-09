@@ -5,8 +5,9 @@
 // 같은 와이파이에 있는 폰에서 화면에 뜬 주소를 치면 지금 만든 index.html 이 그대로 보인다.
 // 깃허브에 올릴 필요가 없다 — 고쳤으면 `node src/build.js` 만 다시 하고 폰에서 새로고침.
 //
-// 컴퓨터에서만 볼 거면 이것도 필요 없다. `index.html` 을 두 번 누르면 열린다.
-// (사진도 마스크도 페이지 안에 들어 있어 file:// 에서도 색이 먹는다. 뒤로가기만 안 된다.)
+// ★ `index.html` 을 두 번 눌러 여는 방식은 이제 못 쓴다. 디자인 사진과 마스크를
+//   `assets/` 폴더로 뺐는데, CSS 마스크는 file:// 에서 밖의 파일을 못 읽는다.
+//   ① 표지까지는 멀쩡히 보이다가 **② 색 화면이 흰 종이로** 나온다. 이 서버로 봐야 한다.
 
 const http = require('http');
 const fs   = require('fs');
@@ -34,7 +35,10 @@ http.createServer((q, r) => {
   const ips = Object.values(os.networkInterfaces()).flat()
     .filter(i => i.family === 'IPv4' && !i.internal).map(i => i.address);
   const kb = Math.round(fs.statSync(path.join(ROOT, 'index.html')).size / 1024);
-  console.log(`미리보기 서버 — index.html ${kb}KB\n`);
+  const A = path.join(ROOT, 'assets');
+  const akb = !fs.existsSync(A) ? 0 : Math.round(fs.readdirSync(A)
+    .reduce((s, f) => s + fs.statSync(path.join(A, f)).size, 0) / 1024);
+  console.log(`미리보기 서버 — 첫 화면 ${kb}KB + assets/ ${akb}KB\n`);
   console.log(`  이 컴퓨터 : http://localhost:${PORT}/`);
   for (const ip of ips) console.log(`  폰·태블릿 : http://${ip}:${PORT}/   ← 같은 와이파이`);
   console.log(`\n고치면 node src/build.js 다시 하고 폰에서 새로고침하면 됩니다.`);

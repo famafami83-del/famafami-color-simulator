@@ -7,7 +7,8 @@
 ---
 
 **디자인마다 바탕 사진 한 장과 마스크 한 벌이 있습니다.** 만드는 도구도 따로입니다 —
-무지는 `extract-masks.js` + `alpha-masks.js`, 양면은 `split-piping.js` 하나입니다.
+무지는 `extract-masks.js` + `alpha-masks.js`, 양면·삥은 `split-piping.js`,
+날개형은 `extract-wing.js` 하나입니다.
 
 | 디자인 | 바탕 | 마스크 | 만드는 도구 |
 |---|---|---|---|
@@ -91,6 +92,28 @@ CSS `mask-image`는 **투명도**를 읽습니다. 흑백 이미지로 두면 �
 **주의 — `SEED` 와 `SHOTS` 순서**
 덩어리 씨앗을 세 장에서의 색 비율로 박아뒀습니다. 사진이 바뀌면 다시 재야 합니다.
 앞뒤는 `양면.jpg`(`WARM_SHOT`)에서 **붉은기가 적은 쪽이 겉면**입니다 — 뒤집히면 알려줍니다.
+
+## 2-1-1. `extract-wing.js` — 날개형 바탕 + 마스크 5장
+
+```
+node src/tools/extract-wing.js      # base_wing.jpg + mask_w{Quilt,Pillow,Mat,Wing,PillowB}.png
+```
+
+**사진 넷을 각각 다른 일에 씁니다.** 이 구별이 이 도구의 전부입니다.
+
+| 사진 | 무슨 일 |
+|---|---|
+| `날개형_시뮬레이션용_원본.tif` (협력업체 납품) | 페이지에 깔 **바탕**. 침구가 완전한 중성 회색(R=G=B)이라 고른 색이 그대로 나옵니다 |
+| `날개형.jpg` | **부위를 가르는 데만.** 자리마다 색이 다릅니다. 페이지에는 안 나갑니다 |
+| `(바탕-화이트).jpg` + `날개(검정).jpg` | **날개 마스크에만.** 둘이 날개 말고는 화소까지 같아 가장자리가 제일 깨끗합니다 |
+
+가르는 방법 — 바탕이 중성이라 `사진 ÷ 바탕` 이 그늘을 지우고 **염색 색만** 남깁니다.
+방·바닥은 두 장에서 화소까지 같으므로 **「차이가 있는가」로 칠한 자리를 먼저 가려내고**,
+그 안에서 `SEEDS` 중 제일 가까운 것으로 붙입니다. 날개가 반쯤 걸린 화소는 **남은 몫만**
+줍니다 — 안 그러면 두 마스크가 겹쳐 색이 두 번 곱해집니다 (지금은 겹침 0.00%).
+
+**주의 — `SEEDS`** 는 실제 사진에서 잰 값입니다. **사진을 다시 찍거나 칠한 색을 바꾸면
+다시 재야 합니다.** 결과가 이상하면 먼저 이것을 의심하십시오.
 
 ## 2-2. `design-cards.js` — 페이지에 들어가는 사진 만들기
 
@@ -215,8 +238,9 @@ Pretendard 는 OFL, Paperlogy 도 웹폰트 사용을 허용합니다. **폰트�
 ```
 node src/tools/extract-masks.js     # 무지 부위 마스크 + 흰색 바탕
 node src/tools/alpha-masks.js       # 투명도 채널로 변환 (건너뛰면 색이 안 먹힘)
-node src/tools/split-piping.js      # 양면 바탕 + 마스크 4장 (건너뛰면 빌드가 멈춤)
-node src/tools/design-cards.js      # 디자인 카드 2장 — 위 둘 다 끝난 뒤에
+node src/tools/split-piping.js      # 양면·삥 바탕 + 마스크 4장 (건너뛰면 빌드가 멈춤)
+node src/tools/extract-wing.js      # 날개형 바탕 + 마스크 5장 (건너뛰면 빌드가 멈춤)
+node src/tools/design-cards.js      # 디자인 카드 4장 — 위 셋이 다 끝난 뒤에
 node src/tools/brand-hero.js        # ① 표지 사진 (표지 사진이 바뀌었을 때만)
 node src/tools/brand-logo.js        # 워드마크 (로고가 바뀌었을 때만)
 node src/tools/extract-colors.js    # 컬러 102색
