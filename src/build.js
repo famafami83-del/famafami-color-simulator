@@ -148,18 +148,19 @@ const DESIGNS = [
   // 삥(테두리) — **사진은 「다른 컬러」와 같은 컷이다.** 다른 것은 테두리를 손님이
   // 따로 고르느냐뿐이다. 「다른 컬러」에서는 앞면 색으로 덮어 안 보이게 하고
   // (`bothP` 의 follow), 여기서는 `pipP` 로 내어 고르게 한다.
-  //   ★ 이름과 값은 대표 확인이 필요하다 — 지금은 「다른 컬러」와 같은 값으로 계산된다.
+  //   ★ 이름은 **대표가 정한 것이다** [2026-08-10] — 「삥 컬러」는 작업자가 지은 말이라
+  //     손님이 못 알아들었다. 화면·주문서 어디에도 「삥」을 쓰지 않는다.
   //   onSame — 앞뒤를 **같은 색으로** 고르셨을 때 밖으로 나가는 이름. 값이 그렇게
   //   갈리므로(PRICE.design.piping.twoByColor) 주문서 이름도 같이 갈려야 한다.
-  { key:'piping', ko:'삥 컬러', d:NOPAT, on:'앞뒤 다른 컬러 · 삥', onSame:'앞뒤 같은 컬러 · 삥',
-    cd:[NOPAT, '이불 앞뒤 다른 컬러', '테두리(삥) 색 따로'],
+  { key:'piping', ko:'라인 디자인', d:NOPAT, on:'앞뒤 다른 컬러 · 라인', onSame:'앞뒤 같은 컬러 · 라인',
+    cd:[NOPAT, '이불 앞뒤 다른 컬러', '테두리(라인) 색 따로'],
     card:'card_piping.jpg', base:'base_both.jpg',
     pilTwo:true, pilMode:'bothPip' },
   // 날개형 [대표, 2026-08-09] — 사진이 **따로**다. 이불 앞뒤가 한 색이고 테두리에
   // 넓은 날개가 둘러 있다. 베개에도 같은 날개가 있어 값과 주문서에 같이 나간다.
-  //   ★ 이름과 값은 대표 확인 전이다. 지금은 「같은 컬러」와 같은 값으로 계산된다.
-  { key:'wing', ko:'날개 컬러', d:NOPAT, on:'날개형',
-    cd:[NOPAT, '이불 앞뒤 같은 컬러', '날개(테두리) 색 따로'],
+  //   베개는 **이불 색을 따라간다** [대표, 2026-08-10]. 그래서 고르는 자리가 셋이다.
+  { key:'wing', ko:'날개 디자인', d:NOPAT, on:'날개 디자인',
+    cd:[NOPAT, '이불·베개 같은 컬러', '날개(테두리) 색 따로'],
     card:'card_wing.jpg', base:'base_wing.jpg', pilMode:'wing' },
 ];
 // 디자인을 바꿔도 **고른 색이 날아가지 않게** 물려준다. 다시 고르게 하면 카드를 둔 뜻이 없다.
@@ -196,24 +197,29 @@ const PARTS = [
   { key:'bothB',    ko:'이불·베개 뒷면',   def:WHITE, su:null,     dz:['both','piping'], grp:'quilt', face:'뒷면' },
   { key:'bothM',    ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['both','piping'], grp:'mat' },
   // 같은 자리(삥)를 디자인마다 다르게 쓴다. 마스크는 한 장을 나눠 쓴다.
-  //   bothP — 「다른 컬러」에는 삥이 **없는 제품**이라, 앞면 색으로 덮어 봉제선처럼 보이게 한다.
-  //   pipP  — 「삥 컬러」에서는 손님이 **직접 고르는 자리**다.
-  { key:'bothP',    ko:'삥(테두리)',       def:WHITE, su:null,     dz:['both'],   follow:'bothA' },
-  //   face 는 「컬러(삥)」으로 짧게 적는다 — 「컬러(삥(테두리))」는 괄호가 겹쳐 읽기 나쁘다.
-  //   단추에 뜨는 이름(ko)만 「삥(테두리)」로 둔다. 손님은 「삥」을 모를 수 있다.
-  { key:'pipP',     ko:'삥(테두리)',       def:WHITE, su:null,     dz:['piping'], grp:'quilt',
-    face:'삥', trim:true, mask:'mask_bothP.png' },
+  //   bothP — 「다른 컬러」에는 라인이 **없는 제품**이라, 앞면 색으로 덮어 봉제선처럼 보이게 한다.
+  //   pipP  — 「라인 디자인」에서는 손님이 **직접 고르는 자리**다.
+  { key:'bothP',    ko:'라인(테두리)',     def:WHITE, su:null,     dz:['both'],   follow:'bothA' },
+  //   face 는 「컬러(라인)」으로 짧게 적는다 — 「컬러(라인(테두리))」는 괄호가 겹쳐 읽기 나쁘다.
+  //   ★ 「삥」은 작업자끼리 쓰는 말이라 **손님 눈에 닿는 데는 한 군데도 없어야 한다**
+  //     [대표, 2026-08-10]. 부위 키(pipP)와 마스크 이름만 옛 말로 남아 있다.
+  { key:'pipP',     ko:'라인(테두리)',     def:WHITE, su:null,     dz:['piping'], grp:'quilt',
+    face:'라인', trim:true, mask:'mask_bothP.png' },
   // ── 날개형 (base_wing.jpg). 사진이 따로다 — 이불 앞뒤가 한 색이고 테두리에 날개가 있다.
   //   마스크는 `src/tools/extract-wing.js` 가 뽑는다.
   { key:'wQuilt',   ko:'이불',            def:WHITE, su:null,     dz:['wing'], grp:'quilt' },
-  { key:'wPillow',  ko:'베개',            def:WHITE, su:null,     dz:['wing'] },
+  // 베개 몸판 — **이불 색을 따라간다** [대표, 2026-08-10]. 따로 고를 수 있게 해뒀더니
+  // 「그냥 같은 컬러로만 고르게 해달라」고 하셨다. 단추가 사라지고 이불을 고르면 같이 칠해진다.
+  //   ★ 따로 고르게 되돌리려면 follow 만 지우고, 아래 PIL_MODES.wing 의 「바탕」 면을
+  //     wQuilt 에서 wPillow 로 되돌리면 된다 — 마스크는 그대로 있다.
+  { key:'wPillow',  ko:'베개',            def:WHITE, su:null,     dz:['wing'], follow:'wQuilt' },
   { key:'wMat',     ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['wing'], grp:'mat' },
   { key:'wWing',    ko:'날개(테두리)',     def:WHITE, su:null,     dz:['wing'], grp:'quilt',
     face:'날개', trim:true },
   // 뒤에 놓인 베개. 사진에 조금 보이는데 **혼자 흰색으로 남으면 고장 난 것처럼 보인다.**
-  // 손님이 따로 고를 것은 아니라 단추를 만들지 않고 베개 색을 따라가게 둔다.
-  //   ★ 따로 고르게 하려면 follow 만 지우면 된다 — 마스크는 이미 있다.
-  { key:'wPillowB', ko:'뒤 베개',          def:WHITE, su:null,     dz:['wing'], follow:'wPillow' },
+  //   ★ 앞 베개가 아니라 **이불을 따라간다.** 따라가는 자리를 또 따라가는 것은 안 된다 —
+  //     apply() 가 한 단계만 퍼뜨려서, wPillow 를 가리켜 두면 여기만 흰 채로 남는다.
+  { key:'wPillowB', ko:'뒤 베개',          def:WHITE, su:null,     dz:['wing'], follow:'wQuilt' },
 ];
 const inDz  = (p, d) => !p.dz || p.dz.includes(d);
 const pickable = p => !p.follow;          // 손님이 눌러서 고르는 부위인가
@@ -295,13 +301,16 @@ const PIL_MODES = {
   bothPip: [
     { key:'B', ko:'베개커버', qty:2, many:true,
       faces:[{ part:'bothA', face:'앞면' }, { part:'bothB', face:'뒷면' },
-             { part:'pipP',  face:'삥' }] },
+             { part:'pipP',  face:'라인' }] },
   ],
   // 날개형 — 몸판 한 색 + 날개. 앞뒤가 갈리지 않아 「바탕」이라고 적는다.
   //   칸 이름(key)을 양면과 같은 'B' 로 둔다 — 디자인을 오가도 사이즈·장수가 살아남는다.
+  //   ★ 바탕 면이 가리키는 곳은 `wPillow` 가 아니라 **`wQuilt`** 다. 베개가 이불 색을
+  //     따라가게 바꾸면서(follow) 그렇게 됐다. 따라가는 자리는 `state` 가 안 바뀌므로
+  //     `wPillow` 를 가리켜 두면 **주문서에만 흰색이 적혀 나간다.**
   wing: [
     { key:'B', ko:'베개커버', qty:2, many:true,
-      faces:[{ part:'wPillow', face:'바탕' }, { part:'wWing', face:'날개' }] },
+      faces:[{ part:'wQuilt', face:'바탕' }, { part:'wWing', face:'날개' }] },
   ],
 };
 // 사이즈·장수 칸은 한 벌만 만들어두고 감췄다 보였다 한다.
