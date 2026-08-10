@@ -940,6 +940,10 @@ ${fontCss}
  .now .l1{font-size:13.5px;font-weight:600}
  .now .l2{font-size:11.5px;color:var(--mut)}
  .hint{font-size:11.5px;color:var(--mut);margin:0 0 12px}
+ /* 색칩 위 안내. 고를 것을 가리지 않게 곁말 크기로 두되, 바탕을 한 칸 깔아 그냥
+    지나치지 않게 한다. 줄바꿈은 HTML 에 손으로 넣으므로 저절로 넘기지 않는다. */
+ .disc{font-size:var(--t5);color:var(--mut);line-height:1.7;word-break:keep-all;
+  margin:0 0 11px;padding:9px 11px;background:var(--soft);border-radius:9px}
  .gname{font-size:11px;color:var(--mut);margin:14px 0 7px}
  /* 칩 밑에 번수(위)와 원단 번호(아래)를 적는다. 컬러명은 넣지 않는다 —
     한글명이 「라이트 스킨 베이지」처럼 길어 이 폭에서는 잘려서 오히려 못 읽는다.
@@ -1143,6 +1147,17 @@ ${PARTS.filter(pickable).map(p=>`    <button class="part" data-part="${p.key}" a
     <span class="big" id="nowSw"></span>
     <span><span class="l1" id="nowL1">-</span><br><span class="l2" id="nowL2">-</span></span>
   </div>
+  <!-- 색칩 바로 위에 둔다 [대표, 2026-08-10]. 손님이 **색을 고르기 직전에** 읽어야
+       하는 말이라, 화면 아래쪽이나 ④ 확인에 두면 이미 다 고른 뒤가 된다.
+       ★ 줄바꿈은 손으로 넣는다 [대표, 2026-08-10] — 폰에서 저절로 넘어가게 두면
+         「사용하시는 기기와 화면 설」 처럼 말 중간이 끊겨 읽기 나쁘다.
+         한 줄을 20자 안쪽으로 끊어 뜻 단위로 넘긴다. 문구를 고치면 이 자리도 다시 볼 것. -->
+  <p class="disc" id="palDisc">
+    화면의 컬러는 참고용입니다.<br>
+    사용하시는 기기와 화면 설정에 따라<br>
+    다르게 보일 수 있으며,<br>
+    실제 원단 컬러와 차이가 있을 수 있습니다.
+  </p>
   <p class="hint" id="palHint"></p>
   <div id="palette"></div>
 </section>
@@ -1915,12 +1930,15 @@ function renderOrder(){
   }
   if (PRICE_READY) {
     const q = quote();
-    if (q.rows.length) {
-      L.push('■ 예상 금액');
-      q.rows.forEach(r => L.push('   ' + r.t + (r.k ? ' ' + r.k : '') + ' : ' + (r.ask ? r.ask : won(r.a))));
-      if (q.rows.some(r => !r.ask)) L.push('   합계 : ' + won(q.sum) + (q.ask ? ' + 문의' : ''));
-      // 복사해서 보내는 글이라 「복사해 문의해주시면…」을 여기 넣으면 순환이 된다.
-      // 화면 안내(.ordnote)가 그 말을 하므로 주문서에는 아무 말도 붙이지 않는다. [대표, 2026-08-07]
+    // ★ 예상 금액은 **주문서에 안 적는다** [대표, 2026-08-10] — ④ 화면 위에서 이미
+    //   보여줬는데 복사한 글에 또 나오면 같은 말이 두 번 된다.
+    //   ※ 안내는 남긴다. **금액이 아니라 만들 때 필요한 말**이다 —
+    //   「똑딱이 갯수를 적어주세요」, 「이 매트리스커버는 만들어 드릴 수 없습니다」 같은 것.
+    //   이것까지 빼면 대표가 물어봐야 알 수 있는 것이 그대로 묻힌다.
+    // 복사해서 보내는 글이라 「복사해 문의해주시면…」을 여기 넣으면 순환이 된다.
+    // 화면 안내(.ordnote)가 그 말을 하므로 주문서에는 아무 말도 붙이지 않는다. [대표, 2026-08-07]
+    if (q.notes.length) {
+      L.push('■ 확인해주세요');
       q.notes.forEach(n => L.push('   ※ ' + n));
       L.push('');
     }
