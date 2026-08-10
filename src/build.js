@@ -1552,6 +1552,77 @@ async function composeScene(){
     cv.toBlob(b => b ? ok(b) : no(new Error('그림을 만들지 못했습니다')), 'image/png'));
 }
 
+/* ---- 주문 내역 그림 ---- [대표, 2026-08-10]
+   저장은 **두 장**이다 — 침구 사진 한 장, 주문 내역 한 장.
+   내역은 화면을 찍는 것이 아니라 **원본 글(orderText)에서 새로 그린다.** 화면 것은
+   폭이 폰마다 달라 줄이 꺾인 자리가 제각각인데, 그림은 어느 폰에서 받아도 같아야 한다.
+   ★ 심어둔 글꼴을 쓴다. document.fonts.ready 를 안 기다리면 아직 안 온 글꼴 대신
+     기기 글꼴로 그려져 두 장의 결이 어긋난다.
+   ★ 어두운 화면에서 받아도 **밝은 종이로 그린다.** 남에게 보이거나 인쇄할 그림이라
+     화면 설정을 따라가면 안 된다. 그래서 색을 여기에 그대로 적는다. */
+const PAPER = { bg:'#f3f0e9', fg:'#16203d', mut:'#636a7b', card:'#fdfbf6', line:'#e2ddd1' };
+function rrect(c, x, y, w, h, r){
+  if (c.roundRect) { c.beginPath(); c.roundRect(x, y, w, h, r); return; }
+  c.beginPath(); c.moveTo(x+r, y);
+  c.arcTo(x+w, y, x+w, y+h, r); c.arcTo(x+w, y+h, x, y+h, r);
+  c.arcTo(x, y+h, x, y, r);     c.arcTo(x, y, x+w, y, r); c.closePath();
+}
+async function composeOrder(W){
+  try { await document.fonts.ready; } catch(_) {}
+  const S = W / 1200;                          // 사진 폭에 맞춰 글자와 여백을 함께 키운다
+  const PAD = Math.round(60 * S), CPAD = Math.round(44 * S);
+  const T = Math.round(46 * S), F = Math.round(29 * S), SM = Math.round(23 * S);
+  const LH = Math.round(50 * S), GAP = Math.round(28 * S);
+  const HEAD = '700 ' + T + 'px ' + ${JSON.stringify(FONT_HEAD)};
+  const ROW  = F + 'px ' + ${JSON.stringify(FONT_BODY)};
+  const ROWH = '700 ' + F + 'px ' + ${JSON.stringify(FONT_HEAD)};
+  const FOOT = SM + 'px ' + ${JSON.stringify(FONT_BODY)};
+
+  // 빈 줄은 **자리만** 차지한다. 덩어리 사이가 붙으면 어디까지가 한 항목인지 안 보인다.
+  const rows = orderText.split('\\n').map(t => ({
+    t: t.trim(), head: t.indexOf('■') === 0, blank: t.trim() === '',
+    ind: t.length - t.replace(/^ +/, '').length,     // 들여쓴 칸수를 그대로 옮긴다
+  }));
+  let body = 0;
+  rows.forEach(r => body += r.blank ? Math.round(LH * .5) : LH);
+
+  const titleH = Math.round(T * 1.25);
+  const footH  = Math.round(SM * 1.7);
+  const cardH  = body + CPAD * 2;
+  const H = PAD + titleH + GAP + cardH + GAP + footH + PAD;
+
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  c.fillStyle = PAPER.bg; c.fillRect(0, 0, W, H);
+  c.textBaseline = 'alphabetic';
+
+  let y = PAD + Math.round(T * .95);
+  c.fillStyle = PAPER.fg; c.font = HEAD;
+  c.fillText('주문 내역', PAD, y);
+
+  const cy = PAD + titleH + GAP;
+  c.fillStyle = PAPER.card; rrect(c, PAD, cy, W - PAD * 2, cardH, Math.round(18 * S)); c.fill();
+  c.strokeStyle = PAPER.line; c.lineWidth = Math.max(1, Math.round(S)); c.stroke();
+
+  y = cy + CPAD + Math.round(F * .85);
+  const x0 = PAD + CPAD, unit = F * .45;       // 한 칸 들여쓰기의 너비
+  rows.forEach(r => {
+    if (r.blank) { y += Math.round(LH * .5); return; }
+    c.font = r.head ? ROWH : ROW;
+    c.fillStyle = r.head ? PAPER.fg : PAPER.mut;
+    c.fillText(r.t, x0 + r.ind * unit, y);
+    y += LH;
+  });
+
+  c.font = FOOT; c.fillStyle = PAPER.mut;
+  c.fillText('화면에서 보이는 색상과 실제 원단의 색상은 차이가 있을 수 있습니다.',
+    PAD, cy + cardH + GAP + Math.round(SM * 1.1));
+
+  return new Promise((ok, no) =>
+    cv.toBlob(b => b ? ok(b) : no(new Error('내역 그림을 만들지 못했습니다')), 'image/png'));
+}
+
 /* 하단 단추의 **잰 높이**를 --navh 에 넣는다. ④ 에서 저장 단추가 한 줄 붙어 높이가
    달라지므로 박아둘 수 없다 — 박아두면 마지막 글이 단추 뒤로 숨는다. */
 function syncNavH(){
@@ -1563,12 +1634,28 @@ addEventListener('resize', syncNavH);
 try { document.fonts.ready.then(syncNavH); } catch(_) {}
 
 const SAVE_LABEL = '침구 이미지 저장하기';
+// 내역 그림은 사진과 **같은 폭**으로 그린다. 두 장을 나란히 놓았을 때 폭이 어긋나면
+// 한 벌로 안 보인다. 사진이 아직 안 왔으면 원본 폭(1200)을 쓴다.
+function sceneW(){
+  const el = $('#sceneMain .scene:not([hidden]) img');
+  return (el && el.naturalWidth) || 1200;
+}
 // ④ 에 들어설 때 **미리 만들어 쥐고 있는다.** 누른 그 순간에 만들면 만드는 사이에
 // 「손님이 눌러서 하는 일」이라는 표시가 풀려, 폰에서 공유창이 안 열리는 일이 있다.
-let saveBlob = null, savePending = null;
+let saveFiles = null, savePending = null;
+async function composeBoth(){
+  const stamp = saveStamp();
+  const shot = await composeScene();
+  const memo = await composeOrder(sceneW());
+  // 이름에 1·2 를 달아 둔다 — 갤러리에서 어느 쪽이 먼저인지 보이게.
+  return [
+    new File([shot], 'famafami-' + design + '-' + stamp + '-1-침구.png', { type:'image/png' }),
+    new File([memo], 'famafami-' + design + '-' + stamp + '-2-주문내역.png', { type:'image/png' }),
+  ];
+}
 function savePrepare(){
-  saveBlob = null;
-  savePending = composeScene().then(b => (saveBlob = b, b), e => { console.warn(e); return null; });
+  saveFiles = null;
+  savePending = composeBoth().then(f => (saveFiles = f, f), e => { console.warn(e); return null; });
 }
 function saveShow(on){
   const b = $('#btnSave');
@@ -1581,32 +1668,39 @@ const saveStamp = () => {
   const d = new Date(), p = n => String(n).padStart(2, '0');
   return d.getFullYear() + p(d.getMonth()+1) + p(d.getDate());
 };
+// 한 장 내려받는다. 두 번 이어 부를 때는 폰·브라우저가 **몰아서 막는 일**이 있어
+// 조금 띄워 부른다.
+function pull(file){
+  const a = document.createElement('a');
+  const u = URL.createObjectURL(file);
+  a.href = u; a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 10000);
+}
 $('#btnSave').onclick = async () => {
   const b = $('#btnSave');
   const say = (t, ms) => { b.textContent = t; if (ms) setTimeout(() => b.textContent = SAVE_LABEL, ms); };
-  const name = 'famafami-' + design + '-' + saveStamp() + '.png';
-  let blob = saveBlob;
-  if (!blob) {                       // 아직 안 됐으면 기다린다. 그래도 안 되면 한 번 더 해본다.
+  let files = saveFiles;
+  if (!files) {                      // 아직 안 됐으면 기다린다. 그래도 안 되면 한 번 더 해본다.
     b.disabled = true; say('만드는 중…');
-    try { blob = await (savePending || composeScene()); } catch(_) {}
-    if (!blob) { try { blob = await composeScene(); } catch(_) {} }
+    try { files = await (savePending || composeBoth()); } catch(_) {}
+    if (!files) { try { files = await composeBoth(); } catch(_) {} }
     b.disabled = false; say(SAVE_LABEL);
   }
-  if (!blob) return say('저장하지 못했습니다', 2000);
+  if (!files) return say('저장하지 못했습니다', 2000);
 
-  const file = new File([blob], name, { type:'image/png' });
   // 폰에서는 공유창이 낫다 — 「사진에 저장」이 거기 있다. 내려받기로 하면 파일앱에
   // 떨어져 갤러리에서 안 보인다. 공유가 없는 곳(컴퓨터)에서만 내려받는다.
-  if (navigator.canShare && navigator.canShare({ files:[file] })) {
-    try { await navigator.share({ files:[file] }); return; }
+  //   ★ 두 장을 **한 번에** 건넨다. 나눠 부르면 두 번째는 손님이 누른 것이 아니라고
+  //     보아 막힌다. 두 장 받기를 못 하는 곳이면 통째로 내려받기로 간다 —
+  //     한 장만 공유하고 나머지를 내려받으면 어디로 갔는지 알 수 없다.
+  if (navigator.canShare && navigator.canShare({ files: files })) {
+    try { await navigator.share({ files: files }); return; }
     catch(e) { if (e && e.name === 'AbortError') return; }   // 손님이 닫은 것은 잘못이 아니다
   }
-  const a = document.createElement('a');
-  const u = URL.createObjectURL(blob);
-  a.href = u; a.download = name;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(u), 10000);
-  say('저장했습니다', 2000);
+  pull(files[0]);
+  setTimeout(() => pull(files[1]), 600);
+  say('2장 저장했습니다', 2200);
 };
 
 /* ---- 색 ---- */
