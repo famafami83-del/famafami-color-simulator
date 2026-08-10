@@ -320,18 +320,25 @@
     이 띠는 보면 안다 — 넷을 거쳐 끝난다는 것이 눈에 먼저 들어온다.
     ★ 그러니 여기에는 **새 내용이 없어야 한다.** 위에 없는 말이 여기서 처음 나오면
       손님은 두 곳을 다 읽어야 한다. 줄인 말이라 자체로는 뜻이 다 안 선다. */
- .flow{display:flex;align-items:center;justify-content:center;gap:5px;
-  margin:9px 0 0;padding:9px 8px;background:var(--soft);border-radius:8px}
+ /* 왼쪽 정렬 [대표, 2026-08-10]. 위 문장들이 왼쪽에서 시작하므로 띠도 같은 자리에서
+    시작해야 한 덩어리로 읽힌다 — 가운데로 모으면 띠만 따로 떠 보인다.
+    ★ 띠 자체에는 바탕을 깔지 않는다. 박스는 이제 **토막마다** 있다. 둘 다 깔면
+      상자 안의 상자가 되어 어느 쪽이 눌러야 할 것인지 흐려진다. */
+ .flow{display:flex;align-items:center;justify-content:flex-start;gap:4px;margin:10px 0 0}
  /* 토막은 **꺾이지 않는다.** 「붙여 / 넣기」로 갈라지면 한눈에 보는 값이 사라진다.
-    대신 좁으면 글자가 함께 줄어든다 — 320px 에서도 넉 토막이 한 줄에 남는다. */
+    대신 좁으면 글자와 여백이 함께 줄어든다 — 320px 에서도 넉 토막이 한 줄에 남는다.
+    바탕은 종이보다 한 단 진한 회색(--soft)에 테두리(--line) 한 줄. 진하게만 해서는
+    박스로 안 보이고, 더 진하게 하면 아래 단추보다 세져 눈을 먼저 끈다. */
  .flow span{font-family:var(--head);font-weight:700;color:var(--fg);
-  font-size:var(--t5);white-space:nowrap}
+  font-size:var(--t5);white-space:nowrap;
+  background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:5px 7px}
  /* 화살표는 **곁말 색**이다. 토막보다 앞에 나서면 안 된다 — 이어진다는 표시일 뿐이다.
     ★ 글꼴을 기기 것으로 둔다. 잘라 심은 두 벌에 → 가 있다는 보장이 없는데, 없으면
       네모(豆腐)로 뜬다. 글자가 아니라 기호라 기기 글꼴로 그려도 티가 안 난다. */
  .flow i{color:var(--mut);font-size:var(--t5);font-style:normal;flex:0 0 auto;
   font-family:system-ui,-apple-system,"Segoe UI Symbol",sans-serif}
- @media (max-width:360px){ .flow{gap:3px;padding:8px 5px} .flow span,.flow i{font-size:9.5px} }
+ @media (max-width:360px){ .flow{gap:2px}
+  .flow span{font-size:9.5px;padding:4px 5px} .flow i{font-size:9.5px} }
  /* 색상 안내는 **딴 이야기**다. 전에는 <br><br> 로 띄웠는데, 사이에 띠가 들어오면서
     문단이 갈렸다 — 이제 그 자리를 margin 이 맡는다. 띠가 없는 경우(문의처 미설정)에도
     같은 만큼 떨어져야 하므로 띠가 아니라 이 문단에 건다. */
