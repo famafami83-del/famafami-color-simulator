@@ -205,7 +205,8 @@ const CARRY = {
 const PARTS = [
   // ── 무지 (base.jpg)
   { key:'quilt',    ko:'이불',            def:WHITE, su:null,     dz:['plain'], grp:'quilt' },
-  { key:'mattress', ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['plain'], grp:'mat' },
+  { key:'mattress', ko:'매트리스커버',     def:WHITE, su:[60,80], suWhy:'100수는 얇아서 쓰지 않습니다',
+    dz:['plain'], grp:'mat' },
   // ★ 베개 넷 — **키 이름과 사진 속 자리는 다르다** [대표, 2026-08-10].
   //   이름 넷이 통째로 밀려 있어서, 고른 색이 엉뚱한 베개에 칠해졌다. 대표가 사진에
   //   자리를 적어 보내주셔서 맞췄다. 마스크에 색을 하나씩 넣어 눈으로 확인한 결과다:
@@ -221,7 +222,8 @@ const PARTS = [
   // ── 양면·삥 (base_both.jpg 한 장을 나눠 쓴다). 이불과 베개가 한 부위다.
   { key:'bothA',    ko:'이불·베개 앞면',   def:WHITE, su:null,     dz:['both','piping'], grp:'quilt', face:'앞면' },
   { key:'bothB',    ko:'이불·베개 뒷면',   def:WHITE, su:null,     dz:['both','piping'], grp:'quilt', face:'뒷면' },
-  { key:'bothM',    ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['both','piping'], grp:'mat' },
+  { key:'bothM',    ko:'매트리스커버',     def:WHITE, su:[60,80], suWhy:'100수는 얇아서 쓰지 않습니다',
+    dz:['both','piping'], grp:'mat' },
   // 같은 자리(삥)를 디자인마다 다르게 쓴다. 마스크는 한 장을 나눠 쓴다.
   //   bothP — 「다른 컬러」에는 line이 **없는 제품**이라, 앞면 색으로 덮어 봉제선처럼 보이게 한다.
   //   pipP  — 「line 디자인」에서는 손님이 **직접 고르는 자리**다.
@@ -229,7 +231,8 @@ const PARTS = [
   //   face 는 「컬러(line)」으로 짧게 적는다 — 「컬러(line(테두리))」는 괄호가 겹쳐 읽기 나쁘다.
   //   ★ 「삥」은 작업자끼리 쓰는 말이라 **손님 눈에 닿는 데는 한 군데도 없어야 한다**
   //     [대표, 2026-08-10]. 부위 키(pipP)와 마스크 이름만 옛 말로 남아 있다.
-  { key:'pipP',     ko:'line(테두리)',     def:WHITE, su:null,     dz:['piping'], grp:'quilt',
+  //   ★ 테두리에는 **100수를 쓰지 않는다** [대표, 2026-08-10]. 60·80수만 고르게 한다.
+  { key:'pipP',     ko:'line(테두리)',     def:WHITE, su:[60,80], dz:['piping'], grp:'quilt',
     face:'line', trim:true, mask:'mask_bothP.png' },
   // ── 날개형 (base_wing.jpg). 사진이 따로다 — 이불 앞뒤가 한 색이고 테두리에 날개가 있다.
   //   마스크는 `src/tools/extract-wing.js` 가 뽑는다.
@@ -239,8 +242,10 @@ const PARTS = [
   //   ★ 따로 고르게 되돌리려면 follow 만 지우고, 아래 PIL_MODES.wing 의 「바탕」 면을
   //     wQuilt 에서 wPillow 로 되돌리면 된다 — 마스크는 그대로 있다.
   { key:'wPillow',  ko:'베개',            def:WHITE, su:null,     dz:['wing'], follow:'wQuilt' },
-  { key:'wMat',     ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['wing'], grp:'mat' },
-  { key:'wWing',    ko:'날개(테두리)',     def:WHITE, su:null,     dz:['wing'], grp:'quilt',
+  { key:'wMat',     ko:'매트리스커버',     def:WHITE, su:[60,80], suWhy:'100수는 얇아서 쓰지 않습니다',
+    dz:['wing'], grp:'mat' },
+  //   ★ 날개도 테두리라 **100수를 쓰지 않는다** [대표, 2026-08-10]. line 과 같은 규칙이다.
+  { key:'wWing',    ko:'날개(테두리)',     def:WHITE, su:[60,80], dz:['wing'], grp:'quilt',
     face:'날개', trim:true },
   // 뒤에 놓인 베개. 사진에 조금 보이는데 **혼자 흰색으로 남으면 고장 난 것처럼 보인다.**
   //   ★ 앞 베개가 아니라 **이불을 따라간다.** 따라가는 자리를 또 따라가는 것은 안 된다 —
@@ -1466,6 +1471,12 @@ const SUB = [
 ];
 function renderSub(){ $('#sub').innerHTML = SUB[step] || ''; }
 function label(c){ return c.no ? \`NO. \${c.no} · \${c.ko} \${c.su}수\` : c.ko; }
+// 「매트리스커버는」 / 「날개(테두리)는」 — 받침이 있으면 「은」이다. 부위 이름이 괄호로
+// 끝나기도 해서(line(테두리)) **마지막 한글 글자**를 찾아 본다. 한글이 없으면 「는」.
+function josa(s){
+  const m = String(s).match(/[가-힣](?=[^가-힣]*$)/);
+  return m && (m[0].charCodeAt(0) - 0xac00) % 28 ? '은' : '는';
+}
 function apply(c){
   state[cur.key] = c;
   touched[cur.key] = 1;
@@ -1491,8 +1502,12 @@ function renderColor(){
     const any = [...g.nextElementSibling.children].some(b => b.style.display !== 'none');
     g.style.display = any ? '' : 'none'; g.nextElementSibling.style.display = any ? '' : 'none';
   });
+  // 부위 이름을 박아두면 안 된다 — 매트리스커버 말고 **테두리에도** 이 제한이 걸린다
+  // [대표, 2026-08-10]. 박아뒀더니 날개 색을 고르는데 「매트리스커버는…」이 떴다.
+  // 까닭(suWhy)은 부위마다 다를 수 있으니 적어둔 자리만 붙인다 — 지어내지 말 것.
   $('#palHint').textContent = allow
-    ? \`매트리스커버는 \${allow.join('·')}수만 됩니다 (100수는 얇아서 쓰지 않습니다) — \${shown}색\`
+    ? \`\${cur.ko}\${josa(cur.ko)} \${allow.join('·')}수만 됩니다\`
+      + (cur.suWhy ? \` (\${cur.suWhy})\` : '') + \` — \${shown}색\`
     : \`\${shown}색\`;
   renderSub();
 }
