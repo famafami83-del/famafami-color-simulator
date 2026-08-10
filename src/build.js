@@ -1067,6 +1067,27 @@ ${fontCss}
     안 읽힌다. 눈이 단추를 찾아야 하니 이름은 붙어 있어야 한다. */
  .ordnote b{font-family:var(--head);font-weight:700;color:var(--fg);white-space:nowrap}
 
+ /* 위 문장을 **한 줄로 줄여 그린 것**이다 [대표, 2026-08-10]. 문장은 읽어야 알고
+    이 띠는 보면 안다 — 넷을 거쳐 끝난다는 것이 눈에 먼저 들어온다.
+    ★ 그러니 여기에는 **새 내용이 없어야 한다.** 위에 없는 말이 여기서 처음 나오면
+      손님은 두 곳을 다 읽어야 한다. 줄인 말이라 자체로는 뜻이 다 안 선다. */
+ .flow{display:flex;align-items:center;justify-content:center;gap:5px;
+  margin:9px 0 0;padding:9px 8px;background:var(--soft);border-radius:8px}
+ /* 토막은 **꺾이지 않는다.** 「붙여 / 넣기」로 갈라지면 한눈에 보는 값이 사라진다.
+    대신 좁으면 글자가 함께 줄어든다 — 320px 에서도 넉 토막이 한 줄에 남는다. */
+ .flow span{font-family:var(--head);font-weight:700;color:var(--fg);
+  font-size:var(--t5);white-space:nowrap}
+ /* 화살표는 **곁말 색**이다. 토막보다 앞에 나서면 안 된다 — 이어진다는 표시일 뿐이다.
+    ★ 글꼴을 기기 것으로 둔다. 잘라 심은 두 벌에 → 가 있다는 보장이 없는데, 없으면
+      네모(豆腐)로 뜬다. 글자가 아니라 기호라 기기 글꼴로 그려도 티가 안 난다. */
+ .flow i{color:var(--mut);font-size:var(--t5);font-style:normal;flex:0 0 auto;
+  font-family:system-ui,-apple-system,"Segoe UI Symbol",sans-serif}
+ @media (max-width:360px){ .flow{gap:3px;padding:8px 5px} .flow span,.flow i{font-size:9.5px} }
+ /* 색상 안내는 **딴 이야기**다. 전에는 <br><br> 로 띄웠는데, 사이에 띠가 들어오면서
+    문단이 갈렸다 — 이제 그 자리를 margin 이 맡는다. 띠가 없는 경우(문의처 미설정)에도
+    같은 만큼 떨어져야 하므로 띠가 아니라 이 문단에 건다. */
+ .ordnote.tail{margin-top:13px}
+
  /* 하단 고정 이동 */
  .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bg);
   border-top:1px solid var(--line);padding:11px 14px calc(11px + env(safe-area-inset-bottom));
@@ -1297,7 +1318,16 @@ ${PRICE_READY ? `  <div class="card">
     // 「위에서 한번 말했으니 여기에는 빼자」. 다만 금액이 안 채워져 그 카드가 통째로
     // 안 나올 때는 여기가 유일한 자리이므로 그때만 적는다.
     + (PRICE_READY ? `` : `<br>확인 후 결제하실 수 있는 링크를 보내드립니다.`)
-    : `주문 내용을 복사해 문의해주시면 ${PRICE_READY ? '최종 ' : ''}금액을 안내드립니다.`}<br><br>
+    : `주문 내용을 복사해 문의해주시면 ${PRICE_READY ? '최종 ' : ''}금액을 안내드립니다.`}
+  </p>
+${INQUIRY ? `  <!-- 바로 위 문장을 한 줄로 줄여 그린다 [대표, 2026-08-10]. 넷을 거쳐 끝난다는
+       것을 읽기 전에 보게 한다. 여기 있는 말은 **모두 위 문장에 이미 있다.**
+       ★ <div> 는 <p> 안에 못 들어간다 — 넣으면 브라우저가 문단을 제멋대로 닫아
+         뒤따르는 글이 문단 밖으로 밀린다. 그래서 문단을 둘로 나눴다. -->
+  <div class="flow" aria-hidden="true">
+    <span>주문하기</span><i>→</i><span>자동 복사</span><i>→</i><span>채팅창</span><i>→</i><span>붙여넣기</span>
+  </div>
+` : ''}  <p class="ordnote tail">
     화면에서 보이는 색상과 실제 원단의 색상은 차이가 있을 수 있습니다.
   </p>
 </section>
