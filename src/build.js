@@ -104,7 +104,10 @@ for (const f of NO_FIX) {
     + dup.map(([no, v]) => `  NO.${no}: ${v.map(c => c.ko + ' ' + c.su + '수').join(' / ')}`).join('\n'));
 }
 
-// 베개 위치: 앞줄 왼쪽=pillowF, 앞줄 오른쪽=pillowR, 뒷줄 왼쪽=pillowL, 뒷줄 오른쪽=pillowW
+// 베개 자리: 앞줄 왼쪽=pillowL, 앞줄 오른쪽=pillowF, 뒷줄 왼쪽=pillowW, 뒷줄 오른쪽=pillowR
+//   **키 이름을 믿지 말 것** — 자리와 안 맞는다 (PARTS 의 베개 넷에 적어둔 까닭 참조).
+//   확실히 하려면 `src/tools/extract-masks.js` 의 label 을 보거나, 마스크마다 다른 색을
+//   넣어 한 장 뽑아 보십시오. 눈으로 보는 것이 제일 빠릅니다.
 // 처음엔 여섯 곳 모두 흰색이다. 색이 미리 들어가 있으면 자기 색을 얹는 자리라는 게
 // 안 보이고, 고르지도 않은 색이 주문에 딸려 나간다. [대표, 2026-08-04]
 // 시작 색은 매트리스커버에서도 고를 수 있어야 한다 — 100수는 매트리스커버에 못 쓰므로
@@ -138,15 +141,20 @@ const WHITE = '#f5f4ef';   // NO. 952 멜트 아이스크림 60수
 //   두 디자인이 똑같아서 **가리는 말이 못 되고** 같은 말만 겹쳐 보였다.
 //   베개커버 주문서도 「앞뒤 같은 컬러 / 앞뒤 다른 컬러」라 이제 온 페이지가 한 말을 쓴다.
 // pilMode = 베개커버 칸 구성. 없으면 pilTwo 를 보고 정한다 (PIL_MODES 참조).
-const NOPAT = '패턴 없는 디자인';
+// cd = 카드에 적는 설명. 줄 단위로 적는다.
+//   ★ 「패턴 없는 디자인」을 넷에서 다 뺐다 [대표, 2026-08-10]. 네 카드에 똑같이 붙어 있어서
+//     **디자인끼리 무엇이 다른지**를 알려주지 못하고 자리만 먹었다. 넷이 공통으로 참인 말은
+//     카드에 적지 말 것 — 카드는 다른 점을 보여주는 자리다.
+//   ② 색 화면 맨 위에도 이 첫 줄이 나간다 (`#dnowD`). 전에는 따로 `d` 를 뒀는데
+//     거기에도 같은 「패턴 없는 디자인」이 찍혀서 함께 없앴다.
 const DESIGNS = [
-  { key:'plain', ko:'같은 컬러', d:NOPAT, on:'앞뒤 같은 컬러',
-    cd:[NOPAT, '이불 앞뒤 같은 컬러'], card:'card_plain.jpg', base:'base.jpg' },
+  { key:'plain', ko:'같은 컬러', on:'앞뒤 같은 컬러',
+    cd:['이불 앞뒤 같은 컬러'], card:'card_plain.jpg', base:'base.jpg' },
   //   onSame — 앞뒤를 **같은 색으로** 고르셨을 때 나가는 이름. 값이 그렇게 갈리므로
   //   (PRICE.design.both.twoByColor) 주문서 이름도 반드시 같이 갈려야 한다 [대표, 2026-08-10].
   //   이름만 「다른 컬러」로 남으면 **같은 컬러 값이 청구된 주문서**가 나간다.
-  { key:'both',  ko:'다른 컬러', d:NOPAT, on:'앞뒤 다른 컬러', onSame:'앞뒤 같은 컬러',
-    cd:[NOPAT, '이불 앞뒤 다른 컬러'], card:'card_both.jpg',  base:'base_both.jpg',
+  { key:'both',  ko:'다른 컬러', on:'앞뒤 다른 컬러', onSame:'앞뒤 같은 컬러',
+    cd:['이불 앞뒤 다른 컬러'], card:'card_both.jpg',  base:'base_both.jpg',
     pilTwo:true },
   // 삥(테두리) — **사진은 「다른 컬러」와 같은 컷이다.** 다른 것은 테두리를 손님이
   // 따로 고르느냐뿐이다. 「다른 컬러」에서는 앞면 색으로 덮어 안 보이게 하고
@@ -155,17 +163,24 @@ const DESIGNS = [
   //     손님이 못 알아들었다. 화면·주문서 어디에도 「삥」을 쓰지 않는다.
   //   onSame — 앞뒤를 **같은 색으로** 고르셨을 때 밖으로 나가는 이름. 값이 그렇게
   //   갈리므로(PRICE.design.piping.twoByColor) 주문서 이름도 같이 갈려야 한다.
-  { key:'piping', ko:'line 디자인', d:NOPAT, on:'앞뒤 다른 컬러 · line', onSame:'앞뒤 같은 컬러 · line',
-    cd:[NOPAT, '이불 앞뒤 다른 컬러', '테두리(line) 색 따로'],
+  //   카드 문구는 대표가 적어 주신 그대로다 [2026-08-10] — 이 디자인만 **앞뒤를 같은
+  //   색으로도, 다른 색으로도** 고를 수 있고 값이 그에 따라 갈린다. 그것을 카드에서부터
+  //   알려야 손님이 골라 들어온다.
+  { key:'piping', ko:'line 디자인', on:'앞뒤 다른 컬러 · line', onSame:'앞뒤 같은 컬러 · line',
+    cd:['이불 (같은 컬러, 양면 다른컬러 선택가능)', 'line 컬러 선택가능'],
     card:'card_piping.jpg', base:'base_both.jpg',
     pilTwo:true, pilMode:'bothPip' },
   // 날개형 [대표, 2026-08-09] — 사진이 **따로**다. 이불 앞뒤가 한 색이고 테두리에
   // 넓은 날개가 둘러 있다. 베개에도 같은 날개가 있어 값과 주문서에 같이 나간다.
   //   베개는 **이불 색을 따라간다** [대표, 2026-08-10]. 그래서 고르는 자리가 셋이다.
-  { key:'wing', ko:'날개 디자인', d:NOPAT, on:'날개 디자인',
-    cd:[NOPAT, '이불·베개 같은 컬러', '날개(테두리) 색 따로'],
+  { key:'wing', ko:'날개 디자인', on:'날개 디자인',
+    cd:['양면 같은 컬러', '날개 컬러만 선택 가능'],
     card:'card_wing.jpg', base:'base_wing.jpg', pilMode:'wing' },
 ];
+// 카드 설명이 비면 카드가 이름만 남은 채로 나간다. 조용히 새지 않게 여기서 멈춘다.
+for (const d of DESIGNS)
+  if (!d.cd || !d.cd.length)
+    throw new Error(`${d.ko} 의 카드 설명(cd)이 비었습니다 — 카드에 적을 줄을 한 줄 이상 두십시오`);
 // 디자인을 바꿔도 **고른 색이 날아가지 않게** 물려준다. 다시 고르게 하면 카드를 둔 뜻이 없다.
 // 그 부위에 아직 손을 안 댔을 때만 물려준다 — 갈 때마다 덮으면 무지↔양면을 오가는 사이에
 // 양면에서 고른 뒷면 색이 앞면 색으로 지워진다.
@@ -191,10 +206,18 @@ const PARTS = [
   // ── 무지 (base.jpg)
   { key:'quilt',    ko:'이불',            def:WHITE, su:null,     dz:['plain'], grp:'quilt' },
   { key:'mattress', ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['plain'], grp:'mat' },
-  { key:'pillowF',  ko:'베개(앞)-왼쪽',    def:WHITE, su:null,     dz:['plain'] },
-  { key:'pillowR',  ko:'베개(앞)-오른쪽',  def:WHITE, su:null,     dz:['plain'] },
-  { key:'pillowL',  ko:'베개(뒤)-왼쪽',    def:WHITE, su:null,     dz:['plain'] },
-  { key:'pillowW',  ko:'베개(뒤)-오른쪽',  def:WHITE, su:null,     dz:['plain'] },
+  // ★ 베개 넷 — **키 이름과 사진 속 자리는 다르다** [대표, 2026-08-10].
+  //   이름 넷이 통째로 밀려 있어서, 고른 색이 엉뚱한 베개에 칠해졌다. 대표가 사진에
+  //   자리를 적어 보내주셔서 맞췄다. 마스크에 색을 하나씩 넣어 눈으로 확인한 결과다:
+  //     pillowL = 왼쪽 뒤에 큰 것 (앞줄 왼쪽)   pillowW = 그 뒤에 반쯤 가린 것 (뒷줄 왼쪽)
+  //     pillowF = 가운데 앞    (앞줄 오른쪽)    pillowR = 오른쪽       (뒷줄 오른쪽)
+  //   **키는 안 바꿨다** — 마스크 파일 이름(mask_pillowF.png …)이 키를 따라가므로
+  //   키를 고치면 파일까지 다 갈아야 한다. 자리는 `ko` 가 정한다.
+  //   칸 순서는 손님이 보는 순서(앞 왼쪽 → 앞 오른쪽 → 뒤 왼쪽 → 뒤 오른쪽)로 둔다.
+  { key:'pillowL',  ko:'베개(앞)-왼쪽',    def:WHITE, su:null,     dz:['plain'] },
+  { key:'pillowF',  ko:'베개(앞)-오른쪽',  def:WHITE, su:null,     dz:['plain'] },
+  { key:'pillowW',  ko:'베개(뒤)-왼쪽',    def:WHITE, su:null,     dz:['plain'] },
+  { key:'pillowR',  ko:'베개(뒤)-오른쪽',  def:WHITE, su:null,     dz:['plain'] },
   // ── 양면·삥 (base_both.jpg 한 장을 나눠 쓴다). 이불과 베개가 한 부위다.
   { key:'bothA',    ko:'이불·베개 앞면',   def:WHITE, su:null,     dz:['both','piping'], grp:'quilt', face:'앞면' },
   { key:'bothB',    ko:'이불·베개 뒷면',   def:WHITE, su:null,     dz:['both','piping'], grp:'quilt', face:'뒷면' },
@@ -278,11 +301,16 @@ for (const p of PARTS) {
 //     적어둔 값을 덮지 않고 각각 살아남는다.
 // faces = 이 칸의 색이 어느 부위에서 오는지. 둘이면 앞면·뒷면이다.
 const PIL_MODES = {
+  // 칸 이름과 **가리키는 부위**가 짝이 맞아야 한다 [대표, 2026-08-10]. 전에는 넷이 다
+  // 밀려 있어서, 「베개(앞)-왼쪽 · 1장」을 주문했는데 주문서에는 가운데 앞 베개 색이 적혔다.
+  //   칸 키(L·R·L2·R2)는 안 바꾼다 — 화면의 사이즈·장수 칸이 이 키로 붙어 있고,
+  //   디자인을 오가도 적어둔 값이 살아남는 근거다(PIL_UNION).
+  //   기본 장수는 **앞 두 자리가 1장** 이다. 뒤 두 자리는 0장으로 두고 필요하면 늘리신다.
   single: [
-    { key:'L',  ko:'베개(앞)-왼쪽',   qty:1, faces:[{ part:'pillowF' }] },
-    { key:'R',  ko:'베개(앞)-오른쪽', qty:1, faces:[{ part:'pillowR' }] },
-    { key:'L2', ko:'베개(뒤)-왼쪽',   qty:0, faces:[{ part:'pillowL' }] },
-    { key:'R2', ko:'베개(뒤)-오른쪽', qty:0, faces:[{ part:'pillowW' }] },
+    { key:'L',  ko:'베개(앞)-왼쪽',   qty:1, faces:[{ part:'pillowL' }] },
+    { key:'R',  ko:'베개(앞)-오른쪽', qty:1, faces:[{ part:'pillowF' }] },
+    { key:'L2', ko:'베개(뒤)-왼쪽',   qty:0, faces:[{ part:'pillowW' }] },
+    { key:'R2', ko:'베개(뒤)-오른쪽', qty:0, faces:[{ part:'pillowR' }] },
   ],
   // 한 칸이 네 칸 몫을 하므로 장수 목록을 늘려 잡는다. 안 그러면 무지에서 8장까지
   // 되던 것이 양면에서 4장으로 조용히 줄어든다.
@@ -1074,7 +1102,7 @@ ${fontCss}
   <div class="cards" id="designs">
 ${DESIGNS.map((d,i)=>`    <button data-design="${d.key}" aria-pressed="${i===0}">
       <img src="${b64(d.card,'image/jpeg')}" alt="${d.ko} 미리보기">
-      <span class="ct"><span class="cn">${d.ko}</span><span class="cd">${(d.cd||[d.d]).join('<br>')}</span><span class="cnow">고르신 것</span></span>
+      <span class="ct"><span class="cn">${d.ko}</span><span class="cd">${d.cd.join('<br>')}</span><span class="cnow">고르신 것</span></span>
     </button>`).join('\n')}
   </div>
   <!-- 줄바꿈은 대표가 정한 자리다 [2026-08-06]. 저절로 넘어가게 두지 말 것. -->
@@ -1400,7 +1428,8 @@ function syncDesign(){
   markCards();
   const d = DESIGNS.find(x => x.key === design);
   $('#dnowT').textContent = d.ko;
-  $('#dnowD').textContent = d.d;
+  // 카드 설명의 **첫 줄**을 쓴다. 줄을 다 이어 붙이면 폰에서 이 작은 칸이 두세 줄로 늘어난다.
+  $('#dnowD').textContent = d.cd[0];
   // 확인 화면의 작은 미리보기는 이 화면을 복사해 만든다. 디자인이 바뀌면 다시 만들어야 한다.
   $('#sceneMini').dataset.built = '';
   if (!inDz(cur, design)) pick(parts()[0]);
