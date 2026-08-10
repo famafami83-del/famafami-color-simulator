@@ -167,7 +167,17 @@ const DESIGNS = [
   //   색으로도, 다른 색으로도** 고를 수 있고 값이 그에 따라 갈린다. 그것을 카드에서부터
   //   알려야 손님이 골라 들어온다.
   { key:'piping', ko:'line 디자인', on:'앞뒤 다른 컬러 · line', onSame:'앞뒤 같은 컬러 · line',
-    cd:['이불 (같은 컬러, 양면 다른컬러 선택가능)', 'line 컬러 선택가능'],
+    //   줄 나눔은 대표가 정한 자리다 [2026-08-10]. 「이불」을 제 줄로 올리고 괄호를
+    //   통째로 다음 줄에 둔다 — 한 줄로 이어 두었더니 폰에서 「…양면 다른컬러 /
+    //   선택가능)」 으로 갈려 괄호가 두 줄에 걸쳤다.
+    //   ★ 「다른컬러」·「선택가능」을 띄어 쓴다. keep-all 은 **띄어쓴 자리에서만** 꺾는데
+    //     붙여 두면 그 덩어리가 통째로 안 꺾여 오히려 이상한 데서 갈린다.
+    //   ★ 괄호 안은 어느 폰에서도 한 줄에 안 들어간다(카드가 화면의 반이다). 그래서
+    //     자리를 <br> 로 못박지 않고 **끊기면 안 되는 덩어리만 묶는다** —  (안 꺾이는
+    //     빈칸)로 「선택 가능)」을 붙여 두면 폭이 어떻든 「…가능)」이 홀로 남지 않는다.
+    //     못박으면 넓은 폰에서는 앞줄이 짧게 떠 버린다. 묶어두면 브라우저가 폭에 맞춰
+    //     고르되 이상한 자리는 못 고른다.
+    cd:['이불', '(같은 컬러, 양면 다른 컬러 선택 가능)', 'line 컬러 선택 가능'],
     card:'card_piping.jpg', base:'base_both.jpg',
     pilTwo:true, pilMode:'bothPip' },
   // 날개형 [대표, 2026-08-09] — 사진이 **따로**다. 이불 앞뒤가 한 색이고 테두리에
@@ -865,9 +875,16 @@ ${fontCss}
  /* 디자인 고르기 — 쇼핑몰 상품 목록처럼 사진 카드를 눌러 들어간다 [대표, 2026-08-06].
     카드 두 장은 같은 사진·같은 색이고 젖혀진 면만 다르다. 견주면 차이가 그것 하나로 보인다. */
  .cards{display:grid;grid-template-columns:1fr 1fr;gap:11px}
- .cards button{display:block;width:100%;padding:0;overflow:hidden;cursor:pointer;font-family:inherit;
+ /* ★ flex 세로쌓기 — display:block 이면 **글이 짧은 카드의 속이 가운데로 내려앉는다**
+    [대표, 2026-08-10]. 두 카드는 grid 가 같은 키로 늘리는데, 단추는 속이 제 키보다
+    작으면 브라우저가 저 혼자 가운데로 모은다(단추의 타고난 성질이다). 그래서 글이
+    두 줄인 「날개 디자인」만 사진도 이름도 아래로 밀려 두 카드의 이름 줄이 어긋났다.
+    세로쌓기로 바꾸면 속이 **위에서부터** 쌓인다 — 카드 키는 그대로 같고 이름 줄이 맞는다. */
+ .cards button{display:flex;flex-direction:column;width:100%;padding:0;overflow:hidden;
+  cursor:pointer;font-family:inherit;
   text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg)}
- .cards button img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+ /* flex 칸이 되었으니 줄어들지 않게 못박는다. 안 그러면 카드가 좁을 때 사진만 눌린다. */
+ .cards button img{display:block;width:100%;aspect-ratio:1;object-fit:cover;flex:0 0 auto}
  /* 두 카드의 안쪽 여백을 똑같이 둔다. 글 길이가 달라도 칸 높이는 grid 가 맞춰준다. */
  .cards .ct{display:block;padding:11px 12px 13px;position:relative}
  /* 카드 제목만 Paperlogy [대표, 2026-08-07]. 표지 제목과 같은 글꼴이라 이름끼리 묶여 보인다.
