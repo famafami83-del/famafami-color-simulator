@@ -794,7 +794,11 @@ ${fontCss}
  :root[data-theme="light"]{--bg:#f3f0e9;--fg:#16203d;--mut:#636a7b;--line:#e2ddd1;--card:#fdfbf6;--soft:#eae5da;--bad:#a8261f}
  *{box-sizing:border-box}
  html,body{margin:0;padding:0}
- body{background:var(--bg);color:var(--fg);line-height:1.6;padding-bottom:76px;
+ /* 아래를 하단 단추 높이만큼 비워 둔다. ④ 에서는 저장 단추가 한 줄 더 붙어 단추가
+    높아지므로 **76px 로 박아두면 마지막 글이 단추 뒤로 숨는다.** 실제 높이를 재어
+    --navh 에 넣는다(syncNavH). 자바스크립트가 늦게 돌 때를 위해 76px 를 기본값으로 둔다. */
+ body{background:var(--bg);color:var(--fg);line-height:1.6;
+  padding-bottom:calc(var(--navh, 76px) + 10px);
   font-family:${FONT_BODY};-webkit-font-smoothing:antialiased}
  .wrap{max-width:960px;margin:0 auto;padding:16px 14px 24px}
 
@@ -1125,19 +1129,29 @@ ${fontCss}
  .ordnote.tail{margin-top:13px}
 
  /* 하단 고정 이동 */
+ /* 세로쌓기 — ④ 에서 저장 단추가 「카톡으로 주문하기」 **위에** 한 줄로 붙는다. */
  .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bg);
   border-top:1px solid var(--line);padding:11px 14px calc(11px + env(safe-area-inset-bottom));
-  display:flex;gap:9px;max-width:960px;margin:0 auto}
- .nav button{flex:1;padding:14px;border-radius:9px;font-size:14px;font-weight:600;
+  display:flex;flex-direction:column;gap:9px;max-width:960px;margin:0 auto}
+ .navrow{display:flex;gap:9px}
+ .nav button{padding:14px;border-radius:9px;font-size:14px;font-weight:600;
   cursor:pointer;font-family:inherit;border:1px solid var(--fg)}
+ .navrow button{flex:1}
  .nav .prev{background:transparent;color:var(--fg);flex:0 0 92px}
  .nav .next{background:var(--fg);color:var(--bg)}
+ /* 저장은 **곁일**이다 [대표, 2026-08-10]. 크기와 모양은 아래 단추와 같게 두되
+    속을 비워 테두리만 남긴다 — 진한 단추가 둘이면 눌러야 할 것이 어느 쪽인지
+    흐려지고, 주문으로 가는 길이 약해진다. 「이전」과 같은 결이다. */
+ .nav .save{background:transparent;color:var(--fg);width:100%}
+ .nav .save:disabled{opacity:.55;cursor:default}
  .nav button[hidden]{display:none}
 
  /* 복사한 뒤 뜨는 알림. **하단 단추 바로 위에 붙여 고정한다** — 어디를 보고 계시든
     눈에 들어와야 한다. ④ 글 사이에 끼워두면 스크롤 위치에 따라 안 보인다.
     카톡으로 넘어간 뒤에도 남아 있어, 돌아오셨을 때 무엇을 하던 중이었는지 알 수 있다. */
- .toast{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));
+ /* --navh 는 하단 단추의 **잰 높이**다(안전영역까지 들어 있다). ④ 에서 저장 단추가
+    붙어 단추가 높아지면 알림도 같이 올라와야 겹치지 않는다. */
+ .toast{position:fixed;left:12px;right:12px;bottom:calc(var(--navh, 76px) + 8px);
   z-index:30;max-width:936px;margin:0 auto;padding:12px 14px;border-radius:10px;
   background:var(--fg);color:var(--bg);font-size:var(--t4);line-height:1.65;
   word-break:keep-all;box-shadow:0 6px 20px rgba(0,0,0,.18)}
@@ -1369,9 +1383,14 @@ ${INQUIRY ? `  <!-- 바로 위 문장을 한 줄로 줄여 그린다 [대표, 20
 </section>
 </div>
 
+<!-- 저장 단추는 ④ 에서만 뜬다 [대표, 2026-08-10]. 앞 단계에서는 아직 고르는 중이라
+     저장할 것이 없고, 자리만 차지해 「다음」을 밀어낸다. -->
 <div class="nav">
-  <button class="prev" id="btnPrev" hidden>이전</button>
-  <button class="next" id="btnNext"></button>
+  <button class="save" id="btnSave" type="button" hidden>침구 이미지 저장하기</button>
+  <div class="navrow">
+    <button class="prev" id="btnPrev" hidden>이전</button>
+    <button class="next" id="btnNext"></button>
+  </div>
 </div>
 ${INQUIRY ? `<!-- 복사한 뒤 뜬다. 카톡으로 넘어가도 남아 있어 돌아오시면 그대로 보인다. -->
 <div class="toast" id="toast" hidden role="status">
@@ -1428,6 +1447,8 @@ function goto(s){
   $('#btnNext').textContent = NEXT_LABEL[s];
   if (s === 2) { renderPillows(); checkHeight(); }
   if (s === 3) { buildMini(); renderQuote(); renderOrder(); }
+  // 저장 단추는 ④ 에서만. 뜨고 지는 만큼 단추 높이가 달라지므로 곧바로 다시 잰다.
+  saveShow(s === LAST);
   // 단계를 옮기면 복사 알림을 지운다. ④ 를 벗어난 뒤에도 떠 있으면 고른 것을 고치는
   // 중인데 「복사되었습니다」가 남아 이미 보낸 것처럼 보인다.
   if (INQUIRY) $('#toast').hidden = true;
@@ -1485,6 +1506,109 @@ $('#btnNext').onclick = async () => {
   setTimeout(() => { b.textContent = NEXT_LABEL[LAST]; location.href = INQUIRY; }, 700);
 };
 
+/* ---- 침구 이미지 저장 ---- [대표, 2026-08-10]
+   화면은 사진 위에 **색 층을 곱하기로 겹쳐** 만든다(.layer{mix-blend-mode:multiply}).
+   그림 파일로 내보내려면 그 겹침을 캔버스에서 똑같이 다시 그려야 한다 — 화면에 보이는
+   것을 그대로 찍어내는 방법은 브라우저에 없다. 순서는 화면과 같다:
+     ① 바탕 사진을 그린다
+     ② 층마다 — 빈 장을 그 색으로 채우고 → 마스크의 투명도로 오려낸 뒤(destination-in)
+       → 바탕에 곱하기로 얹는다(multiply)
+   ★ 사진도 마스크도 **우리 쪽(assets/) 것뿐이다.** 남의 서버 그림이 한 장이라도 섞이면
+     캔버스가 오염되어 toBlob 이 막힌다. 그래서 여기서 밖의 그림을 끌어오지 않는다. */
+function loadImg(src){
+  return new Promise((ok, no) => {
+    const im = new Image();
+    im.onload = () => ok(im);
+    im.onerror = () => no(new Error('그림을 못 받았습니다: ' + src));
+    im.src = src;
+  });
+}
+async function composeScene(){
+  const scene = $('#sceneMain .scene:not([hidden])');
+  if (!scene) throw new Error('그릴 사진이 없습니다');
+  const el = scene.querySelector('img');
+  const base = await loadImg(el.currentSrc || el.src);
+  const W = base.naturalWidth, H = base.naturalHeight;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.drawImage(base, 0, 0, W, H);
+  // 층은 **화면에 놓인 차례대로** 얹는다. 겹치는 자리의 위아래가 화면과 같아야 한다.
+  for (const l of scene.querySelectorAll('.layer')) {
+    if (!l.dataset.maskurl) continue;
+    const mask = await loadImg(l.dataset.maskurl);
+    const tmp = document.createElement('canvas');
+    tmp.width = W; tmp.height = H;
+    const tc = tmp.getContext('2d');
+    tc.fillStyle = getComputedStyle(l).backgroundColor;
+    tc.fillRect(0, 0, W, H);
+    tc.globalCompositeOperation = 'destination-in';   // CSS 의 mask-mode:alpha 와 같다
+    tc.drawImage(mask, 0, 0, W, H);
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(tmp, 0, 0);
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  return new Promise((ok, no) =>
+    cv.toBlob(b => b ? ok(b) : no(new Error('그림을 만들지 못했습니다')), 'image/png'));
+}
+
+/* 하단 단추의 **잰 높이**를 --navh 에 넣는다. ④ 에서 저장 단추가 한 줄 붙어 높이가
+   달라지므로 박아둘 수 없다 — 박아두면 마지막 글이 단추 뒤로 숨는다. */
+function syncNavH(){
+  const n = document.querySelector('.nav');
+  if (n) document.documentElement.style.setProperty('--navh', n.offsetHeight + 'px');
+}
+addEventListener('resize', syncNavH);
+// 글꼴이 늦게 오면 단추 키가 한 번 더 바뀐다. 그때 다시 잰다.
+try { document.fonts.ready.then(syncNavH); } catch(_) {}
+
+const SAVE_LABEL = '침구 이미지 저장하기';
+// ④ 에 들어설 때 **미리 만들어 쥐고 있는다.** 누른 그 순간에 만들면 만드는 사이에
+// 「손님이 눌러서 하는 일」이라는 표시가 풀려, 폰에서 공유창이 안 열리는 일이 있다.
+let saveBlob = null, savePending = null;
+function savePrepare(){
+  saveBlob = null;
+  savePending = composeScene().then(b => (saveBlob = b, b), e => { console.warn(e); return null; });
+}
+function saveShow(on){
+  const b = $('#btnSave');
+  if (!b) return;
+  b.hidden = !on;
+  if (on) { b.disabled = false; b.textContent = SAVE_LABEL; savePrepare(); }
+  syncNavH();
+}
+const saveStamp = () => {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + p(d.getMonth()+1) + p(d.getDate());
+};
+$('#btnSave').onclick = async () => {
+  const b = $('#btnSave');
+  const say = (t, ms) => { b.textContent = t; if (ms) setTimeout(() => b.textContent = SAVE_LABEL, ms); };
+  const name = 'famafami-' + design + '-' + saveStamp() + '.png';
+  let blob = saveBlob;
+  if (!blob) {                       // 아직 안 됐으면 기다린다. 그래도 안 되면 한 번 더 해본다.
+    b.disabled = true; say('만드는 중…');
+    try { blob = await (savePending || composeScene()); } catch(_) {}
+    if (!blob) { try { blob = await composeScene(); } catch(_) {} }
+    b.disabled = false; say(SAVE_LABEL);
+  }
+  if (!blob) return say('저장하지 못했습니다', 2000);
+
+  const file = new File([blob], name, { type:'image/png' });
+  // 폰에서는 공유창이 낫다 — 「사진에 저장」이 거기 있다. 내려받기로 하면 파일앱에
+  // 떨어져 갤러리에서 안 보인다. 공유가 없는 곳(컴퓨터)에서만 내려받는다.
+  if (navigator.canShare && navigator.canShare({ files:[file] })) {
+    try { await navigator.share({ files:[file] }); return; }
+    catch(e) { if (e && e.name === 'AbortError') return; }   // 손님이 닫은 것은 잘못이 아니다
+  }
+  const a = document.createElement('a');
+  const u = URL.createObjectURL(blob);
+  a.href = u; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 10000);
+  say('저장했습니다', 2000);
+};
+
 /* ---- 색 ---- */
 // 한 부위가 **여러 사진에 걸쳐 있을 수 있다** — 양면과 삥은 같은 컷을 쓰므로
 // 「이불·베개 앞면」층이 두 장에 하나씩 있다. 색을 고르면 둘 다 칠해야 한다.
@@ -1531,7 +1655,10 @@ function sceneLoad(key){
     const u = "url('" + l.dataset.mask + "')";
     l.style.webkitMaskImage = u;   // 사파리·크롬
     l.style.maskImage = u;
-    l.removeAttribute('data-mask');
+    // 주소를 한 벌 남겨둔다. 그림으로 저장할 때 **마스크를 다시 읽어야** 하는데,
+    // style 에서 url() 을 도로 뜯어내는 것보다 이쪽이 튼튼하다.
+    l.dataset.maskurl = l.dataset.mask;
+    l.removeAttribute('data-mask');   // 다 심었다는 표시 — 두 번 심지 않는다
   });
 }
 function syncDesign(){
