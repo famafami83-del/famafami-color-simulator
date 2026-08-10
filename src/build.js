@@ -1048,7 +1048,20 @@ ${fontCss}
  pre{margin:0 0 10px;padding:13px;background:var(--card);border:1px solid var(--line);border-radius:9px;
   font-size:12.5px;line-height:1.85;white-space:pre-wrap;word-break:break-word;
   font-family:ui-monospace,SFMono-Regular,Menlo,"D2Coding",monospace}
+ /* 줄이 길어 꺾이면 **꺾인 줄을 들여쓴다** (매달린 들여쓰기) [대표, 2026-08-10].
+    글자를 줄여 대부분 한 줄에 담기게 했지만, 손님이 고른 색 이름이 길면 여전히 꺾인다.
+    그때 꺾인 줄이 왼쪽 끝에서 시작하면 새 항목처럼 보인다.
+    ★ 줄마다 블록이라야 걸린다 — pre 하나에 걸면 **글 전체의 첫 줄**에만 먹는다. */
+ .ol{display:block;padding-left:2.8em;text-indent:-2.8em}
+ /* 좁은 폰(아이폰 SE 320px 등)에서는 한 단계 줄인다. 고정폭 글꼴이라 한글 한 자가
+    넓어서, 색 이름이 긴 줄이 이 폭에서만 넘친다. 글자를 줄이는 편이 줄을 꺾는 것보다 낫다. */
+ @media (max-width:380px){ pre{font-size:11px;padding:11px 10px} }
  .ordnote{font-size:11.5px;color:var(--mut);margin:0;line-height:1.7}
+ /* 손님이 **눌러야 할 것**과 **해야 할 일**만 굵게 [대표, 2026-08-10].
+    ★ 본문 글꼴(FF Body)은 400 한 벌뿐이라 <b> 만으로는 브라우저가 억지로 굵게 그려
+      흐릿하게 번진다. 진짜 굵은 벌이 있는 제목 글꼴(FF Head 700)로 바꿔 그린다.
+      글자색도 곁말 회색에서 본문 네이비로 올려야 눈에 든다 — 굵기만으로는 약하다. */
+ .ordnote b{font-family:var(--head);font-weight:700;color:var(--fg)}
 
  /* 하단 고정 이동 */
  .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bg);
@@ -1267,7 +1280,7 @@ ${PRICE_READY ? `  <div class="card">
   <p class="ordnote">
     ${PRICE_READY ? `선택하신 내용과 예상 금액을 확인해주세요.` : `선택하신 내용을 확인해주세요.`}<br>
     ${INQUIRY ? `아래 <b>「카톡으로 주문하기」</b>를 누르면 주문 내용이 자동으로 복사되고 카카오톡이 열립니다.<br>
-    열린 채팅창을 길게 눌러 「붙여넣기」 후 보내주세요.<br>
+    열린 채팅창을 길게 눌러 <b>「붙여넣기」</b> 후 보내주세요.<br>
     확인 후 결제하실 수 있는 링크를 보내드립니다.`
     : `주문 내용을 복사해 문의해주시면 ${PRICE_READY ? '최종 ' : ''}금액을 안내드립니다.`}<br><br>
     화면에서 보이는 색상과 실제 원단의 색상은 차이가 있을 수 있습니다.
@@ -1373,7 +1386,8 @@ $('#btnNext').onclick = async () => {
     }
   }
   if (step < LAST) return navigate(step+1);
-  const t = $('#orderTxt').textContent;
+  // 화면을 긁지 않는다 — 줄을 나눠 그려서 textContent 에는 줄바꿈이 없다.
+  const t = orderText;
   try { await navigator.clipboard.writeText(t); }
   catch(_) { const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
   const b = $('#btnNext');
@@ -1884,6 +1898,9 @@ function renderQuote(){
   $('#qNote').innerHTML = notes.map(n => '· ' + n).join('<br>');
 }
 
+// 복사해서 카톡으로 보내는 글. **이것이 원본이다** — 화면은 이 글을 줄마다 그린 것뿐이라
+// 거기서 긁으면 줄바꿈이 사라진다.
+let orderText = '';
 function renderOrder(){
   const L = [];
   if (!$('#q_skip').checked) {
@@ -1919,9 +1936,14 @@ function renderOrder(){
     pillowRows().forEach(r => {
       // 칸이 하나면 칸 이름이 「베개커버」라 바로 위 줄과 겹친다. 사이즈로 적는다.
       const head = '   ' + (one ? '사이즈' : r.sl.ko) + ' : ' + r.size + ' · ' + r.n + '장';
-      // 한 색이면 한 줄에 붙이고, 양면처럼 두 색이면 색을 아래에 따로 적는다.
-      if (r.sl.faces.length === 1) L.push(head + '  /  ' + label(state[r.sl.faces[0].part]));
-      else { L.push(head); r.sl.faces.forEach(f => L.push('      컬러(' + f.face + ') : ' + label(state[f.part]))); }
+      // 색은 **늘 아랫줄**에 적는다 [대표, 2026-08-10]. 한 색일 때 한 줄에 붙였더니
+    // 「베개(앞)-왼쪽 : 50×70 · 1장  /  NO. 952 · 멜트 아이스크림 60수」가 45자라
+    // 폰에서 두 줄로 꺾이고, 꺾인 줄이 왼쪽 끝까지 밀려 나와 읽기 나빴다.
+    // 카톡에 붙는 글도 같은 폭에서 같은 일이 난다 — 화면만 고쳐서는 안 된다.
+    // 들여쓰기는 **네 칸**이다. 여섯 칸이면 320px 폰에서 색 이름 줄이 넘친다.
+      L.push(head);
+      if (r.sl.faces.length === 1) L.push('    컬러 : ' + label(state[r.sl.faces[0].part]));
+      else r.sl.faces.forEach(f => L.push('    컬러(' + f.face + ') : ' + label(state[f.part])));
     });
     // 칸이 하나면 합계가 바로 위 줄과 같은 말이다.
     if (!one) L.push('   모두 ' + pillowCount() + '장 ('
@@ -1946,7 +1968,17 @@ function renderOrder(){
   const memo = $('#memo').value.trim();
   if (memo) L.push('■ 요청사항', '   ' + memo, '');
   if (!L.length) L.push('선택하신 항목이 없습니다.');
-  $('#orderTxt').textContent = L.join('\\n').trim();
+  // ★ 줄마다 따로 그린다 [2026-08-10]. 한 덩어리로 넣으면 **꺾인 줄이 왼쪽 끝으로**
+  //   떨어져 새 항목처럼 보인다 — text-indent 는 블록의 **첫 줄**에만 걸려서
+  //   pre 하나로는 매달린 들여쓰기를 못 만든다. 줄을 각각 블록으로 만들어야 걸린다.
+  //   ★ 복사할 글은 화면에서 긁지 말고 **여기서 만든 원본**을 쓴다 (orderText).
+  //     줄을 나눠 그리면 textContent 에 줄바꿈이 안 남아, 화면을 긁으면 한 줄로 붙는다.
+  orderText = L.join('\\n').trim();
+  //   빈 줄은 **폭 없는 공백**을 넣어야 자리를 차지한다. 빈 블록은 높이가 0 이라
+  //   덩어리 사이 여백이 통째로 사라진다 (복사되는 글에는 그대로 빈 줄이 있어 안 보인다).
+  $('#orderTxt').innerHTML = orderText.split('\\n')
+    .map(l => '<span class="ol">'
+      + (l === '' ? '&#8203;' : l.replace(/&/g,'&amp;').replace(/</g,'&lt;')) + '</span>').join('');
 }
 
 syncDesign();
