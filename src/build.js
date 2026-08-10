@@ -152,8 +152,8 @@ const DESIGNS = [
   //     손님이 못 알아들었다. 화면·주문서 어디에도 「삥」을 쓰지 않는다.
   //   onSame — 앞뒤를 **같은 색으로** 고르셨을 때 밖으로 나가는 이름. 값이 그렇게
   //   갈리므로(PRICE.design.piping.twoByColor) 주문서 이름도 같이 갈려야 한다.
-  { key:'piping', ko:'라인 디자인', d:NOPAT, on:'앞뒤 다른 컬러 · 라인', onSame:'앞뒤 같은 컬러 · 라인',
-    cd:[NOPAT, '이불 앞뒤 다른 컬러', '테두리(라인) 색 따로'],
+  { key:'piping', ko:'line 디자인', d:NOPAT, on:'앞뒤 다른 컬러 · line', onSame:'앞뒤 같은 컬러 · line',
+    cd:[NOPAT, '이불 앞뒤 다른 컬러', '테두리(line) 색 따로'],
     card:'card_piping.jpg', base:'base_both.jpg',
     pilTwo:true, pilMode:'bothPip' },
   // 날개형 [대표, 2026-08-09] — 사진이 **따로**다. 이불 앞뒤가 한 색이고 테두리에
@@ -197,14 +197,14 @@ const PARTS = [
   { key:'bothB',    ko:'이불·베개 뒷면',   def:WHITE, su:null,     dz:['both','piping'], grp:'quilt', face:'뒷면' },
   { key:'bothM',    ko:'매트리스커버',     def:WHITE, su:[60,80], dz:['both','piping'], grp:'mat' },
   // 같은 자리(삥)를 디자인마다 다르게 쓴다. 마스크는 한 장을 나눠 쓴다.
-  //   bothP — 「다른 컬러」에는 라인이 **없는 제품**이라, 앞면 색으로 덮어 봉제선처럼 보이게 한다.
-  //   pipP  — 「라인 디자인」에서는 손님이 **직접 고르는 자리**다.
-  { key:'bothP',    ko:'라인(테두리)',     def:WHITE, su:null,     dz:['both'],   follow:'bothA' },
-  //   face 는 「컬러(라인)」으로 짧게 적는다 — 「컬러(라인(테두리))」는 괄호가 겹쳐 읽기 나쁘다.
+  //   bothP — 「다른 컬러」에는 line이 **없는 제품**이라, 앞면 색으로 덮어 봉제선처럼 보이게 한다.
+  //   pipP  — 「line 디자인」에서는 손님이 **직접 고르는 자리**다.
+  { key:'bothP',    ko:'line(테두리)',     def:WHITE, su:null,     dz:['both'],   follow:'bothA' },
+  //   face 는 「컬러(line)」으로 짧게 적는다 — 「컬러(line(테두리))」는 괄호가 겹쳐 읽기 나쁘다.
   //   ★ 「삥」은 작업자끼리 쓰는 말이라 **손님 눈에 닿는 데는 한 군데도 없어야 한다**
   //     [대표, 2026-08-10]. 부위 키(pipP)와 마스크 이름만 옛 말로 남아 있다.
-  { key:'pipP',     ko:'라인(테두리)',     def:WHITE, su:null,     dz:['piping'], grp:'quilt',
-    face:'라인', trim:true, mask:'mask_bothP.png' },
+  { key:'pipP',     ko:'line(테두리)',     def:WHITE, su:null,     dz:['piping'], grp:'quilt',
+    face:'line', trim:true, mask:'mask_bothP.png' },
   // ── 날개형 (base_wing.jpg). 사진이 따로다 — 이불 앞뒤가 한 색이고 테두리에 날개가 있다.
   //   마스크는 `src/tools/extract-wing.js` 가 뽑는다.
   { key:'wQuilt',   ko:'이불',            def:WHITE, su:null,     dz:['wing'], grp:'quilt' },
@@ -301,7 +301,7 @@ const PIL_MODES = {
   bothPip: [
     { key:'B', ko:'베개커버', qty:2, many:true,
       faces:[{ part:'bothA', face:'앞면' }, { part:'bothB', face:'뒷면' },
-             { part:'pipP',  face:'라인' }] },
+             { part:'pipP',  face:'line' }] },
   ],
   // 날개형 — 몸판 한 색 + 날개. 앞뒤가 갈리지 않아 「바탕」이라고 적는다.
   //   칸 이름(key)을 양면과 같은 'B' 로 둔다 — 디자인을 오가도 사이즈·장수가 살아남는다.
