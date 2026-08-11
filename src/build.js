@@ -655,17 +655,33 @@ if (!/^https:\/\/.*\/$/.test(SITE))
 const OG = {
   // 제목은 <title> 과 같게 둔다. 카톡 카드의 굵은 첫 줄이 이것이다.
   title: 'FAMAFAMI MADE',
-  // 두 줄로 보여준다 [대표, 2026-08-11]. 앞줄은 표지 제목 그대로 — 링크에서 본 말과
-  // 열어서 본 말이 같아야 한다. 뒷줄이 무엇을 하는 곳인지 말한다.
-  //   ★ 줄바꿈은 **진짜 줄바꿈 문자**로 넣는다. HTML 속성 값 안에서는 그대로 살아
-  //     있고, 카카오가 그것을 보고 줄을 나눈다. <br> 이나 \\n 이라고 적으면 글자
-  //     그대로 나온다.
-  //   ★ 카카오 카드는 두 줄쯤에서 말줄임(…)으로 자른다. 뒷줄을 늘리면 잘린다.
-  desc:  '찾는 침구에서, 만드는 침구로.\n100가지 색, 내 취향대로 직접 조합해보세요.',
+  /* 두 줄로 보여준다 [대표, 2026-08-11]. 앞줄은 표지 제목 그대로 — 링크에서 본 말과
+     열어서 본 말이 같아야 한다. 뒷줄이 무엇을 하는 곳인지 말한다.
+
+     ★ **카카오는 줄바꿈 문자를 무시한다.** 진짜 줄바꿈을 넣어 봤지만(2026-08-11)
+       카드에서는 빈칸 하나로 바뀌어 한 줄로 이어졌다. <br> 도 \n 도 소용없다.
+       그래서 **안 꺾이는 빈칸(U+00A0)으로 뒷문장 앞머리를 묶는다** — 그 덩어리가
+       앞줄에 남은 자리보다 넓어서 통째로 다음 줄로 밀린다. 이불 카드에서 쓴 것과
+       같은 수법이다.
+     ★ 카드 한 줄은 한글 스무 자쯤이고 **두 줄에서 말줄임(…)으로 자른다.** 그래서
+       뒷문장에서 「직접」을 뺐다 — 넣으면 스무 자를 넘겨 끝이 잘린다.
+       줄바꿈 문자도 그대로 둔다. 카카오는 무시하지만 다른 곳에서는 살아 있다. */
+  desc:  '찾는 침구에서, 만드는 침구로.\n100가지 색, 내 취향대로 조합해보세요.',
   // ?v= 를 떼고 쓴다. 카카오는 **페이지 주소**로 캐시를 잡으므로 그림에 번호를 붙여도
   // 새로 안 읽는다. 주소는 짧고 그대로인 편이 여러 곳에서 잘 읽힌다.
   image: ext('og.jpg').split('?')[0],
 };
+/* 카톡 카드에 들어갈 설명. 줄바꿈 문자를 빈칸으로 펴되, **뒷문장 앞머리 세 낱말을
+   안 꺾이는 빈칸으로 묶는다.** 그 덩어리가 앞줄에 남은 자리보다 넓어서 통째로 다음
+   줄로 밀린다 — 카카오가 줄바꿈을 무시해도 눈에는 두 줄로 보인다.
+   세 낱말인 까닭: 두 낱말(「100가지 색,」)은 앞줄 남은 자리에 아슬아슬하게 들어갈
+   수 있고, 네 낱말이면 뒷줄이 스무 자를 넘겨 잘린다. */
+OG.kakao = (() => {
+  const cut = OG.desc.indexOf('\n');
+  if (cut < 0) return OG.desc;
+  const head = OG.desc.slice(0, cut), w = OG.desc.slice(cut + 1).split(' ');
+  return head + ' ' + [w.slice(0, 3).join('\u00A0'), ...w.slice(3)].join(' ');
+})();
 
 // 이 페이지로 들어오는 주문은 색 조합을 직접 고른 것이라 전부 맞춤 제작이다.
 // 그래서 맞춤 추가금은 항상 붙는다. 기성가로만 낼 일이 생기면 false 로 바꾼다.
@@ -812,7 +828,7 @@ const html = `<!doctype html><html lang="ko"><head>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="FAMAFAMI">
 <meta property="og:title" content="${OG.title}">
-<meta property="og:description" content="${OG.desc}">
+<meta property="og:description" content="${OG.kakao}">
 <meta property="og:url" content="${SITE}">
 <meta property="og:image" content="${SITE}${OG.image}">
 <meta property="og:image:width" content="1200">
@@ -822,7 +838,7 @@ const html = `<!doctype html><html lang="ko"><head>
 <!-- 카카오는 og: 만 보지만, 링크를 다른 데로 옮겨 붙일 수도 있어 함께 적어둔다. -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${OG.title}">
-<meta name="twitter:description" content="${OG.desc}">
+<meta name="twitter:description" content="${OG.kakao}">
 <meta name="twitter:image" content="${SITE}${OG.image}">
 <style>
 ${fontCss}
