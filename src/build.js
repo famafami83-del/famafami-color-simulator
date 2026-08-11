@@ -642,6 +642,26 @@ if (!/^https:\/\//.test(INQUIRY))
 if (/pf\.kakao\.com/.test(INQUIRY) && !/\/chat$/.test(INQUIRY))
   throw new Error('카카오톡 채널 주소는 뒤에 /chat 을 붙여야 채팅방이 열립니다 — 지금 값: ' + INQUIRY);
 
+/* ── 링크 미리보기 ── [대표, 2026-08-11]
+   카톡이나 인스타 디엠에 주소를 붙였을 때 뜨는 카드다. 손님이 링크만 보고 「무엇을
+   하는 곳인지」 알 수 있어야 눌러 들어온다.
+     SITE — **끝에 슬래시까지** 있는 이 페이지의 주소. og:image 를 여기에 이어 붙여
+            https:// 로 시작하는 온전한 주소를 만든다. 짧게 적으면 카카오가 못 받는다.
+   ★ 저장소 이름을 바꾸거나 도메인을 붙이면 **여기를 같이 고쳐야 한다.** 안 고치면
+     미리보기 그림만 조용히 안 뜬다 — 페이지 자체는 멀쩡해서 알아채기 어렵다. */
+const SITE = 'https://famafami83-del.github.io/famafami-color-simulator/';
+if (!/^https:\/\/.*\/$/.test(SITE))
+  throw new Error('SITE 는 https:// 로 시작하고 / 로 끝나야 합니다 — 지금 값: ' + SITE);
+const OG = {
+  // 제목은 <title> 과 같게 둔다. 카톡 카드의 굵은 첫 줄이 이것이다.
+  title: 'FAMAFAMI MADE',
+  // 표지에 적은 말을 그대로 쓴다 — 링크에서 본 말과 열어서 본 말이 같아야 한다.
+  desc:  '찾는 침구에서, 만드는 침구로. 원단 100색을 직접 골라 내 침구를 만들어보세요.',
+  // ?v= 를 떼고 쓴다. 카카오는 **페이지 주소**로 캐시를 잡으므로 그림에 번호를 붙여도
+  // 새로 안 읽는다. 주소는 짧고 그대로인 편이 여러 곳에서 잘 읽힌다.
+  image: ext('og.jpg').split('?')[0],
+};
+
 // 이 페이지로 들어오는 주문은 색 조합을 직접 고른 것이라 전부 맞춤 제작이다.
 // 그래서 맞춤 추가금은 항상 붙는다. 기성가로만 낼 일이 생기면 false 로 바꾼다.
 const ALWAYS_CUSTOM = true;
@@ -775,6 +795,28 @@ const html = `<!doctype html><html lang="ko"><head>
      주소가 아니라 화면 안에만 있다. -->
 <meta name="referrer" content="unsafe-url">
 <title>FAMAFAMI MADE</title>
+<meta name="description" content="${OG.desc}">
+<!-- 링크를 보냈을 때 뜨는 미리보기 [대표, 2026-08-11]. 이 태그가 없으면 카카오톡이
+     「여기를 눌러 링크를 확인하세요」라는 제 기본 문구만 보여주고 사진이 안 뜬다.
+     ★ 주소는 **반드시 https:// 부터 통째로** 적는다. assets/og.jpg 처럼 짧게 적으면
+       카카오 서버가 어디서 받아야 할지 몰라 그림이 빠진다.
+     ★ 카카오는 한번 읽은 미리보기를 **한참 붙들고 있는다.** 고친 뒤에는
+       developers.kakao.com/tool/clear/og 에서 이 주소를 넣어 캐시를 지워야 바뀐다. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FAMAFAMI">
+<meta property="og:title" content="${OG.title}">
+<meta property="og:description" content="${OG.desc}">
+<meta property="og:url" content="${SITE}">
+<meta property="og:image" content="${SITE}${OG.image}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="파마파미 침구">
+<meta property="og:locale" content="ko_KR">
+<!-- 카카오는 og: 만 보지만, 링크를 다른 데로 옮겨 붙일 수도 있어 함께 적어둔다. -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${OG.title}">
+<meta name="twitter:description" content="${OG.desc}">
+<meta name="twitter:image" content="${SITE}${OG.image}">
 <style>
 ${fontCss}
  :root{--head:${FONT_HEAD}}
