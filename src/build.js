@@ -1586,10 +1586,33 @@ async function composeOrder(W){
   let body = 0;
   rows.forEach(r => body += r.blank ? Math.round(LH * .5) : LH);
 
+  /* 금액은 **quote() 에서 바로 가져온다** [대표, 2026-08-10]. orderText 에 끼워 넣지
+     않는다 — 그 글은 화면 주문서가 그대로 쓰는 원본이라, 건드리면 ④ 화면 위 금액
+     카드와 같은 말이 두 번 나온다. 여기서만 따로 그리면 그림에만 값이 붙는다.
+     대표가 이 그림을 보고 견적서를 만든다 [대표, 2026-08-10]. 그래서 합계만이 아니라
+     **줄마다 얼마인지**가 다 있어야 한다. 「가격 문의」·「주문 불가」도 그대로 옮긴다 —
+     빠뜨리면 그 줄이 값이 없는 것인지 0원인지 알 수 없다. */
+  const PL = Math.round(LH * .8), PGAP = Math.round(LH * .3);
+  let q = null, priceH = 0;
+  if (PRICE_READY) {
+    q = quote();
+    if (q.rows.length) {
+      q.rows.forEach(() => priceH += LH + PL + PGAP);
+      if (q.rows.some(r => !r.ask)) priceH += Math.round(LH * 1.25);   // 구분선 + 합계
+      priceH += CPAD * 2;
+    }
+  }
+  // ★ q.notes(똑딱이 갯수·주문 불가 …)는 **여기에 안 그린다.** renderOrder 가 이미
+  //   같은 말을 「■ 확인해주세요」로 orderText 에 넣어 두어, 위 주문 내역 카드에 나온다.
+  //   두 번 적으면 한 장 안에서 같은 말이 두 번 된다.
+  const hasPrice = !!(q && q.rows.length);
+
   const titleH = Math.round(T * 1.25);
   const footH  = Math.round(SM * 1.7);
   const cardH  = body + CPAD * 2;
-  const H = PAD + titleH + GAP + cardH + GAP + footH + PAD;
+  const H = PAD + titleH + GAP + cardH
+    + (hasPrice ? GAP + titleH + GAP + priceH : 0)
+    + GAP + footH + PAD;
 
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
@@ -1615,9 +1638,50 @@ async function composeOrder(W){
     y += LH;
   });
 
+  let below = cy + cardH;                        // 다음 덩어리가 놓일 자리
+
+  if (hasPrice) {
+    c.fillStyle = PAPER.fg; c.font = HEAD;
+    c.fillText('예상 금액', PAD, below + GAP + Math.round(T * .95));
+
+    const py = below + GAP + titleH + GAP;
+    const pw = W - PAD * 2, xr = PAD + pw - CPAD;   // 금액은 오른쪽 끝에 맞춰 적는다
+    c.fillStyle = PAPER.card; rrect(c, PAD, py, pw, priceH, Math.round(18 * S)); c.fill();
+    c.strokeStyle = PAPER.line; c.lineWidth = Math.max(1, Math.round(S)); c.stroke();
+
+    y = py + CPAD + Math.round(F * .85);
+    q.rows.forEach(r => {
+      // 품목과 금액은 **같은 줄 양 끝**에, 딸린 설명은 그 아래 한 단 들여서.
+      // 한 줄에 다 넣으면 설명이 길 때 금액과 부딪힌다 — 견적서로 옮겨 적을 값이라
+      // 부딪히면 안 된다.
+      c.textAlign = 'left';  c.font = ROWH; c.fillStyle = PAPER.fg;
+      c.fillText(r.t, x0, y);
+      c.textAlign = 'right'; c.font = ROWH;
+      c.fillStyle = r.bad ? '#a8261f' : PAPER.fg;
+      c.fillText(r.ask ? r.ask : won(r.a), xr, y);
+      c.textAlign = 'left';  c.font = ROW;  c.fillStyle = PAPER.mut;
+      c.fillText(r.d, x0 + Math.round(F * .6), y + PL);
+      y += LH + PL + PGAP;
+    });
+
+    if (q.rows.some(r => !r.ask)) {
+      const ly = y - PGAP + Math.round(LH * .15);
+      c.strokeStyle = PAPER.fg; c.lineWidth = Math.max(1, Math.round(1.5 * S));
+      c.beginPath(); c.moveTo(x0, ly); c.lineTo(xr, ly); c.stroke();
+      y = ly + Math.round(LH * .95);
+      c.textAlign = 'left';  c.font = ROWH; c.fillStyle = PAPER.fg; c.fillText('합계', x0, y);
+      c.textAlign = 'right'; c.font = '700 ' + Math.round(F * 1.25) + 'px ' + ${JSON.stringify(FONT_HEAD)};
+      c.fillText(won(q.sum) + (q.ask ? ' + 문의' : ''), xr, y);
+      c.textAlign = 'left';
+    }
+
+    below = py + priceH;
+  }
+
+  c.textAlign = 'left';
   c.font = FOOT; c.fillStyle = PAPER.mut;
   c.fillText('화면에서 보이는 색상과 실제 원단의 색상은 차이가 있을 수 있습니다.',
-    PAD, cy + cardH + GAP + Math.round(SM * 1.1));
+    PAD, below + GAP + Math.round(SM * 1.1));
 
   return new Promise((ok, no) =>
     cv.toBlob(b => b ? ok(b) : no(new Error('내역 그림을 만들지 못했습니다')), 'image/png'));
