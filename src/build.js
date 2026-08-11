@@ -655,33 +655,27 @@ if (!/^https:\/\/.*\/$/.test(SITE))
 const OG = {
   // 제목은 <title> 과 같게 둔다. 카톡 카드의 굵은 첫 줄이 이것이다.
   title: 'FAMAFAMI MADE',
-  /* 두 줄로 보여준다 [대표, 2026-08-11]. 앞줄은 표지 제목 그대로 — 링크에서 본 말과
-     열어서 본 말이 같아야 한다. 뒷줄이 무엇을 하는 곳인지 말한다.
+  /* 한 줄짜리 문장이다 [대표, 2026-08-11].
 
-     ★ **카카오는 줄바꿈 문자를 무시한다.** 진짜 줄바꿈을 넣어 봤지만(2026-08-11)
-       카드에서는 빈칸 하나로 바뀌어 한 줄로 이어졌다. <br> 도 \n 도 소용없다.
-       그래서 **안 꺾이는 빈칸(U+00A0)으로 뒷문장 앞머리를 묶는다** — 그 덩어리가
-       앞줄에 남은 자리보다 넓어서 통째로 다음 줄로 밀린다. 이불 카드에서 쓴 것과
-       같은 수법이다.
-     ★ 카드 한 줄은 한글 스무 자쯤이고 **두 줄에서 말줄임(…)으로 자른다.** 그래서
-       뒷문장에서 「직접」을 뺐다 — 넣으면 스무 자를 넘겨 끝이 잘린다.
-       줄바꿈 문자도 그대로 둔다. 카카오는 무시하지만 다른 곳에서는 살아 있다. */
-  desc:  '찾는 침구에서, 만드는 침구로.\n100가지 색, 내 취향대로 조합해보세요.',
+     ★ **카톡 카드에서는 줄을 나눌 수 없다.** 세 가지를 다 해봤고 다 안 됐다:
+         · 진짜 줄바꿈 문자      → 빈칸 하나로 바뀌어 이어붙었다
+         · <br>                 → 글자 그대로 나온다
+         · 안 꺾이는 빈칸(U+00A0) → 이것마저 보통 빈칸으로 펴버린다
+       카카오가 빈칸이란 빈칸을 다 하나로 만들어 놓고 제 폭에 맞춰 꺾는다.
+       그러니 **줄 나누려 애쓰지 말고 문장을 짧게 쓰는 것이 답이다.**
+     ★ 카드는 두 줄에서 말줄임(…)으로 자른다. 한 줄이 한글 스무 자쯤이니
+       마흔 자를 넘기면 끝이 잘린다. 지금 문장은 스물일곱 자다.
+     ★ 표지 제목(BRAND.title)을 앞에 두어, 링크에서 본 말과 열어서 본 말을 맞춘다. */
+  desc:  '찾는 침구에서, 만드는 침구로. 내 취향대로 조합해보세요.',
   // ?v= 를 떼고 쓴다. 카카오는 **페이지 주소**로 캐시를 잡으므로 그림에 번호를 붙여도
   // 새로 안 읽는다. 주소는 짧고 그대로인 편이 여러 곳에서 잘 읽힌다.
   image: ext('og.jpg').split('?')[0],
 };
-/* 카톡 카드에 들어갈 설명. 줄바꿈 문자를 빈칸으로 펴되, **뒷문장 앞머리 세 낱말을
-   안 꺾이는 빈칸으로 묶는다.** 그 덩어리가 앞줄에 남은 자리보다 넓어서 통째로 다음
-   줄로 밀린다 — 카카오가 줄바꿈을 무시해도 눈에는 두 줄로 보인다.
-   세 낱말인 까닭: 두 낱말(「100가지 색,」)은 앞줄 남은 자리에 아슬아슬하게 들어갈
-   수 있고, 네 낱말이면 뒷줄이 스무 자를 넘겨 잘린다. */
-OG.kakao = (() => {
-  const cut = OG.desc.indexOf('\n');
-  if (cut < 0) return OG.desc;
-  const head = OG.desc.slice(0, cut), w = OG.desc.slice(cut + 1).split(' ');
-  return head + ' ' + [w.slice(0, 3).join('\u00A0'), ...w.slice(3)].join(' ');
-})();
+// 설명에 보통 빈칸이 아닌 것(줄바꿈·안 꺾이는 빈칸)이 섞이면, 카드에서 어떻게 나올지
+// 알 수 없다. 눈에 안 보이는 글자라 편집하다 섞여 들어가기 쉬워서 여기서 막는다.
+//   카톡은 어차피 다 펴서 한 줄로 만든다 — 섞어봐야 얻을 것이 없다 [2026-08-11].
+if (OG.desc !== OG.desc.replace(/\s+/g, String.fromCharCode(32)))
+  throw new Error('OG.desc 에 보통 빈칸이 아닌 것이 섞였습니다 — 카톡 카드는 한 줄로 폅니다');
 
 // 이 페이지로 들어오는 주문은 색 조합을 직접 고른 것이라 전부 맞춤 제작이다.
 // 그래서 맞춤 추가금은 항상 붙는다. 기성가로만 낼 일이 생기면 false 로 바꾼다.
@@ -816,9 +810,7 @@ const html = `<!doctype html><html lang="ko"><head>
      주소가 아니라 화면 안에만 있다. -->
 <meta name="referrer" content="unsafe-url">
 <title>FAMAFAMI MADE</title>
-<!-- 검색엔진에 가는 설명은 **한 줄로** 편다. 줄바꿈을 그대로 두면 검색 결과에
-     빈칸이 어정쩡하게 들어간다. 줄을 나눠 보여주는 것은 카톡 카드 쪽 이야기다. -->
-<meta name="description" content="${OG.desc.replace(/\n/g, ' ')}">
+<meta name="description" content="${OG.desc}">
 <!-- 링크를 보냈을 때 뜨는 미리보기 [대표, 2026-08-11]. 이 태그가 없으면 카카오톡이
      「여기를 눌러 링크를 확인하세요」라는 제 기본 문구만 보여주고 사진이 안 뜬다.
      ★ 주소는 **반드시 https:// 부터 통째로** 적는다. assets/og.jpg 처럼 짧게 적으면
@@ -828,7 +820,7 @@ const html = `<!doctype html><html lang="ko"><head>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="FAMAFAMI">
 <meta property="og:title" content="${OG.title}">
-<meta property="og:description" content="${OG.kakao}">
+<meta property="og:description" content="${OG.desc}">
 <meta property="og:url" content="${SITE}">
 <meta property="og:image" content="${SITE}${OG.image}">
 <meta property="og:image:width" content="1200">
@@ -838,7 +830,7 @@ const html = `<!doctype html><html lang="ko"><head>
 <!-- 카카오는 og: 만 보지만, 링크를 다른 데로 옮겨 붙일 수도 있어 함께 적어둔다. -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${OG.title}">
-<meta name="twitter:description" content="${OG.kakao}">
+<meta name="twitter:description" content="${OG.desc}">
 <meta name="twitter:image" content="${SITE}${OG.image}">
 <style>
 ${fontCss}
