@@ -1609,8 +1609,65 @@ async function composeScene(){
     ctx.drawImage(tmp, 0, 0);
   }
   ctx.globalCompositeOperation = 'source-over';
+  stampLogo(ctx, W, H);
   return new Promise((ok, no) =>
     cv.toBlob(b => b ? ok(b) : no(new Error('그림을 만들지 못했습니다')), 'image/png'));
+}
+
+/* 저장한 사진에 워드마크를 얹는다 [대표, 2026-08-12].
+   손님이 카톡으로 퍼뜨릴 때 **어디서 온 그림인지 같이 가라고** 넣는 것이다. 화면에는
+   안 넣는다 — 색을 고르는 내내 얹혀 있으면 이 도구가 보여줘야 할 것을 가린다.
+
+   자리는 **왼쪽 아래**다. 디자인마다 사진이 다른데(무지·양면·날개) 세 장 모두 그 구석이
+   침구라 조용하다. 오른쪽 아래는 무지 컷에서 마루 무늬가 어수선하다.
+
+   ★ 잉크 색은 **놓일 자리를 보고 고른다.** 그 자리는 손님이 고른 색으로 칠해지는
+     침구 위라, 네이비로 박아두면 어두운 색을 고른 손님 그림에서 통째로 사라진다.
+     밝으면 브랜드 네이비, 어두우면 크림으로 뒤집는다.
+   ★ 로고 그림은 **표지에 이미 심어둔 것을 그대로 쓴다.** 같은 그림을 한 번 더 넣으면
+     첫 화면이 그만큼 무거워진다. 못 찾으면 조용히 건너뛴다 — 워드마크 하나 때문에
+     저장이 통째로 실패하면 안 된다. */
+function logoSrc(){
+  const el = $('.bmark'); if (!el) return null;
+  const s = getComputedStyle(el);
+  const m = String(s.maskImage || s.webkitMaskImage || '').match(/url\\(["']?(data:[^"')]+)["']?\\)/);
+  return m ? m[1] : null;
+}
+let logoImg = null;
+loadImg0();
+async function loadImg0(){ try { const s = logoSrc(); if (s) logoImg = await loadImg(s); } catch(_) {} }
+function stampLogo(ctx, W, H){
+  if (!logoImg) return;
+  try {
+    const w = Math.round(W * 0.26), h = Math.round(w * logoImg.naturalHeight / logoImg.naturalWidth);
+    const pad = Math.round(W * 0.05);
+    const x = pad, y = H - pad - h;
+    // 깔린 자리의 밝기를 재어 잉크를 고른다 (사람 눈에 맞춘 가중치)
+    const px = ctx.getImageData(x, y, w, h).data;
+    let lum = 0;
+    for (let i = 0; i < px.length; i += 4) lum += .2126*px[i] + .7152*px[i+1] + .0722*px[i+2];
+    lum /= px.length / 4;
+    // 두 잉크 중 **대비가 큰 쪽**을 고른다. 문턱값 하나로 가르면 가운데 톤(베이지 같은)에서
+    // 판단이 흔들린다 — 실제로 밝기 137 짜리 자리에서 두 잉크의 대비가 105 대 103 이었다.
+    const NAVY = 32, CREAM = 240;             // 두 색의 밝기
+    const dark = Math.abs(lum - NAVY) >= Math.abs(CREAM - lum);
+    const ink = dark ? '#16203d' : '#f3f0e9';
+    // 로고 그림은 투명도만 담고 있다. 그대로 그린 뒤 source-in 으로 색을 채운다.
+    const t = document.createElement('canvas'); t.width = w; t.height = h;
+    const tc = t.getContext('2d');
+    tc.drawImage(logoImg, 0, 0, w, h);
+    tc.globalCompositeOperation = 'source-in';
+    tc.fillStyle = ink; tc.fillRect(0, 0, w, h);
+    ctx.save();
+    // 반대 톤으로 옅은 후광을 두른다. 가운데 톤 위에서는 어느 잉크를 골라도 대비가
+    // 어중간해지는데, 후광이 있으면 **어떤 색을 고른 손님 그림에서도** 글자가 뜬다.
+    ctx.shadowColor = dark ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.45)';
+    ctx.shadowBlur = Math.round(W * .014);
+    // 꽉 찬 검정으로 박지 않는다. 살짝 물려야 사진에 얹힌 것이 아니라 들어 있는 것처럼 보인다.
+    ctx.globalAlpha = .88;
+    ctx.drawImage(t, x, y);
+    ctx.restore();
+  } catch(_) {}
 }
 
 /* ---- 주문 내역 그림 ---- [대표, 2026-08-10]
