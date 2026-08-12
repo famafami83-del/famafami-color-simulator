@@ -84,21 +84,42 @@ const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8">
  .none{display:none;padding:22px 6px;color:#8a857c;font-size:13px}
  .none.on{display:block}
 
- /* 종이(=PDF)로 뽑을 때. PDF 는 폰 기종을 안 가리고 열리고 뷰어에 검색이 딸려 있어서
-    카톡으로 받아 보기에는 이쪽이 편하다. 화면용 검색칸은 종이에선 쓸모가 없으니 뺀다.
-    머리줄은 쪽마다 다시 찍는다(table-header-group) — 둘째 쪽부터 무슨 칸인지 모르게 된다. */
+ /* ── PDF(폰에서 보는 것) ────────────────────────────────────────────
+    ★ 종이를 **폰 모양으로 좁게** 뽑는다 (대조표.js 의 pdf 크기 참조).
+      A4 로 뽑았더니 대표가 폰에서 「검색해도 옆으로 밀어야 번호가 보인다」고 하셨다
+      [대표, 2026-08-12]. A4 는 폭에 맞추면 글씨가 깨알이 되고, 글씨를 키우면
+      번호가 화면 밖으로 나간다. 종이를 좁히면 **폭에 맞춘 채로 번호까지 다 들어온다.**
+
+    ★ table{width:auto} 가 핵심이다. 기본값(width:100%)이면 칸들이 종이 폭 끝까지
+      벌어져서 컬러명과 번호 사이가 텅 빈다 — 옆으로 밀어야 했던 진짜 까닭이다.
+      auto 로 두면 칸이 글자 폭만큼만 잡혀 **번호가 이름 바로 옆에 붙는다.**
+
+    영문명은 PDF 에서 뺀다. 주문서에는 한글명만 오므로 번호를 찾는 데 쓰이지 않는데,
+    좁은 종이에서 자리를 제일 많이 먹는다. 영문명이 필요하면 HTML 쪽을 보면 된다.
+
+    화면용 검색칸은 종이에서 쓸모가 없으니 빼고, 머리줄은 쪽마다 다시 찍는다
+    (table-header-group) — 둘째 쪽부터 무슨 칸인지 모르게 된다. */
  @media print{
   body{background:#fff;padding:0}
-  .q,.none{display:none}
+  .q,.none,.en{display:none}
   .sub b{color:#2b2a27}
-  table{font-size:10.5px}
+  /* 글씨 크기는 **종이 폭을 꽉 채우도록** 맞춘 값이다. 폰은 PDF 를 폭에 맞춰 보여주므로,
+     표가 종이 폭의 60%만 쓰면 그 40%만큼 글씨가 작아져 보인다. 재어보고 키웠다 —
+     지금 표가 종이 안쪽 폭의 90% 남짓을 쓴다. 글씨를 더 키우면 이름이 넘쳐 줄이 꺾인다. */
+  h1{font-size:17px}
+  .sub{font-size:11px;margin:0 0 9px;line-height:1.5}
+  table{width:auto;font-size:16px}
   thead{display:table-header-group}
-  th{padding:0 4px 3px}
-  td{padding:3px 4px}
-  .sw{width:15px;height:15px;border-radius:3px}
-  /* 영문명을 한글명 **옆에** 붙인다. 화면에서는 아랫줄이지만 종이에서 아랫줄로 두면
-     한 줄이 두 줄이 되어 쪽수가 갑절이 된다 (넉 장 → 두 장). */
-  .en{display:inline;font-size:8.5px;margin-left:5px}
+  th{padding:0 0 4px;font-size:11px}
+  th:nth-child(3),th:nth-child(4){text-align:right}
+  td{padding:5px 0;white-space:nowrap}
+  /* 칸 사이는 여백으로만 벌린다. 번호가 이름에서 멀어지지 않게 좁게 준다. */
+  td:nth-child(1){padding-right:8px}
+  td:nth-child(2){padding-right:12px}
+  td:nth-child(3){padding-right:11px}
+  .su,.no{text-align:right}
+  .su{font-size:14px}
+  .sw{width:18px;height:18px;border-radius:4px}
   tr{break-inside:avoid}
  }
 </style></head><body>
@@ -149,9 +170,13 @@ console.log(`원단번호-대조표.html 생성 — ${rows.length}색`);
     const p = await b.newPage();
     await p.goto('file:///' + out.replace(/\\/g, '/'), { waitUntil: 'load' });
     const pdf = path.join(ROOT, '원단번호-대조표.pdf');
-    await p.pdf({ path: pdf, format: 'A4', printBackground: true,
-      margin: { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' } });
-    console.log('원단번호-대조표.pdf 생성 — 폰에서는 이쪽이 편합니다');
+    // ★ A4 가 아니라 **폰 모양의 좁고 긴 종이**로 뽑는다 [대표, 2026-08-12].
+    //   폰에서 「폭 맞춤」으로 봤을 때 글씨가 읽히면서 번호까지 한 화면에 들어오는 크기다.
+    //   A4(210mm)로 뽑으면 폭을 맞추는 순간 글씨가 깨알이 되고, 키우면 번호가 밖으로 나간다.
+    //   여백도 종이가 좁은 만큼 바짝 줄인다 — 여백에 폭을 뺏기면 좁힌 뜻이 없어진다.
+    await p.pdf({ path: pdf, width: '82mm', height: '168mm', printBackground: true,
+      margin: { top: '6mm', bottom: '6mm', left: '6mm', right: '5mm' } });
+    console.log('원단번호-대조표.pdf 생성 — 폰 화면에 맞춘 크기입니다');
   } catch (e) {
     console.log('  (PDF 는 건너뜁니다 — ' + e.message.split('\n')[0] + ')');
   } finally { if (b) await b.close(); }
