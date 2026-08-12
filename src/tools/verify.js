@@ -2,7 +2,7 @@
 const OUT = require('path').join(__dirname,'..','assets') + require('path').sep;
 const PARTS = ['quilt','mattress','pillowL','pillowF','pillowR','pillowW'];
 
-// 원본 '무지- 이불2006번 베개 914번.jpg' 를 재현: 이불 민트, 매트리스 베이지, 베개 민트/베이지/민트/크림
+// 원본 '무지2-민트+베이지.jpg' 를 재현: 이불 민트, 매트리스 베이지, 베개 민트/베이지/민트/크림
 const TEST = {
   quilt:'#c3d5cd', mattress:'#c6b5a3', pillowL:'#c3d5cd',
   pillowF:'#c6b5a3', pillowR:'#c3d5cd', pillowW:'#f2ecdc',
