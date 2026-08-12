@@ -3,73 +3,73 @@ const fs = require('fs');
 const CDIR = 'D:\\01. 파마파미\\06. 협력업체\\프린톤(컬러칩작업)\\최종 수정본\\1차수정분\\JPEG\\';
 
 // 컬러차트 13장을 직접 읽어 옮긴 데이터 (2026-08-04)
-// rows = 행별 칩 목록, 각 칩 = [번호, 영문명, 한글명, 번수]
+// rows = 행별 칩 목록, 각 칩 = [영문명, 한글명, 번수]
 //
-// ★ 여기는 "차트에 찍힌 그대로" 를 적는 자리다. 차트에 틀린 번호가 두 군데 있는데
-//   (다크 그린·코코아 그레이 — 아래 각 줄 참고) 여기서 고치지 마십시오.
-//   고치면 차트와 대조가 안 되고, 다시 옮겨적을 때 원래대로 돌아옵니다.
-//   바로잡는 자리는 build.js 의 NO_FIX 입니다. [2026-08-05]
+// ★ **원단 번호는 여기에 적지 않습니다.** [대표, 2026-08-12]
+//   이 저장소는 공개(PUBLIC)라 여기 적으면 경쟁사가 표를 통째로 가져갑니다.
+//   차트에는 칩마다 번호가 찍혀 있지만, 그 번호는 대표 컴퓨터에만 있는
+//   `src/원단번호.json` 에 「이름 N수 → 번호」로 따로 적어 둡니다 (.gitignore).
+//   차트를 다시 옮겨적을 때도 번호 칸은 만들지 마십시오.
+//   ※ 차트 인쇄본에는 다크 그린·코코아 그레이의 번호가 잘못 찍혀 있습니다.
+//     맞는 값은 `src/원단번호.json` 에 적어두었으니 그 두 줄을 덮어쓰지 마십시오.
 const CHART = {
 '01_WhiteCream': { ko:'화이트 · 크림', en:'White & Creams', rowY:[0.535,0.9], rows:[
-  [['953','Cloud White','클라우드 화이트',60],['903','Cloud White','클라우드 화이트',80]],
-  [['952','Melt Icecream','멜트 아이스크림',60],['902','Muslin White','머슬린 화이트',80],['2002','Muslin White','머슬린 화이트',100]],
+  [['Cloud White','클라우드 화이트',60],['Cloud White','클라우드 화이트',80]],
+  [['Melt Icecream','멜트 아이스크림',60],['Muslin White','머슬린 화이트',80],['Muslin White','머슬린 화이트',100]],
 ]},
 '02_LightGrey': { ko:'라이트 그레이', en:'Light Grey Scale', rowY:[0.383,0.634,0.909], rows:[
-  [['923','Mist Grey','미스트 그레이',80],['924','Mirage Grey','미라지 그레이',80],['976','Illusion Grey','일루션 그레이',60],['2032','Gentle Grey','젠틀 그레이',100]],
-  [['925','Neutral Grey','뉴트럴 그레이',80],['972','Shelter Grey','쉘터 그레이',60]],
-  [['926','Khaki Grey','카키 그레이',80],['977','Mood Grey','무드 그레이',60],['2026','Night Green','나잇 그린',100]],
+  [['Mist Grey','미스트 그레이',80],['Mirage Grey','미라지 그레이',80],['Illusion Grey','일루션 그레이',60],['Gentle Grey','젠틀 그레이',100]],
+  [['Neutral Grey','뉴트럴 그레이',80],['Shelter Grey','쉘터 그레이',60]],
+  [['Khaki Grey','카키 그레이',80],['Mood Grey','무드 그레이',60],['Night Green','나잇 그린',100]],
 ]},
 '03_DeepGreyscale': { ko:'딥 그레이', en:'Deep Grey Scale', rowY:[0.28,0.448,0.62,0.785,0.955], rows:[
-  [['2006','Blue Haze','블루 헤이즈',100],['2025','Aqua Grey','아쿠아 그레이',100],['961','Green Drop','그린 드롭',60],['962','Green Dark Shade','그린 다크 쉐이드',60]],
-  [['930','Shadow Green','쉐도우 그린',80]],
-  [['940','Green Grey','그린 그레이',80],['978','Quiet Shadow','콰이어트 쉐도우',60],['931','Charcoal','차콜',80],['979','Shadow Grey','쉐도우 그레이',60]],
-  // 코코아 그레이의 2023 은 차트 오기입 (2023 은 쿨 라벤더). 2031 이 맞고 build.js 의 NO_FIX 에서 고친다.
-  // 애프터 다크의 2027 은 맞다. [대표, 2026-08-05]
-  [['973','Hearth Grey','하쓰 그레이',60],['910','Evening Haze','이브닝 헤이즈',80],['2023','Cocoa Grey','코코아 그레이',100],['2027','After Dark','애프터 다크',100]],
-  [['932','Ebony Black','에보니 블랙',80],['980','Deep Black','딥 블랙',60]],
+  [['Blue Haze','블루 헤이즈',100],['Aqua Grey','아쿠아 그레이',100],['Green Drop','그린 드롭',60],['Green Dark Shade','그린 다크 쉐이드',60]],
+  [['Shadow Green','쉐도우 그린',80]],
+  [['Green Grey','그린 그레이',80],['Quiet Shadow','콰이어트 쉐도우',60],['Charcoal','차콜',80],['Shadow Grey','쉐도우 그레이',60]],
+  [['Hearth Grey','하쓰 그레이',60],['Evening Haze','이브닝 헤이즈',80],['Cocoa Grey','코코아 그레이',100],['After Dark','애프터 다크',100]],
+  [['Ebony Black','에보니 블랙',80],['Deep Black','딥 블랙',60]],
 ]},
 '04_EarthyRange': { ko:'어시 레인지', en:'Earthy Range', rowY:[0.256,0.428,0.603,0.777,0.949], rows:[
-  [['2003','White Cap','화이트 캡',100],['951','Cream White','크림 화이트',60],['901','Almond Milk','아몬드 밀크',80],['2007','Light Peanut Butter','라이트 피넛 버터',100]],
-  [['954','Light Skin Beige','라이트 스킨 베이지',60],['912','Warm Sand','웜 샌드',80],['937','Peanut Butter','피넛 버터',80],['955','Calm Beige','캄 베이지',60]],
-  [['913','Chinchilla','친칠라',80],['2019','Fine Soil','파인 소일',100],['914','Clams Blacket','클램스 블랭킷',80],['916','Foxtail','폭스테일',80]],
-  [['915','Acom Brown','에이컴 브라운',80],['909','Plam Truffle','플람 트러플',80],['969','Cozy Cocoa','코지 코코아',60]],
-  [['970','Khaki Greige','카키 그레이지',60],['971','Khaki Beige','카키 베이지',60]],
+  [['White Cap','화이트 캡',100],['Cream White','크림 화이트',60],['Almond Milk','아몬드 밀크',80],['Light Peanut Butter','라이트 피넛 버터',100]],
+  [['Light Skin Beige','라이트 스킨 베이지',60],['Warm Sand','웜 샌드',80],['Peanut Butter','피넛 버터',80],['Calm Beige','캄 베이지',60]],
+  [['Chinchilla','친칠라',80],['Fine Soil','파인 소일',100],['Clams Blacket','클램스 블랭킷',80],['Foxtail','폭스테일',80]],
+  [['Acom Brown','에이컴 브라운',80],['Plam Truffle','플람 트러플',80],['Cozy Cocoa','코지 코코아',60]],
+  [['Khaki Greige','카키 그레이지',60],['Khaki Beige','카키 베이지',60]],
 ]},
 '05_RedEnergy': { ko:'레드', en:'Red Energy', rowY:[0.864], rows:[
-  [['2020','Faded Rose','페이드 로즈',100],['967','Vitamin Sour','비타민 사워',60],['968','Energizing Red','에너자이징 레드',60]],
+  [['Faded Rose','페이드 로즈',100],['Vitamin Sour','비타민 사워',60],['Energizing Red','에너자이징 레드',60]],
 ]},
 '06_RoseWine': { ko:'로즈 와인', en:'Rose Wine', rowY:[0.844], rows:[
-  [['908','Terracotta','테라코타',80],['2030','Mahogany','마호가니',100],['2022','Red Wine','레드 와인',100],['929','Windsor Wine','윈저 와인',80]],
+  [['Terracotta','테라코타',80],['Mahogany','마호가니',100],['Red Wine','레드 와인',100],['Windsor Wine','윈저 와인',80]],
 ]},
 '07_BurntOrange': { ko:'번트 오렌지', en:'Burnt Oranges', rowY:[0.816], rows:[
-  [['936','Copper Blanket','쿠퍼 블랭킷',80],['2015','Spicy Orange','스파이시 오렌지',100],['928','Red Soil','레드 소일',80]],
+  [['Copper Blanket','쿠퍼 블랭킷',80],['Spicy Orange','스파이시 오렌지',100],['Red Soil','레드 소일',80]],
 ]},
 '08_YellowVitas': { ko:'옐로우', en:'Yellow vitas', rowY:[0.517,0.904], rows:[
-  [['2013','Magic Dust','매직 더스트',100],['965','Pollen','폴른',60],['2010','Misted Yellow','미스티드 옐로우',100],['966','Sunlit Yellow','썬릿 옐로우',60]],
-  [['2016','Apple Cinnamon','애플 시나몬',100],['918','Harvest Gold','하베스트 골드',80],['919','Plantation','플랜테이션',80]],
+  [['Magic Dust','매직 더스트',100],['Pollen','폴른',60],['Misted Yellow','미스티드 옐로우',100],['Sunlit Yellow','썬릿 옐로우',60]],
+  [['Apple Cinnamon','애플 시나몬',100],['Harvest Gold','하베스트 골드',80],['Plantation','플랜테이션',80]],
 ]},
 '09_AcedTouch': { ko:'에이스드 터치', en:'Aced Touch', rowY:[0.814], rows:[
-  [['963','Apple Lime','애플 라임',60],['933','Hazy Lime','헤지 라임',80],['2028','Golden Green','골든 그린',100],['934','Light Olive','라이트 올리브',80]],
+  [['Apple Lime','애플 라임',60],['Hazy Lime','헤지 라임',80],['Golden Green','골든 그린',100],['Light Olive','라이트 올리브',80]],
 ]},
 '10_GreenWave': { ko:'그린 웨이브', en:'Green Wave', rowY:[0.293,0.494,0.686,0.888], rows:[
-  [['2017','Green Moss','그린 모스',100],['920','Olive Khaki','올리브 카키',80],['921','Burnt Olive','번트 올리브',80],['917','Military Olive','밀리터리 올리브',80]],
-  // 다크 그린의 2027 은 차트 오기입 (2027 은 애프터 다크). 2029 가 맞고 build.js 의 NO_FIX 에서 고친다. [대표, 2026-08-05]
-  [['964','Forest Green','포레스트 그린',60],['2027','Dark Green','다크 그린',100]],
-  [['960','Mint Haze','민트 헤이즈',60],['904','Eggshell Blue','에그쉘 블루',80],['927','Harbor Grey','하버 그레이',80],['2005','Green Tea','그린티',100]],
-  [['2009','Basil Green','바질 그린',100],['2018','Dark Khaki','다크 카키',100],['922','Olive Night','올리브 나이트',80]],
+  [['Green Moss','그린 모스',100],['Olive Khaki','올리브 카키',80],['Burnt Olive','번트 올리브',80],['Military Olive','밀리터리 올리브',80]],
+  [['Forest Green','포레스트 그린',60],['Dark Green','다크 그린',100]],
+  [['Mint Haze','민트 헤이즈',60],['Eggshell Blue','에그쉘 블루',80],['Harbor Grey','하버 그레이',80],['Green Tea','그린티',100]],
+  [['Basil Green','바질 그린',100],['Dark Khaki','다크 카키',100],['Olive Night','올리브 나이트',80]],
 ]},
 '11_Blues': { ko:'블루', en:'Blues', rowY:[0.404,0.668,0.931], rows:[
-  [['974','Light Sky','라이트 스카이',60],['2012','Aqua-esque','아쿠아 에스케',100],['905','Aquifer','애퀴퍼',80],['938','Dusty Blue','더스티 블루',80]],
-  [['2011','Water Dream','워터 드림',100],['975','Misty Blue','미스티 블루',60],['939','Bering Sea','베링씨',80],['2021','Teal Blue','틸 블루',100]],
-  [['2001','Navy','네이비',100]],
+  [['Light Sky','라이트 스카이',60],['Aqua-esque','아쿠아 에스케',100],['Aquifer','애퀴퍼',80],['Dusty Blue','더스티 블루',80]],
+  [['Water Dream','워터 드림',100],['Misty Blue','미스티 블루',60],['Bering Sea','베링씨',80],['Teal Blue','틸 블루',100]],
+  [['Navy','네이비',100]],
 ]},
 '12_Lavender': { ko:'라벤더', en:'Lavender Scent', rowY:[0.857], rows:[
-  [['959','Lilac','라일락',60],['935','Lavender','라벤더',80],['2023','Cool Lavender','쿨 라벤더',100]],
+  [['Lilac','라일락',60],['Lavender','라벤더',80],['Cool Lavender','쿨 라벤더',100]],
 ]},
 '13_Pinkshade': { ko:'핑크', en:'Pink Skin shades', rowY:[0.406,0.669,0.934], rows:[
-  [['2024','Pink Halo','핑크 헤일로',100],['906','Blush Pink','블러쉬 핑크',80],['2004','Cherry Blossom','체리 블라섬',100],['911','Coral Blush','코랄 블러쉬',80]],
-  [['907','Sepia Rose','세피아 로즈',80],['2008','Dry petal','드라이 페탈',100],['957','Skin Pink','스킨 핑크',60],['956','Mommy Pink','마미 핑크',60]],
-  [['2014','Peach','피치',100],['958','Mommy Smell','마미 스멜',60]],
+  [['Pink Halo','핑크 헤일로',100],['Blush Pink','블러쉬 핑크',80],['Cherry Blossom','체리 블라섬',100],['Coral Blush','코랄 블러쉬',80]],
+  [['Sepia Rose','세피아 로즈',80],['Dry petal','드라이 페탈',100],['Skin Pink','스킨 핑크',60],['Mommy Pink','마미 핑크',60]],
+  [['Peach','피치',100],['Mommy Smell','마미 스멜',60]],
 ]},
 };
 
@@ -120,7 +120,7 @@ const S = 6;
         }
         if (!n) return;
         const hex = '#'+[r/n,gg/n,b/n].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');
-        list.push({ no: chip[0], en: chip[1], ko: chip[2], su: chip[3], hex });
+        list.push({ en: chip[0], ko: chip[1], su: chip[2], hex });
         total++;
       });
     });
@@ -131,10 +131,12 @@ const S = 6;
   console.log('\n총', total, '색');
   if (bad.length) { console.log('\n⚠ 행 개수 불일치:'); bad.forEach(b=>console.log('  ', b)); }
 
-  // 번호 중복 점검
+  // 「이름+수」 중복 점검 — 번호를 뺀 뒤로 이것이 색을 가리키는 유일한 이름이다.
+  // 겹치면 주문서에서 어느 원단인지 못 가려내므로 build.js 도 여기서 멈춘다.
   const seen = {};
   for (const g of Object.values(out)) for (const c of g.colors) {
-    if (seen[c.no]) console.log(`⚠ 번호 중복 ${c.no}: ${seen[c.no]} / ${c.en}`);
-    else seen[c.no] = c.en;
+    const id = `${c.ko} ${c.su}수`;
+    if (seen[id]) console.log(`⚠ 이름+수 중복 ${id}: ${seen[id]} / ${c.en}`);
+    else seen[id] = c.en;
   }
 })();

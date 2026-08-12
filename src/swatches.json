@@ -4,35 +4,30 @@
   "en": "White & Creams",
   "colors": [
    {
-    "no": "953",
     "en": "Cloud White",
     "ko": "클라우드 화이트",
     "su": 60,
     "hex": "#f5f5f5"
    },
    {
-    "no": "903",
     "en": "Cloud White",
     "ko": "클라우드 화이트",
     "su": 80,
     "hex": "#f5f5f5"
    },
    {
-    "no": "952",
     "en": "Melt Icecream",
     "ko": "멜트 아이스크림",
     "su": 60,
     "hex": "#f5f4ef"
    },
    {
-    "no": "902",
     "en": "Muslin White",
     "ko": "머슬린 화이트",
     "su": 80,
     "hex": "#edece7"
    },
    {
-    "no": "2002",
     "en": "Muslin White",
     "ko": "머슬린 화이트",
     "su": 100,
@@ -45,63 +40,54 @@
   "en": "Light Grey Scale",
   "colors": [
    {
-    "no": "923",
     "en": "Mist Grey",
     "ko": "미스트 그레이",
     "su": 80,
     "hex": "#e4e1dc"
    },
    {
-    "no": "924",
     "en": "Mirage Grey",
     "ko": "미라지 그레이",
     "su": 80,
     "hex": "#cdcec9"
    },
    {
-    "no": "976",
     "en": "Illusion Grey",
     "ko": "일루션 그레이",
     "su": 60,
     "hex": "#b9bdbc"
    },
    {
-    "no": "2032",
     "en": "Gentle Grey",
     "ko": "젠틀 그레이",
     "su": 100,
     "hex": "#b3b0ab"
    },
    {
-    "no": "925",
     "en": "Neutral Grey",
     "ko": "뉴트럴 그레이",
     "su": 80,
     "hex": "#aeb2b1"
    },
    {
-    "no": "972",
     "en": "Shelter Grey",
     "ko": "쉘터 그레이",
     "su": 60,
     "hex": "#a39b98"
    },
    {
-    "no": "926",
     "en": "Khaki Grey",
     "ko": "카키 그레이",
     "su": 80,
     "hex": "#84877e"
    },
    {
-    "no": "977",
     "en": "Mood Grey",
     "ko": "무드 그레이",
     "su": 60,
     "hex": "#797c75"
    },
    {
-    "no": "2026",
     "en": "Night Green",
     "ko": "나잇 그린",
     "su": 100,
@@ -114,105 +100,90 @@
   "en": "Deep Grey Scale",
   "colors": [
    {
-    "no": "2006",
     "en": "Blue Haze",
     "ko": "블루 헤이즈",
     "su": 100,
     "hex": "#c2d1ca"
    },
    {
-    "no": "2025",
     "en": "Aqua Grey",
     "ko": "아쿠아 그레이",
     "su": 100,
     "hex": "#b5beb9"
    },
    {
-    "no": "961",
     "en": "Green Drop",
     "ko": "그린 드롭",
     "su": 60,
     "hex": "#869892"
    },
    {
-    "no": "962",
     "en": "Green Dark Shade",
     "ko": "그린 다크 쉐이드",
     "su": 60,
     "hex": "#576766"
    },
    {
-    "no": "930",
     "en": "Shadow Green",
     "ko": "쉐도우 그린",
     "su": 80,
     "hex": "#223635"
    },
    {
-    "no": "940",
     "en": "Green Grey",
     "ko": "그린 그레이",
     "su": 80,
     "hex": "#91a1a0"
    },
    {
-    "no": "978",
     "en": "Quiet Shadow",
     "ko": "콰이어트 쉐도우",
     "su": 60,
     "hex": "#6d7077"
    },
    {
-    "no": "931",
     "en": "Charcoal",
     "ko": "차콜",
     "su": 80,
     "hex": "#40434a"
    },
    {
-    "no": "979",
     "en": "Shadow Grey",
     "ko": "쉐도우 그레이",
     "su": 60,
     "hex": "#3f424b"
    },
    {
-    "no": "973",
     "en": "Hearth Grey",
     "ko": "하쓰 그레이",
     "su": 60,
     "hex": "#666761"
    },
    {
-    "no": "910",
     "en": "Evening Haze",
     "ko": "이브닝 헤이즈",
     "su": 80,
     "hex": "#5c575b"
    },
    {
-    "no": "2023",
     "en": "Cocoa Grey",
     "ko": "코코아 그레이",
     "su": 100,
     "hex": "#534a4d"
    },
    {
-    "no": "2027",
     "en": "After Dark",
     "ko": "애프터 다크",
     "su": 100,
     "hex": "#4b4746"
    },
    {
-    "no": "932",
     "en": "Ebony Black",
     "ko": "에보니 블랙",
     "su": 80,
     "hex": "#23272a"
    },
    {
-    "no": "980",
     "en": "Deep Black",
     "ko": "딥 블랙",
     "su": 60,
@@ -225,119 +196,102 @@
   "en": "Earthy Range",
   "colors": [
    {
-    "no": "2003",
     "en": "White Cap",
     "ko": "화이트 캡",
     "su": 100,
     "hex": "#fbf1dd"
    },
    {
-    "no": "951",
     "en": "Cream White",
     "ko": "크림 화이트",
     "su": 60,
     "hex": "#ecdbcf"
    },
    {
-    "no": "901",
     "en": "Almond Milk",
     "ko": "아몬드 밀크",
     "su": 80,
     "hex": "#f1ebdb"
    },
    {
-    "no": "2007",
     "en": "Light Peanut Butter",
     "ko": "라이트 피넛 버터",
     "su": 100,
     "hex": "#cfd0c0"
    },
    {
-    "no": "954",
     "en": "Light Skin Beige",
     "ko": "라이트 스킨 베이지",
     "su": 60,
     "hex": "#d8ccc1"
    },
    {
-    "no": "912",
     "en": "Warm Sand",
     "ko": "웜 샌드",
     "su": 80,
     "hex": "#e0cbab"
    },
    {
-    "no": "937",
     "en": "Peanut Butter",
     "ko": "피넛 버터",
     "su": 80,
     "hex": "#b99e78"
    },
    {
-    "no": "955",
     "en": "Calm Beige",
     "ko": "캄 베이지",
     "su": 60,
     "hex": "#b9a898"
    },
    {
-    "no": "913",
     "en": "Chinchilla",
     "ko": "친칠라",
     "su": 80,
     "hex": "#aba28f"
    },
    {
-    "no": "2019",
     "en": "Fine Soil",
     "ko": "파인 소일",
     "su": 100,
     "hex": "#a68968"
    },
    {
-    "no": "914",
     "en": "Clams Blacket",
     "ko": "클램스 블랭킷",
     "su": 80,
     "hex": "#988576"
    },
    {
-    "no": "916",
     "en": "Foxtail",
     "ko": "폭스테일",
     "su": 80,
     "hex": "#967640"
    },
    {
-    "no": "915",
     "en": "Acom Brown",
     "ko": "에이컴 브라운",
     "su": 80,
     "hex": "#816f5b"
    },
    {
-    "no": "909",
     "en": "Plam Truffle",
     "ko": "플람 트러플",
     "su": 80,
     "hex": "#6e6462"
    },
    {
-    "no": "969",
     "en": "Cozy Cocoa",
     "ko": "코지 코코아",
     "su": 60,
     "hex": "#654f3a"
    },
    {
-    "no": "970",
     "en": "Khaki Greige",
     "ko": "카키 그레이지",
     "su": 60,
     "hex": "#c1beab"
    },
    {
-    "no": "971",
     "en": "Khaki Beige",
     "ko": "카키 베이지",
     "su": 60,
@@ -350,21 +304,18 @@
   "en": "Red Energy",
   "colors": [
    {
-    "no": "2020",
     "en": "Faded Rose",
     "ko": "페이드 로즈",
     "su": 100,
     "hex": "#de7374"
    },
    {
-    "no": "967",
     "en": "Vitamin Sour",
     "ko": "비타민 사워",
     "su": 60,
     "hex": "#df514c"
    },
    {
-    "no": "968",
     "en": "Energizing Red",
     "ko": "에너자이징 레드",
     "su": 60,
@@ -377,28 +328,24 @@
   "en": "Rose Wine",
   "colors": [
    {
-    "no": "908",
     "en": "Terracotta",
     "ko": "테라코타",
     "su": 80,
     "hex": "#a08481"
    },
    {
-    "no": "2030",
     "en": "Mahogany",
     "ko": "마호가니",
     "su": 100,
     "hex": "#b0675e"
    },
    {
-    "no": "2022",
     "en": "Red Wine",
     "ko": "레드 와인",
     "su": 100,
     "hex": "#683f43"
    },
    {
-    "no": "929",
     "en": "Windsor Wine",
     "ko": "윈저 와인",
     "su": 80,
@@ -411,21 +358,18 @@
   "en": "Burnt Oranges",
   "colors": [
    {
-    "no": "936",
     "en": "Copper Blanket",
     "ko": "쿠퍼 블랭킷",
     "su": 80,
     "hex": "#c9825c"
    },
    {
-    "no": "2015",
     "en": "Spicy Orange",
     "ko": "스파이시 오렌지",
     "su": 100,
     "hex": "#c47356"
    },
    {
-    "no": "928",
     "en": "Red Soil",
     "ko": "레드 소일",
     "su": 80,
@@ -438,49 +382,42 @@
   "en": "Yellow vitas",
   "colors": [
    {
-    "no": "2013",
     "en": "Magic Dust",
     "ko": "매직 더스트",
     "su": 100,
     "hex": "#eadbba"
    },
    {
-    "no": "965",
     "en": "Pollen",
     "ko": "폴른",
     "su": 60,
     "hex": "#f3bf76"
    },
    {
-    "no": "2010",
     "en": "Misted Yellow",
     "ko": "미스티드 옐로우",
     "su": 100,
     "hex": "#eac070"
    },
    {
-    "no": "966",
     "en": "Sunlit Yellow",
     "ko": "썬릿 옐로우",
     "su": 60,
     "hex": "#e2a24c"
    },
    {
-    "no": "2016",
     "en": "Apple Cinnamon",
     "ko": "애플 시나몬",
     "su": 100,
     "hex": "#bc8e5a"
    },
    {
-    "no": "918",
     "en": "Harvest Gold",
     "ko": "하베스트 골드",
     "su": 80,
     "hex": "#cca357"
    },
    {
-    "no": "919",
     "en": "Plantation",
     "ko": "플랜테이션",
     "su": 80,
@@ -493,28 +430,24 @@
   "en": "Aced Touch",
   "colors": [
    {
-    "no": "963",
     "en": "Apple Lime",
     "ko": "애플 라임",
     "su": 60,
     "hex": "#e2e7b1"
    },
    {
-    "no": "933",
     "en": "Hazy Lime",
     "ko": "헤지 라임",
     "su": 80,
     "hex": "#e6e7ad"
    },
    {
-    "no": "2028",
     "en": "Golden Green",
     "ko": "골든 그린",
     "su": 100,
     "hex": "#c3b974"
    },
    {
-    "no": "934",
     "en": "Light Olive",
     "ko": "라이트 올리브",
     "su": 80,
@@ -527,91 +460,78 @@
   "en": "Green Wave",
   "colors": [
    {
-    "no": "2017",
     "en": "Green Moss",
     "ko": "그린 모스",
     "su": 100,
     "hex": "#968747"
    },
    {
-    "no": "920",
     "en": "Olive Khaki",
     "ko": "올리브 카키",
     "su": 80,
     "hex": "#847646"
    },
    {
-    "no": "921",
     "en": "Burnt Olive",
     "ko": "번트 올리브",
     "su": 80,
     "hex": "#716e4f"
    },
    {
-    "no": "917",
     "en": "Military Olive",
     "ko": "밀리터리 올리브",
     "su": 80,
     "hex": "#67593d"
    },
    {
-    "no": "964",
     "en": "Forest Green",
     "ko": "포레스트 그린",
     "su": 60,
     "hex": "#587056"
    },
    {
-    "no": "2027",
     "en": "Dark Green",
     "ko": "다크 그린",
     "su": 100,
     "hex": "#4a5b49"
    },
    {
-    "no": "960",
     "en": "Mint Haze",
     "ko": "민트 헤이즈",
     "su": 60,
     "hex": "#cee2d6"
    },
    {
-    "no": "904",
     "en": "Eggshell Blue",
     "ko": "에그쉘 블루",
     "su": 80,
     "hex": "#c9ddde"
    },
    {
-    "no": "927",
     "en": "Harbor Grey",
     "ko": "하버 그레이",
     "su": 80,
     "hex": "#b9cfc2"
    },
    {
-    "no": "2005",
     "en": "Green Tea",
     "ko": "그린티",
     "su": 100,
     "hex": "#a7baa4"
    },
    {
-    "no": "2009",
     "en": "Basil Green",
     "ko": "바질 그린",
     "su": 100,
     "hex": "#757e64"
    },
    {
-    "no": "2018",
     "en": "Dark Khaki",
     "ko": "다크 카키",
     "su": 100,
     "hex": "#5f6750"
    },
    {
-    "no": "922",
     "en": "Olive Night",
     "ko": "올리브 나이트",
     "su": 80,
@@ -624,63 +544,54 @@
   "en": "Blues",
   "colors": [
    {
-    "no": "974",
     "en": "Light Sky",
     "ko": "라이트 스카이",
     "su": 60,
     "hex": "#c6dbf7"
    },
    {
-    "no": "2012",
     "en": "Aqua-esque",
     "ko": "아쿠아 에스케",
     "su": 100,
     "hex": "#c1dee6"
    },
    {
-    "no": "905",
     "en": "Aquifer",
     "ko": "애퀴퍼",
     "su": 80,
     "hex": "#92b7b7"
    },
    {
-    "no": "938",
     "en": "Dusty Blue",
     "ko": "더스티 블루",
     "su": 80,
     "hex": "#8393ac"
    },
    {
-    "no": "2011",
     "en": "Water Dream",
     "ko": "워터 드림",
     "su": 100,
     "hex": "#6491ae"
    },
    {
-    "no": "975",
     "en": "Misty Blue",
     "ko": "미스티 블루",
     "su": 60,
     "hex": "#6c89a7"
    },
    {
-    "no": "939",
     "en": "Bering Sea",
     "ko": "베링씨",
     "su": 80,
     "hex": "#556378"
    },
    {
-    "no": "2021",
     "en": "Teal Blue",
     "ko": "틸 블루",
     "su": 100,
     "hex": "#385660"
    },
    {
-    "no": "2001",
     "en": "Navy",
     "ko": "네이비",
     "su": 100,
@@ -693,21 +604,18 @@
   "en": "Lavender Scent",
   "colors": [
    {
-    "no": "959",
     "en": "Lilac",
     "ko": "라일락",
     "su": 60,
     "hex": "#b39ca4"
    },
    {
-    "no": "935",
     "en": "Lavender",
     "ko": "라벤더",
     "su": 80,
     "hex": "#b5a2bd"
    },
    {
-    "no": "2023",
     "en": "Cool Lavender",
     "ko": "쿨 라벤더",
     "su": 100,
@@ -720,70 +628,60 @@
   "en": "Pink Skin shades",
   "colors": [
    {
-    "no": "2024",
     "en": "Pink Halo",
     "ko": "핑크 헤일로",
     "su": 100,
     "hex": "#f0e6ec"
    },
    {
-    "no": "906",
     "en": "Blush Pink",
     "ko": "블러쉬 핑크",
     "su": 80,
     "hex": "#f5d9d6"
    },
    {
-    "no": "2004",
     "en": "Cherry Blossom",
     "ko": "체리 블라섬",
     "su": 100,
     "hex": "#f2d0ce"
    },
    {
-    "no": "911",
     "en": "Coral Blush",
     "ko": "코랄 블러쉬",
     "su": 80,
     "hex": "#f6ccb6"
    },
    {
-    "no": "907",
     "en": "Sepia Rose",
     "ko": "세피아 로즈",
     "su": 80,
     "hex": "#d8baaf"
    },
    {
-    "no": "2008",
     "en": "Dry petal",
     "ko": "드라이 페탈",
     "su": 100,
     "hex": "#d8baaf"
    },
    {
-    "no": "957",
     "en": "Skin Pink",
     "ko": "스킨 핑크",
     "su": 60,
     "hex": "#d7afa3"
    },
    {
-    "no": "956",
     "en": "Mommy Pink",
     "ko": "마미 핑크",
     "su": 60,
     "hex": "#e2ac8d"
    },
    {
-    "no": "2014",
     "en": "Peach",
     "ko": "피치",
     "su": 100,
     "hex": "#f0aca9"
    },
    {
-    "no": "958",
     "en": "Mommy Smell",
     "ko": "마미 스멜",
     "su": 60,

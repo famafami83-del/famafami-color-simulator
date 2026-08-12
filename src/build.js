@@ -52,56 +52,51 @@ const imgSize = f => {
   throw new Error(`${f} 의 가로세로를 못 읽었습니다 — 사진이 깨졌는지 보십시오`);
 };
 
-// 팔레트에서 빼는 색 — 번호로 적는다.
+/* ★ 원단 번호는 이 저장소 어디에도 없다. [대표, 2026-08-12]
+ *
+ * 저장소가 공개(PUBLIC)라 여기 넣는 것은 경쟁사도 그대로 받아 간다. 번호는 우리가
+ * 어느 원단을 쓰는지 통째로 알려주는 값이라, 페이지에서 지우는 것만으로는 모자랐다 —
+ * `colors.json` 은 주소만 알면 받아지고, `index.html` 안의 색 데이터는 개발자도구로
+ * 보이고, `swatches.json` 은 깃허브에서 그냥 열린다. 그래서 **데이터에서 뺐다.**
+ *
+ * 대신 손님도 대표도 **「컬러명 + 몇수」**로 색을 부른다. 100색 모두 이 둘을 합치면
+ * 겹치지 않으므로(아래 검사) 원단이 하나로 정해진다. 번호가 필요한 발주에서는
+ * 대표 컴퓨터에만 있는 `src/원단번호.json` 을 본다 (.gitignore 로 막아두었다).
+ * 그 표를 폰에서 보기 좋게 한 장으로 뽑는 것이 `src/tools/대조표.js` 다.
+ */
+
+// 팔레트에서 빼는 색 — **이름+수**로 적는다 (번호는 이 저장소에 없다).
 // swatches.json 은 컬러차트를 그대로 옮긴 것이라 손대지 않는다. 차트에는 있지만
 // 팔지 않는 색은 여기서 뺀다. 원본을 지우면 차트를 다시 뽑을 때 어긋난다.
-//   953·903 클라우드 화이트 — 60수·80수가 완전히 같은 값(#f5f5f5)이라 화면에서 구별되지
+//   클라우드 화이트 — 60수·80수가 완전히 같은 값(#f5f5f5)이라 화면에서 구별되지
 //   않는데다, 실제로 쓰지 않는 화이트다. [대표, 2026-08-05]
-const EXCLUDE = ['953', '903'];
+const EXCLUDE = ['클라우드 화이트 60수', '클라우드 화이트 80수'];
+const idOf = c => `${c.ko} ${c.su}수`;          // 팔레트 안에서 색을 가리키는 이름
 {
   const before = Object.values(SW).reduce((s, g) => s + g.colors.length, 0);
   const found = new Set();
   for (const g of Object.values(SW)) {
     g.colors = g.colors.filter(c => {
-      if (!EXCLUDE.includes(c.no)) return true;
-      found.add(c.no); return false;
+      if (!EXCLUDE.includes(idOf(c))) return true;
+      found.add(idOf(c)); return false;
     });
   }
-  // 지우려던 번호가 없으면 조용히 넘어가지 않는다. 오타거나 차트가 바뀐 것이다.
-  const missing = EXCLUDE.filter(no => !found.has(no));
-  if (missing.length) throw new Error(`EXCLUDE 의 번호가 swatches.json 에 없습니다: ${missing.join(', ')}`);
+  // 지우려던 색이 없으면 조용히 넘어가지 않는다. 오타거나 차트가 바뀐 것이다.
+  const missing = EXCLUDE.filter(id => !found.has(id));
+  if (missing.length) throw new Error(`EXCLUDE 의 색이 swatches.json 에 없습니다: ${missing.join(', ')}`);
   console.log(`팔레트 제외 ${EXCLUDE.length}색 — ${before}색 → ${before - EXCLUDE.length}색`);
 }
 
-// 컬러차트에 번호가 잘못 찍힌 칩을 바로잡는다. 이름으로 색을 집고 번호만 고친다.
-// swatches.json 은 차트를 그대로 옮긴 원본이라 손대지 않는다 — 차트를 다시 뽑으면
-// 틀린 번호가 그대로 다시 들어오므로 이 표는 계속 남아 있어야 한다.
-//   다크 그린   — 차트에 2027 로 찍혀 있으나 2027 은 애프터 다크다. 2029 가 맞다.  [대표, 2026-08-05]
-//   코코아 그레이 — 차트에 2023 으로 찍혀 있으나 2023 은 쿨 라벤더다. 2031 이 맞다. [대표, 2026-08-05]
-// 100수는 2001~2032 연속 32번인데 2029·2031 이 비어 있었고 번호가 겹치는 색이 둘이라
-// 수가 정확히 맞았다. 나잇 그린의 2026 은 차트가 맞다 [대표].
-const NO_FIX = [
-  { ko:'다크 그린',   from:'2027', to:'2029' },
-  { ko:'코코아 그레이', from:'2023', to:'2031' },
-];
-for (const f of NO_FIX) {
-  const hit = Object.values(SW).flatMap(g => g.colors).filter(c => c.ko === f.ko && c.no === f.from);
-  if (hit.length !== 1)
-    throw new Error(`NO_FIX: "${f.ko}" NO.${f.from} 을 ${hit.length}개 찾았습니다 (1개여야 합니다)`);
-  const taken = Object.values(SW).flatMap(g => g.colors).find(c => c.no === f.to);
-  if (taken) throw new Error(`NO_FIX: NO.${f.to} 는 이미 ${taken.ko} 가 쓰고 있습니다`);
-  hit[0].no = f.to;
-  console.log(`번호 정정 — ${f.ko}  NO.${f.from} → NO.${f.to}`);
-}
-
-// 번호는 팔레트 안에서 고유해야 한다. 겹치면 주문서에서 어느 색인지 가려낼 수 없다.
-// 조용히 넘어가면 결제·발주가 엉뚱한 색으로 나가므로 여기서 멈춘다. [2026-08-05]
+// 「이름+수」는 팔레트 안에서 고유해야 한다. 이것이 **주문서에 적히는 유일한 이름**이라
+// 겹치면 대표가 어느 원단인지 가려낼 수 없다 — 번호를 뺀 뒤로는 되돌릴 방법도 없다.
+// 조용히 넘어가면 발주가 엉뚱한 원단으로 나가므로 여기서 멈춘다. [2026-08-12]
+//   ※ 머슬린 화이트는 80수·100수 두 색이 있는데, 수까지 붙으면 갈린다.
 {
   const seen = {};
-  for (const c of Object.values(SW).flatMap(g => g.colors)) (seen[c.no] = seen[c.no] || []).push(c);
+  for (const c of Object.values(SW).flatMap(g => g.colors)) (seen[idOf(c)] = seen[idOf(c)] || []).push(c);
   const dup = Object.entries(seen).filter(([, v]) => v.length > 1);
-  if (dup.length) throw new Error('번호가 겹칩니다 — build.js 의 NO_FIX 에서 바로잡으십시오:\n'
-    + dup.map(([no, v]) => `  NO.${no}: ${v.map(c => c.ko + ' ' + c.su + '수').join(' / ')}`).join('\n'));
+  if (dup.length) throw new Error('「이름+수」가 겹칩니다 — 주문서에서 색을 가려낼 수 없습니다:\n'
+    + dup.map(([id, v]) => `  ${id}: ${v.map(c => c.en).join(' / ')}`).join('\n'));
 }
 
 // 베개 자리: 앞줄 왼쪽=pillowL, 앞줄 오른쪽=pillowF, 뒷줄 왼쪽=pillowW, 뒷줄 오른쪽=pillowR
@@ -112,9 +107,9 @@ for (const f of NO_FIX) {
 // 안 보이고, 고르지도 않은 색이 주문에 딸려 나간다. [대표, 2026-08-04]
 // 시작 색은 매트리스커버에서도 고를 수 있어야 한다 — 100수는 매트리스커버에 못 쓰므로
 // 반드시 60수나 80수인 색이어야 한다. 아니면 매트리스커버를 누르는 순간 시작 색이 사라진다.
-// 클라우드 화이트(953·80수 903)를 팔레트에서 빼면서 남은 화이트 중 가장 밝은 색으로 옮겼다.
+// 클라우드 화이트(60수·80수)를 팔레트에서 빼면서 남은 화이트 중 가장 밝은 색으로 옮겼다.
 // [대표, 2026-08-05]
-const WHITE = '#f5f4ef';   // NO. 952 멜트 아이스크림 60수
+const WHITE = '#f5f4ef';   // 멜트 아이스크림 60수
 
 // 디자인 — **사진이 서로 다르다.** 무지는 침대를 옆에서 본 컷, 양면은 위에서 비스듬히
 // 본 세로 컷이다. 그래서 디자인마다 바탕 사진 한 장과 마스크 한 벌을 따로 갖는다.
@@ -420,11 +415,12 @@ const PIL_QTY_MANY = [0,1,2,3,4,5,6,7,8];
 // 이불·매트리스커버 장수. 0은 없다 — 안 살 때는 「안 할래요」로 끈다.
 const ITEM_QTY = [1,2,3,4];
 
-// 팔레트에서 어느 칸이 골라졌는지 가리키는 키. 색상값도 번호도 겹치는 색이 있어서
-// (#edece7 머슬린 화이트 80·100수, #d8baaf 세피아 로즈/드라이 페탈, NO.2023 두 색)
-// 둘 다 기준으로 못 쓴다. [2026-08-04]
+// 팔레트에서 어느 칸이 골라졌는지 가리키는 키. 색상값이 똑같은 색이 있어서
+// (#edece7 머슬린 화이트 80·100수, #d8baaf 세피아 로즈/드라이 페탈) hex 는 기준으로
+// 못 쓴다. [2026-08-04]
 // 이 키는 팔레트 순번이라 색이 늘거나 빠지면 값이 밀린다. 화면 안에서만 쓰고,
-// 주문 기록처럼 오래 남는 곳에 저장하면 안 된다. 저장에는 번호+이름을 쓴다. [2026-08-05]
+// 주문 기록처럼 오래 남는 곳에 저장하면 안 된다. 저장에는 **이름+수**를 쓴다 —
+// 팔레트에서 유일하고, 번호와 달리 밖에 보여도 되는 값이다. [2026-08-12]
 let ki = 0;
 for (const g of Object.values(SW)) g.colors.forEach(c => c.k = 'c' + (ki++));
 
@@ -1031,16 +1027,26 @@ ${fontCss}
  .disc{font-size:var(--t5);color:var(--mut);line-height:1.7;word-break:keep-all;
   margin:0 0 11px;padding:9px 11px;background:var(--soft);border-radius:9px}
  .gname{font-size:11px;color:var(--mut);margin:14px 0 7px}
- /* 칩 밑에 번수(위)와 원단 번호(아래)를 적는다. 컬러명은 넣지 않는다 —
-    한글명이 「라이트 스킨 베이지」처럼 길어 이 폭에서는 잘려서 오히려 못 읽는다.
-    이름은 칩을 누르면 위쪽 큰 칸에 나오고, 마우스를 올려도 나온다. [대표, 2026-08-05] */
- .sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:10px 7px}
+ /* 칩 밑에 번수(위)와 컬러명(아래)을 적는다. **원단 번호는 적지 않는다**
+    [대표, 2026-08-12] — 경쟁사가 그대로 보고 가는 값이라 페이지에서 뺐다.
+    전에는 번호를 적고 이름을 뺐었다. 「라이트 스킨 베이지」처럼 긴 한글명이 52px
+    폭에서 잘렸기 때문이다 [대표, 2026-08-05]. 이름이 유일한 단서가 된 지금은
+    잘리면 안 되므로 **칸을 넓혔다.**
+      66px 은 그냥 고른 값이 아니다. 이 값이 한 줄에 들어가는 칩 수를 정한다 —
+      52px 로 두면 375px 폰에서 여섯 칸이 되어 칩 하나가 다시 52px 가 되고 이름이
+      죄다 접힌다. 66px 이면 네 칸이라 칩이 80px 남짓 되어 **100색이 전부 한 줄에**
+      들어간다 (320px 폰에서만 「라이트 스킨 베이지」 하나가 두 줄로 접힌다 — 재어봤다).
+      좁은 폰까지 생각해 두 줄은 허용하되, 자리를 미리 비워두지는 않는다. */
+ .sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:12px 7px}
  .sw button{border:0;background:none;padding:0;cursor:pointer;font-family:inherit;
   display:flex;flex-direction:column;gap:3px;text-align:center}
  /* 팔레트는 카드가 아니라 크림 바탕 위에 바로 놓인다. 흰색·크림 계열 칩(952·902·2002…)이
     바탕과 가까워서 테두리가 유일한 구분선이다 — 옅게 두면 칩이 안 보인다. */
  .sw button .c{display:block;aspect-ratio:1;border-radius:8px;border:1px solid rgba(0,0,0,.18)}
- .sw button .n{font-size:10px;line-height:1.15;color:var(--fg);letter-spacing:-.3px}
+ /* 컬러명 — 낱말 가운데가 아니라 **띄어쓰기에서** 끊는다(keep-all). 「라이트 스킨 베이지」가
+    「라이트 스킨 / 베이지」로 접히지, 「라이트 스/킨 베이지」로 잘리지 않는다. */
+ .sw button .n{font-size:10px;line-height:1.25;color:var(--fg);letter-spacing:-.3px;
+  word-break:keep-all}
  /* 번수는 매트리스커버에서 고를 수 있는지를 가르는 값이라 흐리면 안 된다 [대표, 2026-08-05] */
  .sw button .s{font-size:10px;line-height:1.15;color:var(--fg);font-weight:600}
  .sw button[aria-current="true"] .c{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--fg)}
@@ -1479,7 +1485,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const byHex = {};
 for (const g of Object.values(SW)) for (const c of g.colors) if(!byHex[c.hex]) byHex[c.hex] = c;
 const state = {};
-PARTS.forEach(p => state[p.key] = byHex[p.def] || { no:'', en:'', ko:'직접 지정', su:'', hex:p.def });
+PARTS.forEach(p => state[p.key] = byHex[p.def] || { en:'', ko:'직접 지정', su:'', hex:p.def });
 const inDz = (p, d) => !p.dz || p.dz.includes(d);
 const pickable = p => !p.follow;
 let design = DESIGNS[0].key, step = 0;
@@ -1926,7 +1932,11 @@ const SUB = [
   '고르신 내용을 확인해보세요.<br>카톡으로 보내주시면 확인해 드립니다.',
 ];
 function renderSub(){ $('#sub').innerHTML = SUB[step] || ''; }
-function label(c){ return c.no ? \`NO. \${c.no} · \${c.ko} \${c.su}수\` : c.ko; }
+// 주문서에 적히는 색 이름. **원단 번호는 넣지 않는다** [대표, 2026-08-12] —
+// 손님이 복사해서 보내는 글이라, 번호를 넣으면 손님 화면에도 그대로 뜬다.
+// 「이름+수」는 100색에서 유일하므로 대표는 이것만으로 원단을 짚을 수 있다
+// (번호가 필요하면 src/원단번호.json 대조표를 본다 — 저장소에는 없다).
+function label(c){ return c.su ? \`\${c.ko} \${c.su}수\` : c.ko; }
 // 「매트리스커버는」 / 「날개(테두리)는」 — 받침이 있으면 「은」이다. 부위 이름이 괄호로
 // 끝나기도 해서(line(테두리)) **마지막 한글 글자**를 찾아 본다. 한글이 없으면 「는」.
 function josa(s){
@@ -1946,7 +1956,7 @@ function renderColor(){
   const c = state[cur.key];
   $('#nowSw').style.background = c.hex;
   $('#nowL1').textContent = c.ko + (c.su ? ' ' + c.su + '수' : '');
-  $('#nowL2').textContent = (c.no ? 'NO. ' + c.no + '  ·  ' : '') + c.en;
+  $('#nowL2').textContent = c.en;
   const allow = cur.su; let shown = 0;
   $$('.sw button').forEach(b => {
     const ok = !allow || allow.includes(+b.dataset.su);
@@ -1974,13 +1984,14 @@ for (const g of Object.values(SW)) {
   g.colors.forEach(c => {
     const b = document.createElement('button');
     b.dataset.k = c.k; b.dataset.su = c.su;
-    b.title = 'NO. ' + c.no + ' ' + c.ko + ' ' + c.su + '수';
+    // 이름이 두 줄로 접혀도 손대면 온이름이 뜨게 둔다. 영문명도 같이 보여준다.
+    b.title = c.ko + ' ' + c.su + '수  ·  ' + c.en;
     // 읽어주는 기계에는 색만 보여줄 수 없으니 이름까지 말해준다.
-    b.setAttribute('aria-label', c.ko + ' ' + c.su + '수, 번호 ' + c.no);
+    b.setAttribute('aria-label', c.ko + ' ' + c.su + '수');
     const sw = document.createElement('span'); sw.className = 'c'; sw.style.background = c.hex;
-    const no = document.createElement('span'); no.className = 'n'; no.textContent = c.no;
+    const nm = document.createElement('span'); nm.className = 'n'; nm.textContent = c.ko;
     const su = document.createElement('span'); su.className = 's'; su.textContent = c.su + '수';
-    b.append(sw, su, no);   // 번수가 위, 원단 번호가 아래 [대표, 2026-08-05]
+    b.append(sw, su, nm);   // 번수가 위, 컬러명이 아래 [대표, 2026-08-12]
     b.onclick = () => apply(c); row.appendChild(b);
   });
   pal.appendChild(row);
@@ -2360,7 +2371,7 @@ function renderOrder(){
       // 칸이 하나면 칸 이름이 「베개커버」라 바로 위 줄과 겹친다. 사이즈로 적는다.
       const head = '   ' + (one ? '사이즈' : r.sl.ko) + ' : ' + r.size + ' · ' + r.n + '장';
       // 색은 **늘 아랫줄**에 적는다 [대표, 2026-08-10]. 한 색일 때 한 줄에 붙였더니
-    // 「베개(앞)-왼쪽 : 50×70 · 1장  /  NO. 952 · 멜트 아이스크림 60수」가 45자라
+    // 「베개(앞)-왼쪽 : 50×70 · 1장  /  멜트 아이스크림 60수」처럼 길어져
     // 폰에서 두 줄로 꺾이고, 꺾인 줄이 왼쪽 끝까지 밀려 나와 읽기 나빴다.
     // 카톡에 붙는 글도 같은 폭에서 같은 일이 난다 — 화면만 고쳐서는 안 된다.
     // 들여쓰기는 **네 칸**이다. 여섯 칸이면 320px 폰에서 색 이름 줄이 넘친다.
