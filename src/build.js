@@ -2424,10 +2424,13 @@ try { history.replaceState({ step:0 }, ''); } catch(_) {}
 </body></html>`;
 
 fs.writeFileSync(path.join(ROOT, 'index.html'), html, 'utf8');
-// 컬러 데이터도 저장소 루트에 공개용으로 함께 내보낸다.
-// k 는 페이지 안에서만 쓰는 키라 공개 파일에서는 뺀다.
-fs.writeFileSync(path.join(ROOT, 'colors.json'),
-  JSON.stringify(SW, (key, v) => key === 'k' ? undefined : v, 1), 'utf8');
+
+// ★ `colors.json` 은 이제 만들지 않는다 [대표, 2026-08-12].
+//   전에는 컬러 데이터를 저장소 루트에 「공개용」으로 함께 내보내 배포까지 했는데,
+//   **페이지가 이 파일을 한 번도 안 읽는다** — 색 데이터는 index.html 안에 박혀 나간다.
+//   하는 일이 없으면서 100색 표(이름·번수·색상값)를 기계가 읽기 좋은 꼴로 한 번에
+//   떠먹여 주는 파일이었다. 배포 목록(.github/workflows/deploy.yml)에서도 뺐다.
+//   다시 필요하면 src/swatches.json 이 원본이다.
 
 // 밖으로 뺀 사진·마스크를 `assets/` 에 내보낸다. **이 폴더도 같이 올라가야 한다**
 // (`.github/workflows/deploy.yml`). 안 올리면 ② 색 화면이 흰 종이로 나간다.

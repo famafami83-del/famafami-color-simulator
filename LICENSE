@@ -1,0 +1,51 @@
+저작권 안내 / Copyright Notice
+==============================
+
+Copyright (c) 2026 파마파미 (FAMAFAMI). All rights reserved.
+무단 전재 및 재배포를 금합니다.
+
+
+한국어
+------
+
+이 저장소와 배포된 페이지에 담긴 모든 것은 파마파미의 자산입니다.
+여기에는 다음이 포함되며, 이에 한정되지 않습니다.
+
+  · 소스 코드 및 빌드 도구
+  · 침구 사진, 부위 마스크, 디자인 카드 이미지, 표지 사진
+  · 컬러 데이터(컬러명 · 번수 · 색상값)와 그 구성
+  · 브랜드 이름, 로고, 워드마크, 문안
+
+**오픈소스가 아닙니다.** 저작권자의 사전 서면 허락 없이 아래 행위를 금합니다.
+
+  · 복제, 배포, 전송, 전시
+  · 2차적 저작물 작성(수정 · 번안 · 재구성 포함)
+  · 상업적 이용
+  · 이미지 · 마스크 · 컬러 데이터의 추출 및 별도 이용
+
+페이지를 브라우저로 열람하는 행위, 그 과정에서 브라우저가 파일을 임시로 내려받는
+행위는 허용됩니다. 그 파일을 따로 보관하거나 다시 쓰는 것은 허용되지 않습니다.
+
+문의: famafami83@gmail.com
+
+
+English
+-------
+
+All contents of this repository and of the deployed page are the property of
+FAMAFAMI, including but not limited to source code and build tools, bedding
+photographs, part masks, design card images, cover imagery, colour data
+(names, thread counts, colour values) and their arrangement, and the brand
+name, logo, wordmark and copy.
+
+**This is not open source software.** No permission is granted to copy,
+distribute, publicly transmit or display, create derivative works from,
+or commercially exploit any part of it, nor to extract and reuse the images,
+masks or colour data, without prior written permission from the copyright
+holder.
+
+Viewing the page in a web browser — and the temporary download of files that
+this necessarily involves — is permitted. Retaining or reusing those files is
+not.
+
+Contact: famafami83@gmail.com

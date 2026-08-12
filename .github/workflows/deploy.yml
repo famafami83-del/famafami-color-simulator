@@ -39,7 +39,7 @@ jobs:
       - name: 올릴 것만 모은다
         run: |
           mkdir -p _site
-          cp index.html colors.json .nojekyll _site/
+          cp index.html .nojekyll _site/
           cp -r assets _site/assets
           ls -lh _site _site/assets
       - uses: actions/upload-pages-artifact@v3
