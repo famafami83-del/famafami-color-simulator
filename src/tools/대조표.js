@@ -83,6 +83,24 @@ const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8">
  .en{font-size:11px;color:#a09a90}
  .none{display:none;padding:22px 6px;color:#8a857c;font-size:13px}
  .none.on{display:block}
+
+ /* 종이(=PDF)로 뽑을 때. PDF 는 폰 기종을 안 가리고 열리고 뷰어에 검색이 딸려 있어서
+    카톡으로 받아 보기에는 이쪽이 편하다. 화면용 검색칸은 종이에선 쓸모가 없으니 뺀다.
+    머리줄은 쪽마다 다시 찍는다(table-header-group) — 둘째 쪽부터 무슨 칸인지 모르게 된다. */
+ @media print{
+  body{background:#fff;padding:0}
+  .q,.none{display:none}
+  .sub b{color:#2b2a27}
+  table{font-size:10.5px}
+  thead{display:table-header-group}
+  th{padding:0 4px 3px}
+  td{padding:3px 4px}
+  .sw{width:15px;height:15px;border-radius:3px}
+  /* 영문명을 한글명 **옆에** 붙인다. 화면에서는 아랫줄이지만 종이에서 아랫줄로 두면
+     한 줄이 두 줄이 되어 쪽수가 갑절이 된다 (넉 장 → 두 장). */
+  .en{display:inline;font-size:8.5px;margin-left:5px}
+  tr{break-inside:avoid}
+ }
 </style></head><body>
 <h1>원단 번호 대조표</h1>
 <p class="sub">카톡 주문서에 적힌 <b>컬러명 + 몇수</b>를 찾으면 원단 번호가 나옵니다.
@@ -113,4 +131,29 @@ document.getElementById('q').addEventListener('input', function (e) {
 const out = path.join(ROOT, '원단번호-대조표.html');
 fs.writeFileSync(out, html, 'utf8');
 console.log(`원단번호-대조표.html 생성 — ${rows.length}색`);
-console.log('  이 파일은 저장소에 안 올라갑니다. 폰으로 보내두고 쓰십시오.');
+
+// PDF 도 함께 뽑는다. **폰에서는 이쪽이 편하다** — 카톡으로 받아 바로 열리고
+// (HTML 은 기종에 따라 「연결 프로그램」을 고르게 하거나 글자만 보여준다),
+// PDF 뷰어에 검색이 딸려 있어 이름으로 찾는 것도 그대로 된다.
+//   puppeteer 가 없거나 크롬을 못 찾으면 조용히 넘어간다 — HTML 만으로도 쓸 수 있다.
+(async () => {
+  let puppeteer;
+  try { puppeteer = require(path.join(ROOT, 'node_modules', 'puppeteer-core')); }
+  catch (_) {
+    console.log('  (PDF 는 건너뜁니다 — puppeteer-core 가 없습니다. HTML 만으로도 씁니다.)');
+    return;
+  }
+  let b;
+  try {
+    b = await puppeteer.launch({ channel: 'chrome', headless: 'new', args: ['--no-sandbox'] });
+    const p = await b.newPage();
+    await p.goto('file:///' + out.replace(/\\/g, '/'), { waitUntil: 'load' });
+    const pdf = path.join(ROOT, '원단번호-대조표.pdf');
+    await p.pdf({ path: pdf, format: 'A4', printBackground: true,
+      margin: { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' } });
+    console.log('원단번호-대조표.pdf 생성 — 폰에서는 이쪽이 편합니다');
+  } catch (e) {
+    console.log('  (PDF 는 건너뜁니다 — ' + e.message.split('\n')[0] + ')');
+  } finally { if (b) await b.close(); }
+  console.log('  두 파일 다 저장소에 안 올라갑니다. 폰으로 보내두고 쓰십시오.');
+})();
