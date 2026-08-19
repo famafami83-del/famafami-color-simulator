@@ -847,6 +847,13 @@ ${fontCss}
  @media (prefers-color-scheme:dark){:root{--bg:#131a2a;--fg:#ece9e1;--mut:#98a0b2;--line:#28324a;--card:#1a2338;--soft:#1f293e;--bad:#ff9384}}
  :root[data-theme="dark"]{--bg:#131a2a;--fg:#ece9e1;--mut:#98a0b2;--line:#28324a;--card:#1a2338;--soft:#1f293e;--bad:#ff9384}
  :root[data-theme="light"]{--bg:#f3f0e9;--fg:#16203d;--mut:#636a7b;--line:#e2ddd1;--card:#fdfbf6;--soft:#eae5da;--bad:#a8261f}
+ /* 카톡 노랑 [대표, 2026-08-19]. 이 두 색만은 **화면 설정을 안 따라간다.** 우리 색이
+    아니라 「이건 카톡이다」를 알리는 표시라, 밝은 화면이든 어두운 화면이든 같은 노랑이어야
+    알아본다. 위에 얹는 글자색도 함께 고정한다 — var(--bg) 로 두면 밝은 화면에서 크림색이
+    되어 노랑 위에서 사라진다. 어두운 화면에서도 네이비 글자가 노랑 위에서 가장 잘 읽힌다.
+    ★ 「카톡으로 주문하기」 단추와 세 컷 그림 ②의 머리띠가 **이 값을 함께 쓴다.** 한쪽만
+      고치면 그림 속 카톡과 눌러야 할 카톡 단추가 다른 노랑이 된다. */
+ :root{--kk:#fee500;--kkink:#16203d}
  *{box-sizing:border-box}
  html,body{margin:0;padding:0}
  /* 아래를 하단 단추 높이만큼 비워 둔다. ④ 에서는 저장 단추가 한 줄 더 붙어 단추가
@@ -868,6 +875,12 @@ ${fontCss}
  .steps div{flex:1;font-size:11.5px;text-align:center;padding:7px 2px;border-radius:7px;
   background:var(--soft);color:var(--mut);border:1px solid transparent}
  .steps div[aria-current="true"]{background:var(--fg);color:var(--bg);font-weight:600}
+ /* display:flex 가 걸려 있어 hidden 만으로는 안 사라진다 — 브라우저의 기본 hidden 은
+    display:none 인데, 뒤에 온 flex 가 그것을 덮는다. 여기서 다시 눌러 준다. */
+ .steps[hidden]{display:none}
+ /* 단계 표시가 빠진 자리를 머리글이 메운다. 안 두면 제목 바로 밑에 사진이 붙어
+    ④ 만 위가 답답해진다 — 다른 단계와 첫 덩어리가 시작하는 높이를 맞춘다. */
+ #topbar:has(.steps[hidden]) header{margin-bottom:26px}
 
  /* ① 디자인 = 브랜드 표지 [대표, 2026-08-06]
     사진이 가로로 꽉 차고, 그 아래끝에 **워드마크가 걸쳐 잘린다.** 양옆으로도 조금 넘겨
@@ -1163,31 +1176,71 @@ ${fontCss}
     안 읽힌다. 눈이 단추를 찾아야 하니 이름은 붙어 있어야 한다. */
  .ordnote b{font-family:var(--head);font-weight:700;color:var(--fg);white-space:nowrap}
 
- /* 위 문장을 **한 줄로 줄여 그린 것**이다 [대표, 2026-08-10]. 문장은 읽어야 알고
-    이 띠는 보면 안다 — 넷을 거쳐 끝난다는 것이 눈에 먼저 들어온다.
-    ★ 그러니 여기에는 **새 내용이 없어야 한다.** 위에 없는 말이 여기서 처음 나오면
-      손님은 두 곳을 다 읽어야 한다. 줄인 말이라 자체로는 뜻이 다 안 선다. */
- /* 왼쪽 정렬 [대표, 2026-08-10]. 위 문장들이 왼쪽에서 시작하므로 띠도 같은 자리에서
-    시작해야 한 덩어리로 읽힌다 — 가운데로 모으면 띠만 따로 떠 보인다.
-    ★ 띠 자체에는 바탕을 깔지 않는다. 박스는 이제 **토막마다** 있다. 둘 다 깔면
-      상자 안의 상자가 되어 어느 쪽이 눌러야 할 것인지 흐려진다. */
- .flow{display:flex;align-items:center;justify-content:flex-start;gap:4px;margin:4px 0 0}
- /* 띠 아래에서 걸음을 풀어 주는 문장. 띠에 바로 붙으면 띠의 일부처럼 보인다. */
- .ordnote.flowtext{margin-top:12px}
- /* 토막은 **꺾이지 않는다.** 「붙여 / 넣기」로 갈라지면 한눈에 보는 값이 사라진다.
-    대신 좁으면 글자와 여백이 함께 줄어든다 — 320px 에서도 넉 토막이 한 줄에 남는다.
-    바탕은 종이보다 한 단 진한 회색(--soft)에 테두리(--line) 한 줄. 진하게만 해서는
-    박스로 안 보이고, 더 진하게 하면 아래 단추보다 세져 눈을 먼저 끈다. */
- .flow span{font-family:var(--head);font-weight:700;color:var(--fg);
-  font-size:var(--t5);white-space:nowrap;
-  background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:5px 7px}
- /* 화살표는 **곁말 색**이다. 토막보다 앞에 나서면 안 된다 — 이어진다는 표시일 뿐이다.
-    ★ 글꼴을 기기 것으로 둔다. 잘라 심은 두 벌에 → 가 있다는 보장이 없는데, 없으면
-      네모(豆腐)로 뜬다. 글자가 아니라 기호라 기기 글꼴로 그려도 티가 안 난다. */
- .flow i{color:var(--mut);font-size:var(--t5);font-style:normal;flex:0 0 auto;
+ /* ---- 주문하는 법, 세 컷 ---- [대표, 2026-08-19]
+    전에는 이 자리에 **글을 한 줄로 줄인 띠**가 있었다. 그것으로는 모자랐다 — 손님이
+    저장을 통째로 건너뛰고 카톡부터 열어, 채팅창을 앞에 두고 붙일 것이 없는 채로 섰다.
+    문장은 읽어야 알지만 **화면 그림은 보면 안다.** 무엇을 누르면 어떤 화면이 뜨고
+    거기서 무엇을 하는지를, 하기 전에 미리 보여준다.
+    ★ 사진을 안 쓴다. 폰 화면은 SVG 로 그린다 — 진짜 카톡을 찍어 넣으면 남의 화면을
+      퍼오는 것이 되고, 카톡이 모양을 바꿀 때마다 그림이 늙는다. 그림은 「이런 화면이
+      뜬다」만 알려주면 되므로 닮기만 하면 된다.
+    ★ 세 컷이 **한 줄에 남아야** 「셋이면 끝난다」가 보인다. 320px 에서도 줄을 안 바꾼다 —
+      대신 그림과 글자가 함께 줄어든다.
+    ★ 화면 읽어주기에는 감춘다(aria-hidden). 바로 아래 문장이 같은 말을 온전한 말로
+      하고 있어, 안 감추면 같은 안내를 두 번 듣는다. */
+ /* 그림 줄과 글씨 줄을 **격자 두 줄**로 짠다. 화살표를 그냥 나란히 두면 글씨까지 잰
+    높이의 가운데로 내려가 그림과 어긋난다 — 화살표는 첫 줄에만 두어 그림 높이의
+    가운데에 걸리게 한다. */
+ .howto{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;
+  column-gap:5px;row-gap:7px;align-items:center;margin:11px 0 0}
+ .p1,.c1{grid-column:1} .p2,.c2{grid-column:3} .p3,.c3{grid-column:5}
+ .a1{grid-column:2} .a2{grid-column:4}
+ .hpic,.harrow{grid-row:1} .hcap{grid-row:2}
+ /* 그림은 제 칸 폭에 맞춰 늘고 준다. 높이를 박아두면 좁은 폰에서 찌그러진다. */
+ .hpic{min-width:0}
+ .hpic svg{display:block;width:100%;height:auto}
+ .harrow{color:var(--mut);font-size:var(--t4);font-style:normal;
   font-family:system-ui,-apple-system,"Segoe UI Symbol",sans-serif}
- @media (max-width:360px){ .flow{gap:2px}
-  .flow span{font-size:9.5px;padding:4px 5px} .flow i{font-size:9.5px} }
+ /* 걸음 이름은 제목 글꼴로 굵게, 풀이는 곁말로. 이름만 굵게 해두면 눈이 ①②③ 을
+    먼저 훑고 풀이는 필요할 때 읽는다. */
+ .hcap{margin:0;text-align:center;word-break:keep-all;line-height:1.4}
+ .hcap b{display:block;font-family:var(--head);font-weight:700;color:var(--fg);font-size:var(--t4)}
+ .hcap em{display:block;font-style:normal;font-family:${FONT_BODY};
+  color:var(--mut);font-size:var(--t5);margin-top:2px}
+ @media (max-width:360px){ .howto{column-gap:3px}
+  .hcap b{font-size:10.5px} .hcap em{font-size:9.5px} .harrow{font-size:9.5px} }
+
+ /* 그림 속 부품 [2026-08-19]. 색은 전부 화면 색 변수에서 가져온다 — 어두운 화면에서도
+    같이 뒤집혀야 그림만 하얗게 뜨지 않는다.
+    ★ 카톡 노랑(--kk)만은 **고정색**이다. 이것은 우리 색이 아니라 「저 화면이 카톡이다」를
+      알려주는 표시라, 화면 설정을 따라 바뀌면 알아볼 수 없게 된다. 그래서 그 노랑 위에
+      얹는 글자 자리(.onkk)도 함께 고정색으로 둔다 — var(--fg) 로 두면 어두운 화면에서
+      크림색이 되어 노랑 위에서 사라진다. */
+ .howto .ph{fill:var(--card);stroke:var(--line);stroke-width:2}
+ .howto .sc{fill:var(--soft)}
+ .howto .sc.dim{opacity:.5}
+ .howto .ink{fill:var(--fg);opacity:.8}
+ .howto .ink2{fill:var(--fg);opacity:.45}
+ .howto .ln{fill:var(--mut);opacity:.5}
+ .howto .bar{fill:var(--soft)}
+ .howto .fld{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+ .howto .kk{fill:var(--kk)}
+ .howto .onkk{fill:var(--kkink);opacity:.5}
+ /* 손님이 **눌러야 할 자리**만 진하게 채운다 — 그림 한 장에 진한 곳이 하나뿐이라야
+    어디를 누르는지가 말 없이 읽힌다. 둘레의 옅은 테는 그 자리를 가리키는 손짓이다. */
+ .howto .hi{fill:var(--fg)}
+ .howto .ring{fill:none;stroke:var(--fg);stroke-width:1.5;opacity:.3}
+ .howto .tick{fill:none;stroke:var(--bg);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+ /* 저장을 마치면 **첫 컷을 눌러 둔다** [대표, 2026-08-19]. 저장은 이미 한 일이라
+    옅게 물리고, 이제 할 일인 둘째 컷에 테를 두른다 — 세 컷이 안내에서 **어디까지 왔는지
+    보여주는 표시**로 바뀐다. 고른 것을 고치면 다시 만들어야 하므로 표시도 함께 풀린다. */
+ .howto[data-done] .p1,.howto[data-done] .c1{opacity:.4}
+ .howto[data-done] .p2 svg{outline:2px solid var(--fg);outline-offset:1px;border-radius:9px}
+
+ /* 세 컷 아래에서 걸음을 온전한 말로 풀어 주는 문장. 그림에 바로 붙이면 그림의
+    설명글처럼 보인다 — 이 문장은 그림이 없어도 혼자 서야 한다. */
+ .ordnote.howtext{margin-top:13px}
  /* 색상 안내는 **딴 이야기**다. 전에는 <br><br> 로 띄웠는데, 사이에 띠가 들어오면서
     문단이 갈렸다 — 이제 그 자리를 margin 이 맡는다. 띠가 없는 경우(문의처 미설정)에도
     같은 만큼 떨어져야 하므로 띠가 아니라 이 문단에 건다. */
@@ -1204,11 +1257,51 @@ ${fontCss}
  .navrow button{flex:1}
  .nav .prev{background:transparent;color:var(--fg);flex:0 0 92px}
  .nav .next{background:var(--fg);color:var(--bg)}
- /* 저장은 **곁일**이다 [대표, 2026-08-10]. 크기와 모양은 아래 단추와 같게 두되
-    속을 비워 테두리만 남긴다 — 진한 단추가 둘이면 눌러야 할 것이 어느 쪽인지
-    흐려지고, 주문으로 가는 길이 약해진다. 「이전」과 같은 결이다. */
- .nav .save{background:transparent;color:var(--fg);width:100%}
+ /* ④ 의 마지막 단추만 **카톡 노랑**이다 [대표, 2026-08-19]. 앞 단계의 「다음」은 그대로
+    네이비다 — 노랑은 「이 단추를 누르면 카톡으로 넘어간다」는 뜻이라, 안 넘어가는
+    단추에까지 칠하면 뜻이 없어진다. .kko 는 goto() 가 마지막 단계에서만 붙인다.
+    ★ 테두리도 노랑으로 덮는다. .nav button 이 var(--fg) 테두리를 갖고 있어서,
+      어두운 화면에서 크림색 테가 노랑을 둘러 단추가 오려 붙인 것처럼 보인다. */
+ .nav .next.kko{background:var(--kk);color:var(--kkink);border-color:var(--kk)}
+ /* 저장을 **곁일에서 되돌렸다** [대표, 2026-08-19].
+    2026-08-10 에는 속을 비운 테두리 단추였다. 진한 단추가 둘이면 어느 쪽을 눌러야
+    할지 흐려진다는 이유였는데, 실제로는 그 반대가 되었다 — 진한 것이 「카톡으로
+    주문하기」 하나뿐이니 손님 눈이 그리로만 가서, 저장을 건너뛴 채 채팅창을 열었다.
+    그래서 **둘 다 진하게** 둔다. 저장이 위에 있으니 위에서 아래로 읽으면 순서대로
+    눌리고, 아래 단추를 막지는 않는다 — 이미 저장해 둔 손님, 그림 없이 먼저 말부터
+    걸고 싶은 손님을 세우지 않기 위해서다 [대표, 2026-08-19].
+    ★ 저장을 마치면 라벨이 「✓ 이미지 2장 저장 완료」로 바뀌어 **그대로 남는다**
+      (되돌리지 않는다). 곁에 진한 단추가 둘이라, 무엇이 끝났는지 단추 자신이
+      말해주지 않으면 손님은 저장을 눌렀는지 아닌지를 알 길이 없다. */
+ .nav .save{background:var(--fg);color:var(--bg);width:100%}
  .nav .save:disabled{opacity:.55;cursor:default}
+ /* 끝난 표시. 채운 색을 벗고 테두리만 남긴다 — 할 일이 아니라 **지난 일**이 되었으니
+    진한 자리를 아래 단추에 넘긴다. 다시 눌러 받을 수는 있게 열어둔다. */
+ .nav .save.done{background:transparent;color:var(--fg)}
+ /* 단추 옆 동그라미 번호 [대표, 2026-08-19]. 위 「주문 방법」 세 컷의 ①②와 **같은 번호**다 —
+    그림에서 본 걸음이 어느 단추인지 눈으로 바로 이어진다. 세 컷의 ③(2장 첨부)에는 단추가
+    없다. 그것은 카톡 채팅창에서 하는 일이라 이 페이지에 누를 자리가 없다.
+    ★ 글자가 아니라 **::before 로 그린다.** 라벨은 JS 가 바꿔 끼우는데(「만드는 중…」,
+      「✓ 이미지 2장 저장 완료」, 「카카오톡을 여는 중」), 번호를 라벨 글자에 섞어두면
+      바뀔 때마다 같이 지워진다. 배지는 단추에 붙어 있어 라벨이 무엇이 되든 남는다.
+    ★ 자리는 **왼쪽 끝에 띄워 놓는다.** 글자는 그대로 가운데 있어야 단추 이름으로 읽힌다 —
+      번호를 글자 앞에 붙이면 이름이 오른쪽으로 밀려 가운데가 어긋난다. */
+ .nav .save,.nav .next.kko{position:relative}
+ .nav .save::before,.nav .next.kko::before{
+  content:"1";position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  width:19px;height:19px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--head);font-size:11.5px;font-weight:700;line-height:1;
+  background:var(--bg);color:var(--fg)}
+ .nav .next.kko::before{content:"2";background:var(--kkink);color:var(--kk)}
+ /* 저장을 마치면 단추가 속을 비우므로(.done) 배지도 함께 뒤집는다 — 안 뒤집으면
+    크림 동그라미가 크림 바탕 위에 놓여 통째로 사라진다. */
+ .nav .save.done::before{background:var(--fg);color:var(--bg)}
+ /* 좁은 폰(320px)에서는 「카톡으로 주문하기」 단추가 191px 밖에 안 되어 배지와 글자
+    사이가 15px 까지 좁아진다. 배지를 한 단 줄여 숨통을 틔운다 — 겹치지는 않지만
+    붙어 보이면 배지가 글자의 일부처럼 읽힌다. */
+ @media (max-width:360px){
+  .nav .save::before,.nav .next.kko::before{left:9px;width:17px;height:17px;font-size:10.5px} }
  .nav button[hidden]{display:none}
 
  /* 카톡으로 넘어가기 직전에 뜨는 알림. **하단 단추 바로 위에 붙여 고정한다** — 어디를 보고 계시든
@@ -1222,6 +1315,11 @@ ${fontCss}
   word-break:keep-all;box-shadow:0 6px 20px rgba(0,0,0,.18)}
  .toast[hidden]{display:none}
  .toast b{display:block;font-size:var(--t3);font-weight:650;margin-bottom:2px}
+ /* 두 말 중 **한쪽만** 보인다 (data-saved). 저장을 마쳤으면 무엇을 할 차례인지,
+    건너뛰었으면 무엇이 빠졌는지 — 같은 자리에서 서로 다른 말을 한다. */
+ .toast .tsaved,.toast .tnone{display:none}
+ .toast[data-saved="1"] .tsaved{display:block}
+ .toast[data-saved="0"] .tnone{display:block}
  /* 카톡이 안 열렸을 때 손수 누를 자리. 늘 보이지만 작게 둔다. */
  .toast a{display:inline-block;margin-top:6px;color:inherit;opacity:.8}
 </style>
@@ -1406,41 +1504,108 @@ ${PIL_UNION.map(s=>`      <div class="prow" data-slot="${s.key}">
 <!-- ④ 확인 -->
 <section class="step" data-step="3" aria-hidden="true">
   <div class="scenebox mini" id="sceneMini"></div>
+  <!-- 주문 방법은 **견적보다 먼저** 온다 [대표, 2026-08-19]. 전에는 이 안내가 ④ 의
+       맨 아래, 긴 주문 내역 다음에 있었다 — 화면 세 뼘을 내려야 나오는 자리라
+       손님 눈에는 아예 없는 것이나 마찬가지였고, 견적만 보고 바로 아래 단추를
+       눌러 카톡으로 넘어갔다. 완성한 사진 바로 밑, **첫 화면 안**으로 올린다.
+       ★ 색상 안내(.ordnote.tail)는 안 따라 올린다. 그것은 주문 방법이 아니라
+         맨 끝에 남기는 단서라, 읽는 차례의 마지막 자리가 제자리다. -->
+  <div class="card" id="howcard">
+    <h2>주문 방법</h2>
+    <!-- 주문은 **이미지 두 장을 첨부하는 방식**이다 [대표, 2026-08-10]. 전에는 주문
+         내용을 클립보드에 복사해 채팅창에 붙여넣게 했는데, 이제 저장 단추가 침구
+         사진과 주문 내역을 그림으로 만들어 주므로 손님은 그 두 장을 붙이면 된다.
+         ★ 세 컷이 **먼저** 온다. 셋을 거쳐 끝난다는 것과 걸음마다 어떤 화면이 뜨는지를
+           읽기 전에 보게 하고, 그 아래 문장이 걸음마다 무엇을 하는지 말로 풀어 준다.
+         ★ <div> 는 <p> 안에 못 들어간다 — 넣으면 브라우저가 문단을 제멋대로 닫아
+           뒤따르는 글이 문단 밖으로 밀린다. 그래서 그림을 문단 밖에 둔다. -->
+    <div class="howto" id="howto" aria-hidden="true">
+      <!-- ① 저장하면 갤러리에 두 장이 놓인다 -->
+      <div class="hpic p1"><svg viewBox="0 0 132 176" role="presentation">
+        <rect class="ph" x="24" y="5" width="84" height="166" rx="12"/>
+        <rect class="sc" x="34" y="20" width="64" height="62" rx="5"/>
+        <rect class="ink2" x="43" y="36" width="20" height="12" rx="3"/>
+        <rect class="ink2" x="69" y="36" width="20" height="12" rx="3"/>
+        <rect class="ink"  x="39" y="50" width="54" height="27" rx="4"/>
+        <rect class="sc" x="34" y="92" width="64" height="62" rx="5"/>
+        <rect class="ink" x="41" y="100" width="28" height="5" rx="2.5"/>
+        <rect class="ln"  x="41" y="112" width="50" height="4" rx="2"/>
+        <rect class="ln"  x="41" y="122" width="43" height="4" rx="2"/>
+        <rect class="ln"  x="41" y="132" width="48" height="4" rx="2"/>
+        <rect class="ln"  x="41" y="142" width="33" height="4" rx="2"/>
+        <circle class="hi" cx="95" cy="152" r="12"/>
+        <path class="tick" d="M89.5 152l4 4 8-8.5"/>
+      </svg></div>
+      <i class="harrow a1">→</i>
+      <!-- ② 카톡 채팅방이 열린다. 누를 곳은 왼쪽 아래 + -->
+      <div class="hpic p2"><svg viewBox="0 0 132 176" role="presentation">
+        <rect class="ph" x="24" y="5" width="84" height="166" rx="12"/>
+        <path class="kk" d="M28 17a8 8 0 0 1 8-8h60a8 8 0 0 1 8 8v18H28z"/>
+        <rect class="onkk" x="36" y="19" width="32" height="5" rx="2.5"/>
+        <rect class="sc" x="34" y="46" width="44" height="15" rx="7"/>
+        <rect class="sc" x="34" y="67" width="30" height="13" rx="6"/>
+        <path class="bar" d="M28 134h76v25a8 8 0 0 1-8 8H36a8 8 0 0 1-8-8z"/>
+        <rect class="fld" x="55" y="141" width="44" height="12" rx="6"/>
+        <circle class="ring" cx="41" cy="147" r="13"/>
+        <circle class="hi" cx="41" cy="147" r="9"/>
+        <path class="tick" d="M41 142.5v9M36.5 147h9"/>
+      </svg></div>
+      <i class="harrow a2">→</i>
+      <!-- ③ 앨범에서 저장해 둔 두 장을 골라 보낸다 -->
+      <div class="hpic p3"><svg viewBox="0 0 132 176" role="presentation">
+        <rect class="ph" x="24" y="5" width="84" height="166" rx="12"/>
+        <rect class="sc" x="36" y="18" width="32" height="32" rx="4"/>
+        <rect class="ink" x="41" y="34" width="22" height="11" rx="3"/>
+        <rect class="sc" x="72" y="18" width="32" height="32" rx="4"/>
+        <rect class="ln" x="77" y="30" width="22" height="4" rx="2"/>
+        <rect class="ln" x="77" y="38" width="17" height="4" rx="2"/>
+        <rect class="sc dim" x="36" y="54" width="32" height="32" rx="4"/>
+        <rect class="sc dim" x="72" y="54" width="32" height="32" rx="4"/>
+        <rect class="sc dim" x="36" y="90" width="32" height="32" rx="4"/>
+        <rect class="sc dim" x="72" y="90" width="32" height="32" rx="4"/>
+        <circle class="hi" cx="63" cy="23" r="6.5"/>
+        <path class="tick" d="M60.5 23l2 2 3.5-4"/>
+        <circle class="hi" cx="99" cy="23" r="6.5"/>
+        <path class="tick" d="M96.5 23l2 2 3.5-4"/>
+        <path class="bar" d="M28 130h76v29a8 8 0 0 1-8 8H36a8 8 0 0 1-8-8z"/>
+        <rect class="hi" x="44" y="138" width="44" height="17" rx="8.5"/>
+        <path class="tick" d="M59 146.5h13M67.5 141.5l5 5-5 5"/>
+      </svg></div>
+      <p class="hcap c1"><b>① 저장하기</b><em>2장이 저장됩니다</em></p>
+      <p class="hcap c2"><b>② 카톡 열기</b><em>채팅방이 열립니다</em></p>
+      <p class="hcap c3"><b>③ 2장 첨부</b><em>앨범에서 골라 전송</em></p>
+    </div>
+    <!-- 한 문장에 한 줄 — 넓은 화면이라고 이어 붙이지 않는다 [대표, 2026-08-07].
+         폰에서 꺾이는 자리를 브라우저에 맡기면 말 가운데가 잘리므로, **뜻이 끊기는
+         자리마다 우리가 먼저 줄을 바꾼다.** 걸음 사이는 빈 줄로 띄워 두 덩어리가
+         갈려 보이게 한다 — 무엇을 먼저 하고 무엇을 나중에 하는지가 그것으로 읽힌다.
+         ★ 세 컷 그림과 **같은 걸음, 같은 차례**를 말한다. 그림은 화면을 보여주고
+           이 문장은 누를 단추 이름을 말한다 — 둘이 어긋나면 손님이 둘을 맞춰 보느라
+           멈춘다. 한쪽을 고치면 다른 쪽도 같이 고칠 것. -->
+    <p class="ordnote howtext">
+      <b>「내 침구 저장하기」</b>를 누르면<br>
+      완성한 침구 이미지와 주문 내역이 함께 저장됩니다.<br><br>
+      <b>「카톡으로 주문하기」</b>를 누른 후<br>
+      채팅창 왼쪽 아래 <b>+</b> 를 눌러<br>
+      <b>앨범</b>에서 저장된 <b>이미지 2장</b>을<br>
+      첨부해주세요.<br><br>
+      확인 후 결제하실 수 있는 링크를 보내드립니다.
+    </p>
+  </div>
 ${PRICE_READY ? `  <div class="card">
     <!-- 「예상」이 아니라 「견적」이다 [대표, 2026-08-11]. 예상이라고 하면 뒤에 값이
          바뀔 수 있는 것처럼 읽힌다. 고른 옵션으로 셈이 끝난 값이므로 견적이 맞다. -->
     <h2>견적 금액</h2>
     <div id="qRows"></div>
     <div class="qsum" id="qSumBox"><span>합계</span><b id="qSum">-</b></div>
-    <!-- 이 카드는 **얼마인지만** 말한다 [대표, 2026-08-11]. 결제 링크 이야기는 아래
-         주문 방법 안내가 「확인 후 결제하실 수 있는 링크를 보내드립니다」로 하고 있어,
+    <!-- 이 카드는 **얼마인지만** 말한다 [대표, 2026-08-11]. 결제 링크 이야기는 위
+         주문 방법 카드가 「확인 후 결제하실 수 있는 링크를 보내드립니다」로 하고 있어,
          여기에도 적었더니 한 화면에 같은 말이 두 번 나왔다. 다음에 무슨 일이
          생기는지는 **주문 방법 쪽 한 곳에서만** 말한다. -->
     <p class="qfoot">선택하신 옵션을 기준으로 계산된 견적 금액입니다.</p>
     <p class="qnote" id="qNote"></p>
   </div>
 ` : ''}  <pre id="orderTxt"></pre>
-  <!-- 주문은 **이미지 두 장을 첨부하는 방식**이다 [대표, 2026-08-10]. 전에는 주문
-       내용을 클립보드에 복사해 채팅창에 붙여넣게 했는데, 이제 저장 단추가 침구
-       사진과 주문 내역을 그림으로 만들어 주므로 손님은 그 두 장을 붙이면 된다.
-       ★ 띠가 **먼저** 온다. 세 걸음이라는 것을 읽기 전에 보게 하고, 그 아래 문장이
-         걸음마다 무엇을 하는지 풀어 준다.
-       ★ <div> 는 <p> 안에 못 들어간다 — 넣으면 브라우저가 문단을 제멋대로 닫아
-         뒤따르는 글이 문단 밖으로 밀린다. 그래서 띠를 문단 밖에 둔다. -->
-  <div class="flow" aria-hidden="true">
-    <span>내 침구 저장하기</span><i>→</i><span>카톡으로 주문하기</span><i>→</i><span>이미지 2장 첨부</span>
-  </div>
-  <!-- 한 문장에 한 줄 — 넓은 화면이라고 이어 붙이지 않는다 [대표, 2026-08-07].
-       폰에서 꺾이는 자리를 브라우저에 맡기면 말 가운데가 잘리므로, **뜻이 끊기는
-       자리마다 우리가 먼저 줄을 바꾼다.** 걸음 사이는 빈 줄로 띄워 두 덩어리가
-       갈려 보이게 한다 — 무엇을 먼저 하고 무엇을 나중에 하는지가 그것으로 읽힌다. -->
-  <p class="ordnote flowtext">
-    <b>「내 침구 저장하기」</b>를 누르면<br>
-    완성한 침구 이미지와 주문 내역이 함께 저장됩니다.<br><br>
-    <b>「카톡으로 주문하기」</b>를 누른 후<br>
-    저장된 <b>이미지 2장</b>을 채팅창에 첨부해주세요.<br><br>
-    확인 후 결제하실 수 있는 링크를 보내드립니다.
-  </p>
   <p class="ordnote tail">
     화면에서 보이는 색상과 실제 원단의 색상은 차이가 있을 수 있습니다.
   </p>
@@ -1459,9 +1624,15 @@ ${PRICE_READY ? `  <div class="card">
 ${INQUIRY ? `<!-- 카톡으로 넘어가기 직전에 뜬다. 넘어간 뒤에도 남아 있어 돌아오시면
      무엇을 하던 중이었는지 그대로 보인다 — 첨부는 채팅창에서 해야 하는 일이라
      이 한 줄이 없으면 채팅창을 열어놓고 무엇을 할지 모른 채 서게 된다. -->
-<div class="toast" id="toast" hidden role="status">
-  <b>✓ 이미지 2장이 저장되어 있습니다.</b>
-  카카오톡 채팅창에 두 장을 첨부해 보내주세요.
+<div class="toast" id="toast" hidden role="status" data-saved="0">
+  <span class="tsaved">
+    <b>✓ 이미지 2장이 저장되어 있습니다.</b>
+    채팅창 왼쪽 아래 + 를 눌러 앨범에서 두 장을 골라 보내주세요.
+  </span>
+  <span class="tnone">
+    <b>아직 이미지를 저장하지 않으셨습니다.</b>
+    이 화면으로 돌아오셔서 「내 침구 저장하기」를 먼저 눌러주세요.
+  </span>
   <a href="${INQUIRY}" target="_blank" rel="noopener">카카오톡이 안 열렸다면 여기를 눌러주세요</a>
 </div>` : ''}
 
@@ -1506,10 +1677,19 @@ function goto(s){
   step = s;
   // ① 은 브랜드 표지다. 머리글과 단계 표시를 걷어내야 사진이 화면 맨 위에서 시작한다.
   $('#topbar').hidden = s === 0;
+  /* ④ 에서는 단계 표시를 감춘다 [대표, 2026-08-19]. ④ 화면 안에 「주문 방법」의 ①②③ 과
+     단추의 ①② 가 들어오면서, 위쪽 ①디자인 ②색 ③사이즈 ④확인 과 번호가 겹쳐 읽혔다.
+     한 화면에 뜻이 다른 번호가 두 벌 있으면 어느 쪽 순서를 따라야 하는지 흐려진다.
+     ★ 감춰도 잃는 것이 없다 — 이 표시는 **눌러서 옮기는 자리가 아니라** 지금 어디쯤인지
+       보여주기만 한다. ④ 는 마지막이라 그 말이 이미 끝난 셈이고, 머리글의 곁말
+       (「고르신 내용을 확인해보세요」)이 어느 화면인지 그대로 말해준다. */
+  $('.steps').hidden = s === LAST;
   $$('.step').forEach(el => el.setAttribute('aria-hidden', +el.dataset.step !== s));
   $$('.steps div').forEach(el => el.setAttribute('aria-current', +el.dataset.s === s));
   $('#btnPrev').hidden = s === 0;
   $('#btnNext').textContent = NEXT_LABEL[s];
+  // 카톡 노랑은 **카톡으로 넘어가는 단추에만** 붙는다 (위 .nav .next.kko).
+  $('#btnNext').classList.toggle('kko', s === LAST);
   if (s === 2) { renderPillows(); checkHeight(); }
   if (s === 3) { buildMini(); renderQuote(); renderOrder(); }
   // 저장 단추는 ④ 에서만. 뜨고 지는 만큼 단추 높이가 달라지므로 곧바로 다시 잰다.
@@ -1561,8 +1741,13 @@ $('#btnNext').onclick = async () => {
   //   해야 하는지(두 장 첨부) 알고 간다. 알림은 지우지 않는다 — 돌아오시면 그대로 보인다.
   //   ★ window.open 이 아니라 location 을 쓴다. 새 창은 폰 브라우저가 막는 일이 있다.
   //   주소를 갈아타는 것은 막히지 않고, 카톡 앱으로 넘어가므로 브라우저는 뒤에 남는다.
+  //   ★ 알림은 **저장을 했는지 보고 말을 고른다** [대표, 2026-08-19]. 저장을 막지
+  //   않기로 했으므로(둘 다 진한 단추) 건너뛰고 오는 손님이 있는데, 그분에게
+  //   「저장되어 있습니다」라고 하면 채팅창에서 없는 사진을 찾다 그냥 나간다.
   const b = $('#btnNext');
-  $('#toast').hidden = false;
+  const t = $('#toast');
+  t.dataset.saved = savedOK ? '1' : '0';
+  t.hidden = false;
   b.textContent = '카카오톡을 여는 중';
   setTimeout(() => { b.textContent = NEXT_LABEL[LAST]; location.href = INQUIRY; }, 700);
 };
@@ -1816,6 +2001,23 @@ addEventListener('resize', syncNavH);
 try { document.fonts.ready.then(syncNavH); } catch(_) {}
 
 const SAVE_LABEL = '내 침구 저장하기';
+// 저장을 마치면 이 라벨로 바뀌어 **그대로 남는다** [대표, 2026-08-19]. 곁에 진한 단추가
+// 둘이라(저장·주문), 무엇이 끝났는지 단추가 스스로 말해주지 않으면 손님은 저장을
+// 눌렀는지 아닌지를 알 길이 없다 — 폰에서는 공유창이 뜨고 닫히는 것이 전부라
+// 화면에 아무 자국도 안 남는다.
+const SAVE_DONE = '✓ 이미지 2장 저장 완료';
+// 저장까지 마쳤는지. 카톡으로 넘어갈 때 뜨는 알림이 이 값을 보고 말을 고른다 —
+// 저장을 건너뛴 손님에게 「저장되어 있습니다」라고 하면 채팅창에서 있지도 않은
+// 사진을 찾는다.
+let savedOK = false;
+function saveDone(){
+  savedOK = true;
+  const b = $('#btnSave');
+  b.classList.add('done'); b.textContent = SAVE_DONE;
+  // 세 컷 안내가 **어디까지 왔는지 보여주는 표시**로 바뀐다 — 첫 컷은 옅어지고
+  // 이제 할 일인 둘째 컷에 테가 둘린다.
+  const h = $('#howto'); if (h) h.setAttribute('data-done', '1');
+}
 // 내역 그림은 사진과 **같은 폭**으로 그린다. 두 장을 나란히 놓았을 때 폭이 어긋나면
 // 한 벌로 안 보인다. 사진이 아직 안 왔으면 원본 폭(1200)을 쓴다.
 function sceneW(){
@@ -1843,7 +2045,14 @@ function saveShow(on){
   const b = $('#btnSave');
   if (!b) return;
   b.hidden = !on;
-  if (on) { b.disabled = false; b.textContent = SAVE_LABEL; savePrepare(); }
+  // ④ 에 들어설 때마다 **처음으로 되돌린다.** 앞 단계로 갔다 오면 고른 것이 달라졌을
+  // 수 있어, 아까 저장한 두 장은 이제 지금 화면과 다른 그림이다.
+  if (on) {
+    savedOK = false;
+    b.disabled = false; b.classList.remove('done'); b.textContent = SAVE_LABEL;
+    const h = $('#howto'); if (h) h.removeAttribute('data-done');
+    savePrepare();
+  }
   syncNavH();
 }
 const saveStamp = () => {
@@ -1877,12 +2086,12 @@ $('#btnSave').onclick = async () => {
   //     보아 막힌다. 두 장 받기를 못 하는 곳이면 통째로 내려받기로 간다 —
   //     한 장만 공유하고 나머지를 내려받으면 어디로 갔는지 알 수 없다.
   if (navigator.canShare && navigator.canShare({ files: files })) {
-    try { await navigator.share({ files: files }); return; }
+    try { await navigator.share({ files: files }); saveDone(); return; }
     catch(e) { if (e && e.name === 'AbortError') return; }   // 손님이 닫은 것은 잘못이 아니다
   }
   pull(files[0]);
   setTimeout(() => pull(files[1]), 600);
-  say('2장 저장했습니다', 2200);
+  saveDone();
 };
 
 /* ---- 색 ---- */
